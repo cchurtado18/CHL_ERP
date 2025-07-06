@@ -185,7 +185,7 @@
                     <td>
                         @php $servicio = is_object($paquete) ? ($paquete->servicio ?? null) : ($paquete['servicio'] ?? null); @endphp
                         @if($servicio)
-                            {{ is_object($servicio) ? (Str::contains(strtolower($servicio->tipo_servicio ?? ''), 'mar') ? 'Mar' : 'Air') : (Str::contains(strtolower($servicio), 'mar') ? 'Mar' : 'Air') }}
+                            {{ is_object($servicio) ? ($servicio->tipo_servicio ?? '-') : ($servicio ?? '-') }}
                         @else
                             -
                         @endif
@@ -197,6 +197,47 @@
                 @php $total += is_object($paquete) ? ($paquete->monto_calculado ?? 0) : ($paquete['monto_calculado'] ?? 0); @endphp
             @endforeach
             </tbody>
+        </table>
+    </div>
+
+    {{-- Resumen de libras por servicio --}}
+    @php
+        function quitarTildesYMinusculas($cadena) {
+            $cadena = mb_strtolower($cadena, 'UTF-8');
+            $buscar  = array('á','é','í','ó','ú','ñ');
+            $reempl = array('a','e','i','o','u','n');
+            return str_replace($buscar, $reempl, $cadena);
+        }
+        $librasAereo = 0;
+        $librasMaritimo = 0;
+        $librasPieCubico = 0;
+        foreach($factura->paquetes as $paquete) {
+            $servicio = is_object($paquete) ? ($paquete->servicio ?? $paquete->servicio) : ($paquete['servicio'] ?? null);
+            $tipo = is_object($servicio) ? ($servicio->tipo_servicio ?? $servicio) : ($servicio ?? '');
+            $tipo = quitarTildesYMinusculas($tipo);
+            $peso = is_object($paquete) ? ($paquete->peso_lb ?? 0) : ($paquete['peso_lb'] ?? 0);
+            if(strpos($tipo, 'aereo') !== false || strpos($tipo, 'air') !== false) $librasAereo += floatval($peso);
+            if(strpos($tipo, 'maritimo') !== false || strpos($tipo, 'mar') !== false) $librasMaritimo += floatval($peso);
+            if(strpos($tipo, 'pie') !== false) $librasPieCubico += floatval($peso);
+        }
+    @endphp
+    <div class="section" style="margin-top: 10px;">
+        <table style="width: 100%; font-size: 13px;">
+            @if($librasAereo > 0)
+            <tr>
+                <td><strong>Libras Aéreas:</strong> {{ number_format($librasAereo, 2) }} lb</td>
+            </tr>
+            @endif
+            @if($librasMaritimo > 0)
+            <tr>
+                <td><strong>Libras Marítimas:</strong> {{ number_format($librasMaritimo, 2) }} lb</td>
+            </tr>
+            @endif
+            @if($librasPieCubico > 0)
+            <tr>
+                <td><strong>Pies Cúbicos:</strong> {{ number_format($librasPieCubico, 2) }} cu ft</td>
+            </tr>
+            @endif
         </table>
     </div>
 
