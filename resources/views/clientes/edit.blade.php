@@ -55,7 +55,7 @@
                                 <label for="tipo_cliente" class="form-label fw-semibold">Tipo de Cliente</label>
                                 <select class="form-select form-select-lg rounded-3" id="tipo_cliente" name="tipo_cliente">
                                     <option value="normal" {{ old('tipo_cliente', $cliente->tipo_cliente) == 'normal' ? 'selected' : '' }}>Normal</option>
-                                    <option value="casillero" {{ old('tipo_cliente', $cliente->tipo_cliente) == 'casillero' ? 'selected' : '' }}>Casillero</option>
+                                    <option value="subagencia" {{ old('tipo_cliente', $cliente->tipo_cliente) == 'subagencia' ? 'selected' : '' }}>Subagencia</option>
                                 </select>
                                 @error('tipo_cliente') <div class="text-danger">{{ $message }}</div> @enderror
                             </div>

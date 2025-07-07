@@ -57,9 +57,8 @@
                             <td style="font-size:1.07rem;">{{ $cliente->correo }}</td>
                             <td style="font-size:1.07rem;">{{ $cliente->telefono }}</td>
                             <td>
-                                @if($cliente->tipo_cliente == 'casillero')
-                                    <span class="badge bg-accent text-white px-3 py-2 rounded-pill" style="font-size:1.01rem; letter-spacing:0.5px; background:#5C6AC4;">Casillero</span>
-                                @elseif($cliente->tipo_cliente == 'Subagencia')
+                                @php $tipo = strtolower(trim($cliente->tipo_cliente)); @endphp
+                                @if($tipo === 'subagencia')
                                     <span class="badge bg-warning text-dark px-3 py-2 rounded-pill" style="font-size:1.01rem; letter-spacing:0.5px; background:#FFD700;">Subagencia</span>
                                 @else
                                     <span class="badge bg-primary text-white px-3 py-2 rounded-pill" style="font-size:1.01rem; letter-spacing:0.5px; background:#1A2E75;">Normal</span>
