@@ -178,16 +178,13 @@
                             </td>
                             <td class="px-4 py-3">
                                 <div class="small">
-                                    @if($tracking->recordatorio_fecha)
-                                        {{ \Carbon\Carbon::parse($tracking->recordatorio_fecha)->format('d/m/Y H:i') }}
+                                    @if($tracking->creador)
+                                        {{ $tracking->creador->name }}
+                                    @elseif($tracking->creado_por)
+                                        ID: {{ $tracking->creado_por }}
                                     @else
-                                        <span class="text-muted">No configurado</span>
+                                        <span class="text-muted">Sin información</span>
                                     @endif
-                                </div>
-                            </td>
-                            <td class="px-4 py-3">
-                                <div class="small">
-                                    {{ $tracking->creador->name ?? 'Usuario no encontrado' }}
                                 </div>
                                 <small class="text-muted">
                                     {{ \Carbon\Carbon::parse($tracking->created_at)->format('d/m/Y') }}
