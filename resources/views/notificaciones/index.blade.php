@@ -61,7 +61,7 @@
                             @forelse($notificaciones as $notificacion)
                             <tr>
                                 <td>
-                                    <div class="fw-semibold">{{ $notificacion->usuario->name ?? 'Usuario no encontrado' }}</div>
+                                    <div class="fw-semibold">{{ $notificacion->usuario->nombre ?? 'Usuario no encontrado' }}</div>
                                     <small class="text-muted">{{ $notificacion->usuario->email ?? '' }}</small>
                                 </td>
                                 <td>
@@ -140,7 +140,7 @@
                             </div>
                             <div>
                                 <div class="fw-semibold text-dark small mb-1">
-                                    {{ $notificacion->usuario->name ?? 'Usuario no encontrado' }}
+                                    {{ $notificacion->usuario->nombre ?? 'Usuario no encontrado' }}
                                 </div>
                                 <div class="text-muted small">{{ $notificacion->usuario->email ?? '' }}</div>
                             </div>
