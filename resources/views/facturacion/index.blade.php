@@ -47,6 +47,7 @@
                     <option value="entregado_pagado" {{ request('estado')=='entregado_pagado'?'selected':'' }}>Entregado y Pagado</option>
                     <option value="entregado_sin_pagar" {{ request('estado')=='entregado_sin_pagar'?'selected':'' }}>Entregado sin Pagar</option>
                     <option value="pagado_sin_entregar" {{ request('estado')=='pagado_sin_entregar'?'selected':'' }}>Pagado sin Entregar</option>
+                    <option value="facturado_npne" {{ request('estado')=='facturado_npne'?'selected':'' }}>Facturado NPNE</option>
                 </select>
             </div>
             <div class="col-md-3 filter-btn-group">
@@ -189,6 +190,7 @@
                                         <option value="entregado_pagado" {{ $factura->estado_pago=='entregado_pagado'?'selected':'' }}>Entregado y Pagado</option>
                                         <option value="entregado_sin_pagar" {{ $factura->estado_pago=='entregado_sin_pagar'?'selected':'' }}>Entregado sin Pagar</option>
                                         <option value="pagado_sin_entregar" {{ $factura->estado_pago=='pagado_sin_entregar'?'selected':'' }}>Pagado sin Entregar</option>
+                                        <option value="facturado_npne" {{ $factura->estado_pago=='facturado_npne'?'selected':'' }}>Facturado NPNE</option>
                                     </select>
                                 </form>
                             </td>
