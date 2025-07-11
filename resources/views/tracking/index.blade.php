@@ -3,6 +3,7 @@
 @section('title', 'Lista de Trackings - SkylinkOne CRM')
 
 @section('content')
+{{-- Vista principal de tracking: lista, filtros y acciones --}}
 <div class="container-fluid px-4">
     <!-- Botón Volver al Dashboard -->
     <div class="mb-3">
@@ -40,7 +41,7 @@
         </div>
     @endif
 
-    <!-- Filtros -->
+    {{-- Filtros de estado, cliente y fecha de vencimiento --}}
     <div class="collapse mb-4" id="filtersCollapse">
         <div class="card border-0 shadow-sm">
             <div class="card-body">
@@ -88,7 +89,7 @@
         </div>
     </div>
 
-    <!-- Main Table -->
+    {{-- Tabla de trackings con acciones --}}
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white border-0 py-3">
             <div class="d-flex justify-content-between align-items-center">

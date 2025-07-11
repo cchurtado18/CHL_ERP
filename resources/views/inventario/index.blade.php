@@ -4,6 +4,7 @@
 @section('page-title', 'Inventario de Paquetes')
 
 @section('content')
+{{-- Vista principal de inventario: lista, filtros y estadísticas --}}
 <div class="container-fluid px-4">
     <!-- Header Section -->
     <div class="row mb-4">

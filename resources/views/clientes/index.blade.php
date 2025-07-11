@@ -4,6 +4,7 @@
 @section('page-title', 'Clientes')
 
 @section('content')
+{{-- Vista principal de clientes: muestra la lista, filtros y acciones --}}
 <div class="container-fluid px-4">
     <div class="row mb-4">
         <div class="col-12">
@@ -22,6 +23,7 @@
         </div>
     </div>
     <div class="card p-4" style="border-radius:22px; box-shadow:0 2px 8px rgba(26,46,117,0.06);">
+        {{-- Filtros de búsqueda y tipo de cliente --}}
         <form class="row mb-3 align-items-center" method="GET" action="{{ route('clientes.index') }}">
             <div class="col-md-6 mb-2 mb-md-0">
                 <input type="text" id="busqueda_cliente" name="busqueda" class="form-control form-control-lg rounded-3" placeholder="Buscar por nombre, correo o teléfono..." value="{{ request('busqueda', $busqueda ?? '') }}">
@@ -38,6 +40,7 @@
                 <a href="{{ route('clientes.index') }}" class="btn btn-outline-secondary px-4"><i class="fas fa-eraser me-1"></i>Limpiar</a>
             </div>
         </form>
+        {{-- Tabla de clientes con columnas principales --}}
         <div class="table-responsive">
             <table class="table clientes-table table-hover align-middle mb-0" style="border-radius:16px; overflow:hidden;" id="tabla_clientes">
                 <thead class="table-primary">
@@ -69,6 +72,7 @@
                                 <div class="text-muted" style="font-size:0.95rem;">{{ \Carbon\Carbon::parse($cliente->fecha_registro)->format('H:i:s') }}</div>
                             </td>
                             <td class="text-center">
+                                {{-- Acciones: ver, editar, eliminar cliente --}}
                                 <a href="{{ route('clientes.show', $cliente->id) }}" class="btn btn-info btn-client-action me-1" title="Previsualizar"><i class="fas fa-eye"></i></a>
                                 <a href="{{ route('clientes.edit', $cliente->id) }}" class="btn btn-primary btn-client-action me-1" title="Editar"><i class="fas fa-edit"></i></a>
                                 <form action="{{ route('clientes.destroy', $cliente->id) }}" method="POST" class="d-inline">

@@ -4,6 +4,7 @@
 @section('page-title', 'Facturación')
 
 @section('content')
+{{-- Vista principal de facturación: lista, filtros y acciones --}}
 <div class="container-fluid px-4">
     <div class="row mb-4">
         <div class="col-12">
@@ -27,6 +28,7 @@
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
     <div class="card p-3">
+        {{-- Filtros de búsqueda por cliente, fecha, acta y estado --}}
         <form method="GET" class="row g-2 mb-3 align-items-end">
             <div class="col-md-3">
                 <label class="form-label">Cliente</label>
@@ -158,6 +160,7 @@
                     justify-content: flex-end;
                 }
             </style>
+            {{-- Tabla de facturas con acciones --}}
             <table class="table fact-table table-hover align-middle mb-0">
                 <thead>
                     <tr>
