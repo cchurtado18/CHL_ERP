@@ -194,10 +194,17 @@ class InventarioController extends Controller
     {
         $clienteId = $request->input('cliente_id');
         $servicioId = $request->input('servicio_id');
+        
+        \Log::info('Obteniendo tarifa para cliente: ' . $clienteId . ' y servicio: ' . $servicioId);
+        
         $tarifa = \App\Models\TarifaCliente::where('cliente_id', $clienteId)
             ->where('servicio_id', $servicioId)
             ->first();
-        return response()->json(['tarifa' => $tarifa ? $tarifa->tarifa : null]);
+            
+        $response = ['tarifa' => $tarifa ? $tarifa->tarifa : null];
+        \Log::info('Tarifa encontrada: ' . json_encode($response));
+        
+        return response()->json($response);
     }
 
     public function exportExcel()

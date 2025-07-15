@@ -153,10 +153,16 @@
                                     </label>
                                     <div class="input-group">
                                         <span class="input-group-text">$</span>
-                                        <input type="number" step="0.01" name="tarifa_manual" class="form-control @error('tarifa_manual') is-invalid @enderror" 
+                                        <input type="number" step="0.01" name="tarifa_manual" id="tarifa_manual" class="form-control @error('tarifa_manual') is-invalid @enderror" 
                                                value="{{ old('tarifa_manual') }}" placeholder="0.00">
+                                        <span class="input-group-text" id="tarifa-loading" style="display:none;">
+                                            <i class="fas fa-spinner fa-spin text-primary"></i>
+                                        </span>
                                     </div>
                                     <small class="form-text text-muted">Dejar vacío para calcular automáticamente</small>
+                                    <small class="form-text text-success" id="tarifa-info" style="display:none;">
+                                        <i class="fas fa-check-circle"></i> Tarifa automática aplicada
+                                    </small>
                                     @error('tarifa_manual')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -529,8 +535,11 @@ function showSuggestions(term) {
             selectedClienteId = cliente.id;
             hiddenInput.value = cliente.id;
             list.style.display = 'none';
-            if (typeof obtenerTarifaCliente === 'function') obtenerTarifaCliente();
-            if (typeof calculateMonto === 'function') calculateMonto();
+            // Llamar a la función para obtener tarifa automáticamente
+            setTimeout(() => {
+                if (typeof obtenerTarifaCliente === 'function') obtenerTarifaCliente();
+                if (typeof calculateMonto === 'function') calculateMonto();
+            }, 100);
         };
         list.appendChild(li);
     });
@@ -587,7 +596,8 @@ document.addEventListener('DOMContentLoaded', function() {
         obtenerTarifaCliente();
         calculateMonto();
     });
-    clienteSelect.addEventListener('change', function() {
+    // También escuchar cambios en el campo de cliente autocompletado
+    document.getElementById('cliente_id').addEventListener('change', function() {
         obtenerTarifaCliente();
         calculateMonto();
     });
@@ -596,7 +606,18 @@ document.addEventListener('DOMContentLoaded', function() {
     function obtenerTarifaCliente() {
         const clienteId = document.getElementById('cliente_id').value;
         const servicioId = servicioSelect.value;
+        const tarifaLoading = document.getElementById('tarifa-loading');
+        const tarifaInfo = document.getElementById('tarifa-info');
+        
+        console.log('Obteniendo tarifa para cliente:', clienteId, 'servicio:', servicioId);
+        
+        // Ocultar indicadores previos
+        tarifaInfo.style.display = 'none';
+        
         if (clienteId && servicioId) {
+            // Mostrar loading
+            tarifaLoading.style.display = 'inline-flex';
+            
             fetch("{{ route('inventario.obtener-tarifa') }}", {
                 method: 'POST',
                 headers: {
@@ -607,14 +628,29 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(res => res.json())
             .then(data => {
-                if (data.tarifa !== null) {
+                console.log('Tarifa obtenida:', data);
+                // Ocultar loading
+                tarifaLoading.style.display = 'none';
+                
+                if (data.tarifa !== null && data.tarifa !== undefined) {
                     tarifaManualInput.value = data.tarifa;
+                    console.log('Tarifa aplicada:', data.tarifa);
+                    // Mostrar indicador de éxito
+                    tarifaInfo.style.display = 'block';
                 } else {
                     tarifaManualInput.value = '';
+                    console.log('No se encontró tarifa para esta combinación');
                 }
+                calculateMonto();
+            })
+            .catch(error => {
+                console.error('Error al obtener tarifa:', error);
+                tarifaManualInput.value = '';
+                tarifaLoading.style.display = 'none';
                 calculateMonto();
             });
         } else {
+            console.log('Faltan datos: clienteId =', clienteId, 'servicioId =', servicioId);
             tarifaManualInput.value = '';
             calculateMonto();
         }

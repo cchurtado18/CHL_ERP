@@ -59,13 +59,14 @@ class FacturacionController extends Controller
             'delivery'       => 'nullable|numeric',
         ]);
 
-        // Validar que los paquetes pertenezcan al cliente y no estén facturados
+        // Validar que los paquetes pertenezcan al cliente, no estén facturados y no estén entregados
         $paquetes = \App\Models\Inventario::whereIn('id', $request->paquetes)
             ->where('cliente_id', $request->cliente_id)
             ->whereNull('factura_id')
+            ->where('estado', '!=', 'entregado') // Excluir paquetes ya entregados
             ->get();
         if (count($paquetes) !== count($request->paquetes)) {
-            return back()->withErrors(['paquetes' => 'Uno o más paquetes seleccionados no pertenecen al cliente o ya han sido facturados.'])->withInput();
+            return back()->withErrors(['paquetes' => 'Uno o más paquetes seleccionados no pertenecen al cliente, ya han sido facturados o ya están entregados.'])->withInput();
         }
 
         // Calcular monto total real
@@ -180,26 +181,9 @@ class FacturacionController extends Controller
             'telefono' => $request->input('cliente_telefono', ''),
         ];
         $paquetes = [];
-        // Si no se reciben paquetes pero hay cliente_id, traer todos los paquetes no facturados
-        if (!$request->has('paquetes') && $request->filled('cliente_id')) {
-            $inventarios = \App\Models\Inventario::where('cliente_id', $request->input('cliente_id'))
-                ->whereNull('factura_id')
-                ->with('servicio')
-                ->get();
-            foreach ($inventarios as $inv) {
-                $paquetes[] = (object) [
-                    'numero_guia' => $inv->numero_guia,
-                    'notas' => $inv->notas,
-                    'tracking_codigo' => $inv->tracking_codigo,
-                    'servicio' => $inv->servicio ? $inv->servicio->tipo_servicio : null,
-                    'tarifa_manual' => $inv->tarifa_manual,
-                    'monto_calculado' => $inv->monto_calculado,
-                    'peso_lb' => $inv->peso_lb,
-                ];
-            }
-        }
-        // Solo agregar paquetes seleccionados, no duplicar
-        if ($request->has('paquetes')) {
+        
+        // Solo agregar paquetes seleccionados explícitamente
+        if ($request->has('paquetes') && !empty($request->input('paquetes'))) {
             foreach ($request->input('paquetes', []) as $i => $id) {
                 $peso = floatval($request->input('paquete_peso_'.$id, 0));
                 $tarifa = floatval($request->input('paquete_tarifa_'.$id, 0));
@@ -219,6 +203,7 @@ class FacturacionController extends Controller
                 ];
             }
         }
+        
         $factura->paquetes = collect($paquetes);
         $factura->delivery = $request->input('delivery', 0);
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('facturacion.pdf', compact('factura'));
@@ -232,6 +217,7 @@ class FacturacionController extends Controller
     {
         $inventarios = \App\Models\Inventario::where('cliente_id', $clienteId)
             ->whereNull('factura_id')
+            ->where('estado', '!=', 'entregado') // Excluir paquetes ya entregados
             ->with('servicio')
             ->get()
             ->map(function($inv) {
@@ -244,6 +230,7 @@ class FacturacionController extends Controller
                     'tarifa_manual' => $inv->tarifa_manual,
                     'monto_calculado' => $inv->monto_calculado,
                     'peso_lb' => $inv->peso_lb,
+                    'estado' => $inv->estado, // Agregar el estado del paquete
                 ];
             });
         return response()->json($inventarios);
@@ -257,6 +244,7 @@ class FacturacionController extends Controller
         $cliente = \App\Models\Cliente::select('id', 'nombre_completo', 'telefono', 'direccion')->findOrFail($clienteId);
         $paquetes = \App\Models\Inventario::where('cliente_id', $clienteId)
             ->whereNull('factura_id')
+            ->where('estado', '!=', 'entregado') // Excluir paquetes ya entregados
             ->with('servicio')
             ->get()
             ->map(function($inv) {
@@ -269,6 +257,7 @@ class FacturacionController extends Controller
                     'tarifa_manual' => $inv->tarifa_manual,
                     'monto_calculado' => $inv->monto_calculado,
                     'peso_lb' => $inv->peso_lb,
+                    'estado' => $inv->estado, // Agregar el estado del paquete
                 ];
             });
         $historial = \App\Models\Facturacion::where('cliente_id', $clienteId)

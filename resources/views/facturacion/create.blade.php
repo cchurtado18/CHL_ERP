@@ -180,8 +180,11 @@ $(document).ready(function() {
                 `);
                 // Paquetes
                 if (!resp.paquetes || resp.paquetes.length === 0) {
-                    $('#paquetes_container').html('<div class="alert alert-warning"><i class="fas fa-exclamation-triangle me-1"></i> No hay paquetes disponibles para facturar a este cliente.</div>');
+                    $('#paquetes_container').html('<div class="alert alert-warning"><i class="fas fa-exclamation-triangle me-1"></i> No hay paquetes disponibles para facturar a este cliente. Todos los paquetes han sido entregados o ya están facturados.</div>');
                     $('#btn_guardar_factura').prop('disabled', true);
+                    // Limpiar preview cuando no hay paquetes
+                    document.getElementById('preview-pdf').src = '';
+                    document.getElementById('preview-placeholder').style.display = 'block';
                 } else {
                     let tabla = `<table class="table fact-table table-hover table-bordered align-middle shadow-sm rounded-3" style="background:#fff;">
                         <thead class="table-primary">
@@ -224,7 +227,21 @@ $(document).ready(function() {
                 } else {
                     let hist = `<div class="card mb-2"><div class="card-body"><h6 class="fw-semibold">Últimas 5 facturas</h6><table class="table fact-table table-sm table-bordered mb-0"><thead class="table-light"><tr><th>#</th><th>Fecha</th><th>Monto</th><th>Estado</th></tr></thead><tbody>`;
                     resp.historial.forEach(f => {
-                        hist += `<tr><td>${f.id}</td><td>${f.fecha_factura}</td><td>$${parseFloat(f.monto_total).toFixed(2)}</td><td>${f.estado_pago === 'pagado' ? '<span class="badge bg-success">Pagado</span>' : f.estado_pago === 'parcial' ? '<span class="badge bg-warning text-dark">Parcial</span>' : '<span class="badge bg-danger">Pendiente</span>'}</td></tr>`;
+                        let estadoBadge = '';
+                        if (f.estado_pago === 'entregado_pagado') {
+                            estadoBadge = '<span class="badge bg-success">Entregado</span>';
+                        } else if (f.estado_pago === 'pagado') {
+                            estadoBadge = '<span class="badge bg-success">Pagado</span>';
+                        } else if (f.estado_pago === 'parcial') {
+                            estadoBadge = '<span class="badge bg-warning text-dark">Parcial</span>';
+                        } else if (f.estado_pago === 'entregado_sin_pagar') {
+                            estadoBadge = '<span class="badge bg-info">Entregado sin Pagar</span>';
+                        } else if (f.estado_pago === 'pagado_sin_entregar') {
+                            estadoBadge = '<span class="badge bg-primary">Pagado sin Entregar</span>';
+                        } else {
+                            estadoBadge = '<span class="badge bg-danger">Pendiente</span>';
+                        }
+                        hist += `<tr><td>${f.id}</td><td>${f.fecha_factura}</td><td>$${parseFloat(f.monto_total).toFixed(2)}</td><td>${estadoBadge}</td></tr>`;
                     });
                     hist += '</tbody></table></div></div>';
                     $('#facturas_historial').html(hist);
@@ -299,6 +316,7 @@ $(document).ready(function() {
         var form = document.getElementById('factura-form');
         var formData = new FormData(form);
         var cliente = getClienteData();
+        
         // Enviar los datos del cliente en campos separados y limpios
         formData.set('cliente_nombre', cliente.nombre_completo || '');
         formData.set('cliente_direccion', cliente.direccion || '');
@@ -309,9 +327,12 @@ $(document).ready(function() {
         // Si no hay paquetes seleccionados, limpiar el PDF y no enviar nada
         if ($('.paquete-checkbox:checked').length === 0) {
             document.getElementById('preview-pdf').src = '';
+            document.getElementById('preview-placeholder').style.display = 'block';
             return;
         }
-        // Ya no agregamos los paquetes manualmente, los inputs ocultos lo hacen
+        
+        // Ocultar placeholder si hay paquetes seleccionados
+        document.getElementById('preview-placeholder').style.display = 'none';
 
         // Enviar delivery
         var deliveryInput = document.getElementById('delivery');
@@ -361,7 +382,13 @@ $(document).ready(function() {
     function revisarPendientesCliente(historial) {
         hayPendientesCliente = false;
         if (historial && Array.isArray(historial)) {
-            hayPendientesCliente = historial.some(f => f.estado_pago === 'pendiente' || f.estado_pago === 'no pagado');
+            // Considerar como pendientes: pendiente, parcial, entregado_sin_pagar, pagado_sin_entregar
+            hayPendientesCliente = historial.some(f => 
+                f.estado_pago === 'pendiente' || 
+                f.estado_pago === 'parcial' || 
+                f.estado_pago === 'entregado_sin_pagar' || 
+                f.estado_pago === 'pagado_sin_entregar'
+            );
         }
     }
     // Intercepta el submit del formulario

@@ -127,7 +127,7 @@
                         </div>
                         <div class="flex-grow-1 ms-3">
                             <h6 class="card-title text-muted mb-1">Entregados</h6>
-                            <h4 class="mb-0 fw-bold text-dark">{{ $inventarios->where('estado', 'entregado')->count() }}</h4>
+                            <h4 class="mb-0 fw-bold text-dark">{{ $totalEntregados }}</h4>
                         </div>
                     </div>
                 </div>
