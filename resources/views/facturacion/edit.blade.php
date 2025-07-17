@@ -83,6 +83,10 @@
                                     <option value="pendiente" {{ old('estado_pago', $factura->estado_pago) == 'pendiente' ? 'selected' : '' }}>Pendiente</option>
                                     <option value="parcial" {{ old('estado_pago', $factura->estado_pago) == 'parcial' ? 'selected' : '' }}>Parcial</option>
                                     <option value="pagado" {{ old('estado_pago', $factura->estado_pago) == 'pagado' ? 'selected' : '' }}>Pagado</option>
+                                    <option value="entregado_pagado" {{ old('estado_pago', $factura->estado_pago) == 'entregado_pagado' ? 'selected' : '' }}>Entregado y Pagado</option>
+                                    <option value="entregado_sin_pagar" {{ old('estado_pago', $factura->estado_pago) == 'entregado_sin_pagar' ? 'selected' : '' }}>Entregado sin Pagar</option>
+                                    <option value="pagado_sin_entregar" {{ old('estado_pago', $factura->estado_pago) == 'pagado_sin_entregar' ? 'selected' : '' }}>Pagado sin Entregar</option>
+                                    <option value="facturado_npne" {{ old('estado_pago', $factura->estado_pago) == 'facturado_npne' ? 'selected' : '' }}>Facturado NPNE</option>
                                 </select>
                                 @error('estado_pago') <div class="text-danger">{{ $message }}</div> @enderror
                             </div>

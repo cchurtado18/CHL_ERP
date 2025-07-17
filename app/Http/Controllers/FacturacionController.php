@@ -52,7 +52,7 @@ class FacturacionController extends Controller
             'moneda'         => 'required|in:USD,NIO',
             'tasa_cambio'    => 'nullable|numeric',
             'monto_local'    => 'required|numeric',
-            'estado_pago'    => 'required|in:pendiente,parcial,pagado,entregado_pagado,entregado_sin_pagar,pagado_sin_entregar',
+            'estado_pago'    => 'required|in:pendiente,parcial,pagado,entregado_pagado,entregado_sin_pagar,pagado_sin_entregar,facturado_npne',
             'nota'           => 'nullable|string',
             'paquetes'       => 'required|array|min:1',
             'paquetes.*'     => 'exists:inventario,id',
@@ -124,7 +124,7 @@ class FacturacionController extends Controller
             'moneda'         => 'required|in:USD,NIO',
             'tasa_cambio'    => 'nullable|numeric',
             'monto_local'    => 'required|numeric',
-            'estado_pago'    => 'required|in:pendiente,parcial,pagado,entregado_pagado,entregado_sin_pagar,pagado_sin_entregar',
+            'estado_pago'    => 'required|in:pendiente,parcial,pagado,entregado_pagado,entregado_sin_pagar,pagado_sin_entregar,facturado_npne',
             'nota'           => 'nullable|string',
             'delivery'       => 'nullable|numeric',
         ]);
@@ -276,10 +276,16 @@ class FacturacionController extends Controller
     {
         $factura = Facturacion::findOrFail($id);
         $request->validate([
-            'estado_pago' => 'required|in:pendiente,parcial,pagado,entregado_pagado,entregado_sin_pagar,pagado_sin_entregar',
+            'estado_pago' => 'required|in:pendiente,parcial,pagado,entregado_pagado,entregado_sin_pagar,pagado_sin_entregar,facturado_npne',
         ]);
         $factura->estado_pago = $request->estado_pago;
         $factura->save();
+
+        // Si el nuevo estado es entregado_pagado o entregado_sin_pagar, actualizar productos relacionados
+        if (in_array($request->estado_pago, ['entregado_pagado', 'entregado_sin_pagar'])) {
+            \App\Models\Inventario::where('factura_id', $factura->id)->update(['estado' => 'entregado']);
+        }
+
         return redirect()->route('facturacion.index')->with('success', 'Estado de la factura actualizado.');
     }
 
