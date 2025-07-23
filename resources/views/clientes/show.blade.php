@@ -73,7 +73,9 @@
                             <span class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width:38px; height:38px;"><i class="fas fa-bolt text-primary"></i></span>
                             <label class="form-label mb-0 flex-grow-1">Pie Cúbico</label>
                             <div class="form-control bg-light" style="max-width:120px;">
-                                ${{ number_format(optional($tarifas->first(function($t){ return str_replace(['á','é','í','ó','ú'],['a','e','i','o','u'], strtolower($t->servicio->tipo_servicio ?? '')) === 'pie_cubico'; }))->tarifa, 2) }}
+                                ${{ number_format(optional($tarifas->first(function($t){
+                                    return str_replace([' ', '-', 'á','é','í','ó','ú','Á','É','Í','Ó','Ú'], ['_','_','a','e','i','o','u','a','e','i','o','u'], strtolower($t->servicio->tipo_servicio ?? '')) === 'pie_cubico';
+                                }))->tarifa, 2) }}
                             </div>
                         </div>
                     </div>

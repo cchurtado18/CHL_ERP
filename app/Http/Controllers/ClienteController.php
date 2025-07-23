@@ -67,7 +67,8 @@ class ClienteController extends Controller
             $servicio = $servicios->first(function($s) use ($tipo) {
                 $normalize = function($str) {
                     $str = strtolower($str);
-                    $str = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'], $str);
+                    $str = str_replace(['á','é','í','ó','ú','Á','É','Í','Ó','Ú'], ['a','e','i','o','u','a','e','i','o','u'], $str);
+                    $str = str_replace([' ', '-'], '_', $str);
                     return $str;
                 };
                 return $normalize($s->tipo_servicio) === $tipo;
@@ -132,7 +133,8 @@ class ClienteController extends Controller
             $servicio = $servicios->first(function($s) use ($tipo) {
                 $normalize = function($str) {
                     $str = strtolower($str);
-                    $str = str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'], $str);
+                    $str = str_replace(['á','é','í','ó','ú','Á','É','Í','Ó','Ú'], ['a','e','i','o','u','a','e','i','o','u'], $str);
+                    $str = str_replace([' ', '-'], '_', $str);
                     return $str;
                 };
                 return $normalize($s->tipo_servicio) === $tipo;
