@@ -678,14 +678,45 @@ document.addEventListener('DOMContentLoaded', function() {
     // Validación dinámica para número de guía
     const numeroGuiaInput = document.getElementById('numero_guia');
     const guiaError = document.getElementById('guia-error');
+    const btnGuardar = document.getElementById('btn_guardar_inventario') || document.querySelector('button[type=submit]');
+    const errorAjax = document.createElement('div');
+    errorAjax.className = 'text-danger';
+    errorAjax.style.fontSize = '1rem';
+    errorAjax.style.marginTop = '4px';
+    numeroGuiaInput.parentNode.appendChild(errorAjax);
+
+    let lastValue = '';
+    numeroGuiaInput.addEventListener('blur', validarNumeroGuiaAjax);
     numeroGuiaInput.addEventListener('input', function() {
-        const value = numeroGuiaInput.value.trim();
-        if (value.length === 0 || !/^\d{6}$/.test(value)) {
-            guiaError.style.display = 'block';
-        } else {
-            guiaError.style.display = 'none';
+        if (this.value !== lastValue) {
+            errorAjax.textContent = '';
+            if (btnGuardar) btnGuardar.disabled = false;
         }
     });
+
+    function validarNumeroGuiaAjax() {
+        const valor = numeroGuiaInput.value.trim();
+        if (!valor) return;
+        fetch("{{ route('inventario.validar-numero-guia') }}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('input[name=_token]').value
+            },
+            body: JSON.stringify({ numero_guia: valor })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.exists) {
+                errorAjax.textContent = data.message;
+                if (btnGuardar) btnGuardar.disabled = true;
+            } else {
+                errorAjax.textContent = '';
+                if (btnGuardar) btnGuardar.disabled = false;
+            }
+            lastValue = valor;
+        });
+    }
     // Validar al enviar el formulario
     const inventarioForm = document.getElementById('inventarioForm');
     inventarioForm.addEventListener('submit', function(e) {

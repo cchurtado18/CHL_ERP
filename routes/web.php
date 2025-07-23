@@ -135,6 +135,7 @@ Route::middleware(['auth', 'role:admin,agente,basico'])->prefix('inventario')->g
     Route::get('/{id}', [InventarioController::class, 'show'])->name('inventario.show');
     Route::post('obtener-tarifa', [InventarioController::class, 'obtenerTarifa'])->name('inventario.obtener-tarifa');
     Route::delete('/{id}', [InventarioController::class, 'destroy'])->name('inventario.destroy');
+    Route::post('inventario/validar-numero-guia', [App\Http\Controllers\InventarioController::class, 'validarNumeroGuia'])->name('inventario.validar-numero-guia');
 });
 
 // Rutas para notificaciones

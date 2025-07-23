@@ -71,9 +71,11 @@ class InventarioController extends Controller
             'volumen_pie3'    => 'nullable|numeric',
             'tarifa_manual'   => 'nullable|numeric',
             'estado'          => 'required|string|max:50',
-            'numero_guia'     => 'nullable|string|max:100',
+            'numero_guia'     => 'required|string|max:100|unique:inventario,numero_guia',
             'notas'           => 'nullable|string',
             'servicio_id'     => 'nullable|exists:servicios,id',
+        ], [
+            'numero_guia.unique' => 'El número de guía ya está en uso. Por favor, ingresa uno diferente.'
         ]);
 
         $data = $request->all();
@@ -135,9 +137,11 @@ class InventarioController extends Controller
             'volumen_pie3'    => 'nullable|numeric',
             'tarifa_manual'   => 'nullable|numeric',
             'estado'          => 'required|string|max:50',
-            'numero_guia'     => 'nullable|string|max:100',
+            'numero_guia'     => 'required|string|max:100|unique:inventario,numero_guia,' . $inventario->id,
             'notas'           => 'nullable|string',
             'servicio_id'     => 'nullable|exists:servicios,id',
+        ], [
+            'numero_guia.unique' => 'El número de guía ya está en uso. Por favor, ingresa uno diferente.'
         ]);
 
         $data = $request->all();
@@ -210,5 +214,20 @@ class InventarioController extends Controller
     public function exportExcel()
     {
         return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\InventarioExport, 'inventario.xlsx');
+    }
+
+    public function validarNumeroGuia(Request $request)
+    {
+        $numeroGuia = $request->input('numero_guia');
+        $id = $request->input('id'); // Para edición
+        $query = \App\Models\Inventario::where('numero_guia', $numeroGuia);
+        if ($id) {
+            $query->where('id', '!=', $id);
+        }
+        $existe = $query->exists();
+        return response()->json([
+            'exists' => $existe,
+            'message' => $existe ? 'El número de guía ya está en uso. Por favor, ingresa uno diferente.' : ''
+        ]);
     }
 }
