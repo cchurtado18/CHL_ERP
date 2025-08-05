@@ -122,6 +122,7 @@ Route::prefix('facturacion')->group(function () {
     Route::get('/paquetes-por-cliente/{cliente}', [FacturacionController::class, 'paquetesPorCliente'])->name('facturacion.paquetes-por-cliente');
     Route::post('/{id}/cambiar-estado', [FacturacionController::class, 'cambiarEstado'])->name('facturacion.cambiar-estado');
     Route::post('/{id}/enviar-correo', [FacturacionController::class, 'enviarCorreo'])->name('facturacion.enviar-correo');
+    Route::post('/validar-numero-acta', [FacturacionController::class, 'validarNumeroActa'])->name('facturacion.validar-numero-acta');
 });
 
 // Rutas para inventario
@@ -167,6 +168,7 @@ Route::prefix('tracking')->group(function () {
     Route::get('/proximos-vencer', [TrackingController::class, 'proximosVencer'])->name('tracking.proximos-vencer');
     Route::get('/verificar-recordatorios', [TrackingController::class, 'verificarRecordatorios'])->name('tracking.verificar-recordatorios');
     Route::post('/{id}/completar', [TrackingController::class, 'completar'])->name('tracking.completar');
+    Route::get('/vencidos/count', [TrackingController::class, 'countVencidos'])->name('tracking.vencidos.count');
 });
 
 // Tarifas

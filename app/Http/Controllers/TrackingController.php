@@ -230,7 +230,9 @@ class TrackingController extends Controller
     {
         $totalTrackings = Tracking::count();
         $trackingsPendientes = Tracking::where('estado', 'pendiente')->count();
-        $trackingsVencidos = Tracking::where('estado', 'vencido')->count();
+        $trackingsVencidos = Tracking::where('recordatorio_fecha', '<=', now())
+            ->where('estado', '!=', 'completado')
+            ->count();
         $trackingsCompletados = Tracking::where('estado', 'completado')->count();
         
         $proximosVencer = Tracking::with(['cliente'])
@@ -241,12 +243,20 @@ class TrackingController extends Controller
             ->take(5)
             ->get();
 
+        $trackingsVencidosList = Tracking::with(['cliente'])
+            ->where('recordatorio_fecha', '<=', now())
+            ->where('estado', '!=', 'completado')
+            ->orderBy('recordatorio_fecha', 'asc')
+            ->take(10)
+            ->get();
+
         return view('tracking.dashboard', compact(
             'totalTrackings',
             'trackingsPendientes',
             'trackingsVencidos',
             'trackingsCompletados',
-            'proximosVencer'
+            'proximosVencer',
+            'trackingsVencidosList'
         ));
     }
 
@@ -256,5 +266,20 @@ class TrackingController extends Controller
         $tracking->estado = 'completado';
         $tracking->save();
         return response()->json(['success' => true]);
+    }
+
+    /**
+     * Contar trackings vencidos para la notificación
+     */
+    public function countVencidos()
+    {
+        $count = Tracking::where('recordatorio_fecha', '<=', now())
+            ->where('estado', '!=', 'completado')
+            ->count();
+        
+        return response()->json([
+            'count' => $count,
+            'has_vencidos' => $count > 0
+        ]);
     }
 } 

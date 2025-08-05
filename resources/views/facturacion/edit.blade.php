@@ -302,6 +302,46 @@ $(document).ready(function() {
         return cliente;
     }
 
+    // Validación en tiempo real del número de acta para edición
+    let timeoutNumeroActa;
+    $('input[name="numero_acta"]').on('input', function() {
+        clearTimeout(timeoutNumeroActa);
+        const numeroActa = $(this).val().trim();
+        
+        if (numeroActa.length > 0) {
+            timeoutNumeroActa = setTimeout(function() {
+                $.ajax({
+                    url: '{{ route("facturacion.validar-numero-acta") }}',
+                    method: 'POST',
+                    data: {
+                        numero_acta: numeroActa,
+                        factura_id: {{ $factura->id }},
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        const input = $('input[name="numero_acta"]');
+                        const errorDiv = input.siblings('.numero-acta-error');
+                        
+                        if (response.exists) {
+                            if (errorDiv.length === 0) {
+                                input.after('<div class="numero-acta-error text-danger mt-1"><i class="fas fa-exclamation-triangle me-1"></i>' + response.message + '</div>');
+                            }
+                            input.addClass('is-invalid');
+                            $('#btn_guardar_factura').prop('disabled', true);
+                        } else {
+                            errorDiv.remove();
+                            input.removeClass('is-invalid');
+                            $('#btn_guardar_factura').prop('disabled', false);
+                        }
+                    }
+                });
+            }, 500);
+        } else {
+            $('.numero-acta-error').remove();
+            $('input[name="numero_acta"]').removeClass('is-invalid');
+        }
+    });
+
     // Llamar updatePreview cuando se selecciona cliente o paquetes o cambia algún campo relevante
     $('#cliente_id').on('change', function() { setTimeout(updatePreview, 300); });
     $(document).on('change', '.paquete-checkbox', function() { setTimeout(updatePreview, 300); });

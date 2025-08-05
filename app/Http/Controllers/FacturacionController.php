@@ -48,7 +48,7 @@ class FacturacionController extends Controller
         $request->validate([
             'cliente_id'     => 'required|exists:clientes,id',
             'fecha_factura'  => 'required|date',
-            'numero_acta'    => 'required|string|max:100',
+            'numero_acta'    => 'required|string|max:100|unique:facturacion,numero_acta',
             'moneda'         => 'required|in:USD,NIO',
             'tasa_cambio'    => 'nullable|numeric',
             'monto_local'    => 'required|numeric',
@@ -57,6 +57,8 @@ class FacturacionController extends Controller
             'paquetes'       => 'required|array|min:1',
             'paquetes.*'     => 'exists:inventario,id',
             'delivery'       => 'nullable|numeric',
+        ], [
+            'numero_acta.unique' => 'El número de acta ya ha sido utilizado en otra factura. Por favor, ingresa un número diferente.'
         ]);
 
         // Validar que los paquetes pertenezcan al cliente, no estén facturados y no estén entregados
@@ -119,7 +121,7 @@ class FacturacionController extends Controller
         $request->validate([
             'cliente_id'     => 'required|exists:clientes,id',
             'fecha_factura'  => 'required|date',
-            'numero_acta'    => 'nullable|string|max:100',
+            'numero_acta'    => 'nullable|string|max:100|unique:facturacion,numero_acta,' . $factura->id,
             'monto_total'    => 'required|numeric',
             'moneda'         => 'required|in:USD,NIO',
             'tasa_cambio'    => 'nullable|numeric',
@@ -127,6 +129,8 @@ class FacturacionController extends Controller
             'estado_pago'    => 'required|in:pendiente,parcial,pagado,entregado_pagado,entregado_sin_pagar,pagado_sin_entregar,facturado_npne',
             'nota'           => 'nullable|string',
             'delivery'       => 'nullable|numeric',
+        ], [
+            'numero_acta.unique' => 'El número de acta ya ha sido utilizado en otra factura. Por favor, ingresa un número diferente.'
         ]);
 
         $factura->update([
@@ -302,5 +306,24 @@ class FacturacionController extends Controller
         // Enviar correo
         Mail::to($correo)->send(new FacturaMailable($factura, $pdfContent));
         return back()->with('success', 'Factura enviada correctamente a ' . $correo);
+    }
+
+    public function validarNumeroActa(Request $request)
+    {
+        $numeroActa = $request->input('numero_acta');
+        $facturaId = $request->input('factura_id'); // Para edición
+        
+        $query = \App\Models\Facturacion::where('numero_acta', $numeroActa);
+        
+        if ($facturaId) {
+            $query->where('id', '!=', $facturaId);
+        }
+        
+        $existe = $query->exists();
+        
+        return response()->json([
+            'exists' => $existe,
+            'message' => $existe ? 'El número de acta ya ha sido utilizado en otra factura. Por favor, ingresa un número diferente.' : ''
+        ]);
     }
 }

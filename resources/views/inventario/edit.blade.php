@@ -23,6 +23,19 @@
             </div>
         </div>
     </div>
+    <!-- Success Message -->
+    @if (session('success'))
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>
+                    {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <!-- Form Card & Sidebar -->
     <div class="row">
         <div class="col-lg-8">
@@ -37,6 +50,7 @@
                     <form action="{{ route('inventario.update', $paquete->id) }}" method="POST" id="inventarioForm">
                         @csrf
                         @method('PUT')
+                        <input type="hidden" name="cliente_id_filter" value="{{ $paquete->cliente_id }}">
                         <div class="row g-4">
                             <!-- Cliente -->
                             <div class="col-md-6">
@@ -200,6 +214,10 @@
                                         <i class="fas fa-save me-1"></i>
                                         Actualizar Paquete
                                     </button>
+                                    <a href="{{ route('inventario.index') }}" class="btn btn-outline-primary">
+                                        <i class="fas fa-list me-1"></i>
+                                        Ver Inventario
+                                    </a>
                                 </div>
                             </div>
                         </div>

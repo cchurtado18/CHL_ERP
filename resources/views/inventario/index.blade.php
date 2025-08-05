@@ -192,11 +192,21 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-6 col-md-3 d-flex align-items-center">
+                        <div class="col-6 col-md-2 d-flex align-items-center">
                             <select name="estado" class="form-select form-select-lg rounded-3 filtro-sm">
                                 <option value="">Todos los estados</option>
                                 <option value="recibido" {{ request('estado', $estado ?? '') == 'recibido' ? 'selected' : '' }}>Recibido</option>
                                 <option value="entregado" {{ request('estado', $estado ?? '') == 'entregado' ? 'selected' : '' }}>Entregado</option>
+                            </select>
+                        </div>
+                        <div class="col-6 col-md-2 d-flex align-items-center">
+                            <select name="cliente_id" class="form-select form-select-lg rounded-3 filtro-sm">
+                                <option value="">Todos los clientes</option>
+                                @foreach($clientes as $cliente)
+                                    <option value="{{ $cliente->id }}" {{ request('cliente_id', $cliente_id ?? '') == $cliente->id ? 'selected' : '' }}>
+                                        {{ $cliente->nombre_completo }}
+                                    </option>
+                                @endforeach
                             </select>
                         </div>
                         <div class="col-6 col-md-2 d-flex gap-2 align-items-center">

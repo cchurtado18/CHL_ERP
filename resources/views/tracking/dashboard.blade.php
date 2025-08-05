@@ -72,7 +72,7 @@
             </div>
         </div>
         <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-0 shadow-sm h-100">
+            <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #dc3545 !important;">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-shrink-0">
@@ -82,7 +82,7 @@
                         </div>
                         <div class="flex-grow-1 ms-3">
                             <h6 class="card-title text-muted mb-1">VENCIDOS</h6>
-                            <h4 class="mb-0 fw-bold text-dark">{{ $trackingsVencidos }}</h4>
+                            <h4 class="mb-0 fw-bold text-danger">{{ $trackingsVencidos }}</h4>
                         </div>
                     </div>
                 </div>
@@ -133,6 +133,66 @@
             </div>
         </div>
     </div>
+
+    <!-- Trackings Vencidos -->
+    @if($trackingsVencidos > 0)
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-danger shadow-sm" style="border-left: 4px solid #dc3545 !important;">
+                <div class="card-header bg-danger text-white border-0 py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-semibold">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Trackings Vencidos
+                    </h6>
+                    <span class="badge bg-white text-danger fw-bold">{{ $trackingsVencidos }}</span>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-danger border-0" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>¡Atención!</strong> Hay {{ $trackingsVencidos }} tracking(s) que han vencido su tiempo límite. 
+                        <a href="{{ route('tracking.index', ['estado' => 'vencido']) }}" class="alert-link">Ver todos los vencidos</a>
+                    </div>
+                    
+                    @if($trackingsVencidosList->count() > 0)
+                    <div class="row">
+                        @foreach($trackingsVencidosList->take(5) as $tracking)
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card border-danger h-100" style="border-left: 4px solid #dc3545 !important;">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="card-title text-danger mb-0">
+                                            {{ $tracking->tracking_codigo }}
+                                        </h6>
+                                        <span class="badge bg-danger text-white">
+                                            VENCIDO
+                                        </span>
+                                    </div>
+                                    <p class="card-text small text-muted mb-2">
+                                        <strong>Cliente:</strong> {{ $tracking->cliente->nombre_completo }}
+                                    </p>
+                                    <p class="card-text small text-danger mb-3">
+                                        <strong>Venció:</strong> {{ \Carbon\Carbon::parse($tracking->recordatorio_fecha)->format('d/m/Y H:i') }}
+                                        <br>
+                                        <small>{{ \Carbon\Carbon::parse($tracking->recordatorio_fecha)->diffForHumans() }}</small>
+                                    </p>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="verTracking({{ $tracking->id }})">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-success" onclick="marcarCompletado({{ $tracking->id }})">
+                                            <i class="fas fa-check"></i> Completar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 
     <!-- Próximos a Vencer -->
     <div class="row mb-4">

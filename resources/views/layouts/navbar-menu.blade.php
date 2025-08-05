@@ -37,8 +37,41 @@
         display: flex;
         align-items: center;
     }
+    .tracking-notification {
+        position: relative;
+        margin-right: 1rem;
+    }
+    .tracking-notification-badge {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background: #dc3545;
+        color: white;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: bold;
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
 </style>
 <div class="navbar-flex">
+    <!-- Notificación de tracking vencido -->
+    <div class="tracking-notification">
+        <a href="{{ route('tracking.dashboard') }}" class="btn btn-outline-danger btn-sm position-relative">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span class="tracking-notification-badge" id="trackingVencidoCount" style="display: none;">0</span>
+        </a>
+    </div>
+    
     <span class="navbar-user">
         <i class="fas fa-user"></i> {{ $user->nombre ?? 'Usuario' }}
     </span>

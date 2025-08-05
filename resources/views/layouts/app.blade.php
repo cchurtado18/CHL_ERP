@@ -286,10 +286,31 @@
         // Cargar notificaciones al cargar la página
         document.addEventListener('DOMContentLoaded', function() {
             loadNotifications();
+            loadTrackingVencidos();
             
             // Recargar notificaciones cada 30 segundos
             setInterval(loadNotifications, 30000);
+            // Recargar tracking vencidos cada 60 segundos
+            setInterval(loadTrackingVencidos, 60000);
         });
+
+        // Cargar conteo de trackings vencidos
+        function loadTrackingVencidos() {
+            fetch('{{ route("tracking.vencidos.count") }}')
+                .then(response => response.json())
+                .then(data => {
+                    const badge = document.getElementById('trackingVencidoCount');
+                    if (data.has_vencidos) {
+                        badge.textContent = data.count;
+                        badge.style.display = 'flex';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading tracking vencidos:', error);
+                });
+        }
     </script>
     @yield('scripts')
     @stack('scripts')

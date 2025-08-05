@@ -176,7 +176,8 @@ class InventarioController extends Controller
             ]);
         }
 
-        return redirect()->route('inventario.index')->with('success', 'Paquete actualizado correctamente.');
+        // Redirigir de vuelta a la misma vista de edición con mensaje de éxito
+        return redirect()->route('inventario.edit', $inventario->id)->with('success', 'Paquete actualizado correctamente.');
     }
 
     public function destroy($id)
