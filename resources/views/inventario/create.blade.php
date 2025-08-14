@@ -119,8 +119,8 @@
                                         Número de Guía
                                     </label>
                                     <input type="text" name="numero_guia" id="numero_guia" class="form-control @error('numero_guia') is-invalid @enderror" 
-                                           value="{{ old('numero_guia') }}" placeholder="Ej: 1223113/1, 345463/2 o 12345678" required maxlength="9" minlength="8" title="Formato: números con barra o 8-9 dígitos">
-                                    <div id="guia-error" class="form-text text-danger" style="display:none;">El número de guía debe tener 8-9 caracteres o formato con barra (ej: 1223113/1)</div>
+                                           value="{{ old('numero_guia') }}" placeholder="Ej: 1223113/1, 345463/2 o 12345678" required maxlength="9" minlength="6" title="Formato: números con barra o 6-9 dígitos">
+                                    <div id="guia-error" class="form-text text-danger" style="display:none;">El número de guía debe tener 6-9 caracteres o formato con barra (ej: 1223113/1)</div>
                                     @error('numero_guia')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -721,9 +721,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const inventarioForm = document.getElementById('inventarioForm');
     inventarioForm.addEventListener('submit', function(e) {
         const value = numeroGuiaInput.value.trim();
-        // Nueva validación: 8-9 caracteres o formato con barra
-        const validFormat = /^(\d+\/\d+|\d{8,9})$/;
-        if (value.length < 8 || value.length > 9 || !validFormat.test(value)) {
+        // Nueva validación: 6-9 caracteres o formato con barra
+        const validFormat = /^(\d+\/\d+|\d{6,9})$/;
+        if (value.length < 6 || value.length > 9 || !validFormat.test(value)) {
             guiaError.style.display = 'block';
             numeroGuiaInput.focus();
             e.preventDefault();

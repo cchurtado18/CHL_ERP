@@ -71,20 +71,20 @@ class InventarioController extends Controller
             'volumen_pie3'    => 'nullable|numeric',
             'tarifa_manual'   => 'nullable|numeric',
             'estado'          => 'required|string|max:50',
-            'numero_guia'     => 'required|string|min:8|max:9|unique:inventario,numero_guia',
+            'numero_guia'     => 'required|string|min:6|max:9|unique:inventario,numero_guia',
             'notas'           => 'nullable|string',
             'servicio_id'     => 'nullable|exists:servicios,id',
         ], [
             'numero_guia.unique' => 'El número de guía ya está en uso. Por favor, ingresa uno diferente.',
-            'numero_guia.min' => 'El número de guía debe tener al menos 8 caracteres.',
+            'numero_guia.min' => 'El número de guía debe tener al menos 6 caracteres.',
             'numero_guia.max' => 'El número de guía no puede exceder 9 caracteres.'
         ]);
 
         // Validación personalizada para el formato del número de guía
         $numeroGuia = $request->input('numero_guia');
-        if (!preg_match('/^(\d+\/\d+|\d{8,9})$/', $numeroGuia)) {
+        if (!preg_match('/^(\d+\/\d+|\d{6,9})$/', $numeroGuia)) {
             return back()->withErrors([
-                'numero_guia' => 'El número de guía debe tener 8-9 dígitos o formato con barra (ej: 1223113/1)'
+                'numero_guia' => 'El número de guía debe tener 6-9 dígitos o formato con barra (ej: 1223113/1)'
             ])->withInput();
         }
 
@@ -159,20 +159,20 @@ class InventarioController extends Controller
             'volumen_pie3'    => 'nullable|numeric',
             'tarifa_manual'   => 'nullable|numeric',
             'estado'          => 'required|string|max:50',
-            'numero_guia'     => 'required|string|min:8|max:9|unique:inventario,numero_guia,' . $inventario->id,
+            'numero_guia'     => 'required|string|min:6|max:9|unique:inventario,numero_guia,' . $inventario->id,
             'notas'           => 'nullable|string',
             'servicio_id'     => 'nullable|exists:servicios,id',
         ], [
             'numero_guia.unique' => 'El número de guía ya está en uso. Por favor, ingresa uno diferente.',
-            'numero_guia.min' => 'El número de guía debe tener al menos 8 caracteres.',
+            'numero_guia.min' => 'El número de guía debe tener al menos 6 caracteres.',
             'numero_guia.max' => 'El número de guía no puede exceder 9 caracteres.'
         ]);
 
         // Validación personalizada para el formato del número de guía
         $numeroGuia = $request->input('numero_guia');
-        if (!preg_match('/^(\d+\/\d+|\d{8,9})$/', $numeroGuia)) {
+        if (!preg_match('/^(\d+\/\d+|\d{6,9})$/', $numeroGuia)) {
             return back()->withErrors([
-                'numero_guia' => 'El número de guía debe tener 8-9 dígitos o formato con barra (ej: 1223113/1)'
+                'numero_guia' => 'El número de guía debe tener 6-9 dígitos o formato con barra (ej: 1223113/1)'
             ])->withInput();
         }
 
