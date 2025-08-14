@@ -71,12 +71,22 @@ class InventarioController extends Controller
             'volumen_pie3'    => 'nullable|numeric',
             'tarifa_manual'   => 'nullable|numeric',
             'estado'          => 'required|string|max:50',
-            'numero_guia'     => 'required|string|max:100|unique:inventario,numero_guia',
+            'numero_guia'     => 'required|string|min:8|max:9|unique:inventario,numero_guia',
             'notas'           => 'nullable|string',
             'servicio_id'     => 'nullable|exists:servicios,id',
         ], [
-            'numero_guia.unique' => 'El número de guía ya está en uso. Por favor, ingresa uno diferente.'
+            'numero_guia.unique' => 'El número de guía ya está en uso. Por favor, ingresa uno diferente.',
+            'numero_guia.min' => 'El número de guía debe tener al menos 8 caracteres.',
+            'numero_guia.max' => 'El número de guía no puede exceder 9 caracteres.'
         ]);
+
+        // Validación personalizada para el formato del número de guía
+        $numeroGuia = $request->input('numero_guia');
+        if (!preg_match('/^(\d+\/\d+|\d{8,9})$/', $numeroGuia)) {
+            return back()->withErrors([
+                'numero_guia' => 'El número de guía debe tener 8-9 dígitos o formato con barra (ej: 1223113/1)'
+            ])->withInput();
+        }
 
         $data = $request->all();
         $data['fecha_ingreso'] = now();
@@ -85,16 +95,28 @@ class InventarioController extends Controller
         $peso = floatval($data['peso_lb'] ?? 0);
         $volumen = floatval($data['volumen_pie3'] ?? 0);
         $tarifa = null;
+        
+        // Si hay tarifa manual, usarla
         if (isset($data['tarifa_manual']) && $data['tarifa_manual'] !== null && $data['tarifa_manual'] !== '') {
             $tarifa = floatval($data['tarifa_manual']);
-        } else if (isset($data['cliente_id'], $data['servicio_id'])) {
+        } 
+        // Si no hay tarifa manual, buscar tarifa específica del cliente y servicio
+        else if (isset($data['cliente_id'], $data['servicio_id'])) {
             $tarifaCliente = \App\Models\TarifaCliente::where('cliente_id', $data['cliente_id'])
                 ->where('servicio_id', $data['servicio_id'])
                 ->first();
-            $tarifa = $tarifaCliente ? floatval($tarifaCliente->tarifa) : 1.00;
+            
+            if ($tarifaCliente) {
+                $tarifa = floatval($tarifaCliente->tarifa);
+                // Guardar la tarifa automática en el campo tarifa_manual para referencia
+                $data['tarifa_manual'] = $tarifa;
+            } else {
+                $tarifa = 1.00; // Tarifa por defecto
+            }
         } else {
-            $tarifa = 1.00;
+            $tarifa = 1.00; // Tarifa por defecto
         }
+        
         $data['monto_calculado'] = $peso * $tarifa;
 
         $inventario = Inventario::create($data);
@@ -137,12 +159,22 @@ class InventarioController extends Controller
             'volumen_pie3'    => 'nullable|numeric',
             'tarifa_manual'   => 'nullable|numeric',
             'estado'          => 'required|string|max:50',
-            'numero_guia'     => 'required|string|max:100|unique:inventario,numero_guia,' . $inventario->id,
+            'numero_guia'     => 'required|string|min:8|max:9|unique:inventario,numero_guia,' . $inventario->id,
             'notas'           => 'nullable|string',
             'servicio_id'     => 'nullable|exists:servicios,id',
         ], [
-            'numero_guia.unique' => 'El número de guía ya está en uso. Por favor, ingresa uno diferente.'
+            'numero_guia.unique' => 'El número de guía ya está en uso. Por favor, ingresa uno diferente.',
+            'numero_guia.min' => 'El número de guía debe tener al menos 8 caracteres.',
+            'numero_guia.max' => 'El número de guía no puede exceder 9 caracteres.'
         ]);
+
+        // Validación personalizada para el formato del número de guía
+        $numeroGuia = $request->input('numero_guia');
+        if (!preg_match('/^(\d+\/\d+|\d{8,9})$/', $numeroGuia)) {
+            return back()->withErrors([
+                'numero_guia' => 'El número de guía debe tener 8-9 dígitos o formato con barra (ej: 1223113/1)'
+            ])->withInput();
+        }
 
         $data = $request->all();
 
@@ -150,16 +182,28 @@ class InventarioController extends Controller
         $peso = floatval($data['peso_lb'] ?? 0);
         $volumen = floatval($data['volumen_pie3'] ?? 0);
         $tarifa = null;
+        
+        // Si hay tarifa manual, usarla
         if (isset($data['tarifa_manual']) && $data['tarifa_manual'] !== null && $data['tarifa_manual'] !== '') {
             $tarifa = floatval($data['tarifa_manual']);
-        } else if (isset($data['cliente_id'], $data['servicio_id'])) {
+        } 
+        // Si no hay tarifa manual, buscar tarifa específica del cliente y servicio
+        else if (isset($data['cliente_id'], $data['servicio_id'])) {
             $tarifaCliente = \App\Models\TarifaCliente::where('cliente_id', $data['cliente_id'])
                 ->where('servicio_id', $data['servicio_id'])
                 ->first();
-            $tarifa = $tarifaCliente ? floatval($tarifaCliente->tarifa) : 1.00;
+            
+            if ($tarifaCliente) {
+                $tarifa = floatval($tarifaCliente->tarifa);
+                // Guardar la tarifa automática en el campo tarifa_manual para referencia
+                $data['tarifa_manual'] = $tarifa;
+            } else {
+                $tarifa = 1.00; // Tarifa por defecto
+            }
         } else {
-            $tarifa = 1.00;
+            $tarifa = 1.00; // Tarifa por defecto
         }
+        
         $data['monto_calculado'] = $peso * $tarifa;
 
         $inventario->update($data);
@@ -231,4 +275,4 @@ class InventarioController extends Controller
             'message' => $existe ? 'El número de guía ya está en uso. Por favor, ingresa uno diferente.' : ''
         ]);
     }
-}
+} 

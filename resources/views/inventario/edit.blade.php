@@ -128,7 +128,7 @@
                                         <i class="fas fa-barcode me-1 text-muted"></i>
                                         Número de Guía
                                     </label>
-                                    <input type="text" name="numero_guia" class="form-control @error('numero_guia') is-invalid @enderror" value="{{ $paquete->numero_guia }}" placeholder="Ingrese el número de guía">
+                                    <input type="text" name="numero_guia" class="form-control @error('numero_guia') is-invalid @enderror" value="{{ $paquete->numero_guia }}" placeholder="Ej: 345463/1, 345463/2 o 12345678" maxlength="9" minlength="8">
                                     @error('numero_guia')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror

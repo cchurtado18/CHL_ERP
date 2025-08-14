@@ -24,6 +24,7 @@ class Facturacion extends Model
         'created_by',
         'updated_by',
         'delivery',
+        'cantidad_paquetes',
     ];
 
     // Cliente relacionado

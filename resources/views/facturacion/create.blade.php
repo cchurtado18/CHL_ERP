@@ -187,40 +187,129 @@ $(document).ready(function() {
                     document.getElementById('preview-pdf').src = '';
                     document.getElementById('preview-placeholder').style.display = 'block';
                 } else {
-                    let tabla = `<table class="table fact-table table-hover table-bordered align-middle shadow-sm rounded-3" style="background:#fff;">
-                        <thead class="table-primary">
-                            <tr>
-                                <th></th>
-                                <th>Guía</th>
-                                <th>Notas</th>
-                                <th>Tracking</th>
-                                <th>Servicio</th>
-                                <th>Peso (lb)</th>
-                                <th>Precio Unitario</th>
-                                <th>Monto</th>
-                            </tr>
-                        </thead>
-                        <tbody>`;
+                    let tabla = `<div class="paquetes-header mb-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="paquetes-info">
+                                <h6 class="mb-1 fw-semibold text-dark">
+                                    <i class="fas fa-boxes me-2 text-primary"></i>
+                                    Paquetes Disponibles
+                                </h6>
+                                <small class="text-muted">
+                                    <span class="fw-medium text-primary">${resp.paquetes.length}</span> paquetes disponibles
+                                </small>
+                            </div>
+                            <div class="paquetes-actions">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button type="button" class="btn btn-outline-primary" id="select-all-packages">
+                                        <i class="fas fa-check me-1"></i>
+                                        Todos
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" id="deselect-all-packages">
+                                        <i class="fas fa-times me-1"></i>
+                                        Ninguno
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table fact-table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th width="60" class="text-center">
+                                        <div class="form-check d-flex justify-content-center">
+                                            <input type="checkbox" id="select-all-checkbox" class="form-check-input">
+                                        </div>
+                                    </th>
+                                    <th><i class="fas fa-barcode me-1"></i>Guía</th>
+                                    <th><i class="fas fa-truck me-1"></i>Tracking</th>
+                                    <th><i class="fas fa-shipping-fast me-1"></i>Servicio</th>
+                                    <th><i class="fas fa-weight-hanging me-1"></i>Peso (lb)</th>
+                                    <th><i class="fas fa-dollar-sign me-1"></i>Precio Unit.</th>
+                                    <th><i class="fas fa-calculator me-1"></i>Monto</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
                     resp.paquetes.forEach(p => {
                         const peso = parseFloat(p.peso_lb ?? 0);
                         const tarifa = parseFloat(p.tarifa_manual ?? p.tarifa ?? 1);
                         const monto = peso * tarifa;
-                        tabla += `<tr>
-                            <td><input type="checkbox" class="paquete-checkbox" value="${p.id}"></td>
-                            <td>${p.numero_guia ?? '-'}</td>
-                            <td>${p.notas ?? '-'}</td>
-                            <td>${p.tracking_codigo ?? '-'}</td>
-                            <td>${p.servicio ?? '-'}</td>
-                            <td>${p.peso_lb ?? '-'}</td>
-                            <td>$${tarifa.toFixed(2)}</td>
-                            <td>$${monto.toFixed(2)}</td>
+                        tabla += `<tr class="paquete-row" data-paquete-id="${p.id}" data-notas="${p.notas || ''}">
+                            <td class="text-center align-middle">
+                                <div class="form-check d-flex justify-content-center">
+                                    <input type="checkbox" class="paquete-checkbox form-check-input" value="${p.id}">
+                                </div>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge bg-light text-dark border">
+                                    <i class="fas fa-barcode me-1"></i>
+                                    ${p.numero_guia ?? '-'}
+                                </span>
+                            </td>
+                            <td class="align-middle text-center">
+                                <span class="badge bg-info bg-opacity-10 text-info border">
+                                    <i class="fas fa-truck me-1"></i>
+                                    ${p.tracking_codigo ?? '-'}
+                                </span>
+                            </td>
+                            <td class="align-middle text-center">
+                                <span class="badge bg-primary bg-opacity-10 text-primary border">
+                                    <i class="fas fa-shipping-fast me-1"></i>
+                                    ${p.servicio ?? '-'}
+                                </span>
+                            </td>
+                            <td class="text-center align-middle">
+                                <div class="d-flex flex-column align-items-center">
+                                    <span class="fw-semibold">${p.peso_lb ?? '-'}</span>
+                                    <small class="text-muted">lb</small>
+                                </div>
+                            </td>
+                            <td class="text-end align-middle">
+                                <span class="fw-semibold text-success">$${tarifa.toFixed(2)}</span>
+                            </td>
+                            <td class="text-end align-middle">
+                                <span class="fw-bold text-primary">$${monto.toFixed(2)}</span>
+                            </td>
                         </tr>`;
                     });
-                    tabla += '</tbody></table>';
+                    tabla += '</tbody></table></div>';
                     // Inputs ocultos para paquetes seleccionados
                     tabla += '<div id="inputs_paquetes"></div>';
                     $('#paquetes_container').html(tabla);
                     $('#btn_guardar_factura').prop('disabled', true);
+                    
+                    // Disparar evento personalizado para inicializar la selección masiva
+                    $(document).trigger('paquetesLoaded');
+                    
+                    // Inicializar checkboxes inmediatamente
+                    setTimeout(function() {
+                        console.log('Inicializando checkboxes después de cargar paquetes...');
+                        
+                        // Checkbox principal
+                        $('#select-all-checkbox').off('change').on('change', function() {
+                            console.log('Checkbox principal clickeado:', this.checked);
+                            var isChecked = this.checked;
+                            $('.paquete-checkbox').prop('checked', isChecked).trigger('change');
+                        });
+                        
+                        // Botón "Todos"
+                        $('#select-all-packages').off('click').on('click', function(e) {
+                            e.preventDefault();
+                            console.log('Botón Todos clickeado');
+                            $('.paquete-checkbox').prop('checked', true).trigger('change');
+                            $('#select-all-checkbox').prop('checked', true);
+                        });
+                        
+                        // Botón "Ninguno"
+                        $('#deselect-all-packages').off('click').on('click', function(e) {
+                            e.preventDefault();
+                            console.log('Botón Ninguno clickeado');
+                            $('.paquete-checkbox').prop('checked', false).trigger('change');
+                            $('#select-all-checkbox').prop('checked', false);
+                        });
+                        
+                        console.log('Checkboxes inicializados correctamente');
+                    }, 100);
                 }
                 // Historial
                 if (!resp.historial || resp.historial.length === 0) {
@@ -259,15 +348,18 @@ $(document).ready(function() {
     });
     // Manejo de selección de paquetes
     $(document).on('change', '.paquete-checkbox', function() {
+        console.log('Checkbox individual cambiado:', this.value, this.checked);
+        
         paquetesSeleccionados = $('.paquete-checkbox:checked').map(function(){ return this.value; }).get();
+        
         // Lógica de alerta por paquetes no pagados
         if (paquetesSeleccionados.length > 1) {
             let hayPendientes = false;
             let paquetePendiente = null;
             paquetesSeleccionados.forEach(id => {
                 var fila = $(".paquete-checkbox[value='"+id+"']").closest('tr');
-                // Suponiendo que el estado está en la columna 8 (ajusta si es necesario)
-                var estado = fila.find('td').eq(8).text().trim().toLowerCase();
+                // Suponiendo que el estado está en la columna 7 (ajustado sin columna de notas)
+                var estado = fila.find('td').eq(7).text().trim().toLowerCase();
                 if (estado === 'pendiente' || estado === 'no pagado') {
                     hayPendientes = true;
                     paquetePendiente = id;
@@ -283,22 +375,30 @@ $(document).ready(function() {
                 }
             }
         }
+        
         // Actualiza inputs ocultos
         let inputs = '';
         paquetesSeleccionados.forEach(id => {
             var fila = $(".paquete-checkbox[value='"+id+"']").closest('tr');
+            var notas = fila.attr('data-notas') || '';
             inputs += `<input type="hidden" name="paquetes[]" value="${id}">`;
             inputs += `<input type="hidden" name="paquete_guia_${id}" value="${fila.find('td').eq(1).text().trim()}">`;
-            inputs += `<input type="hidden" name="paquete_descripcion_${id}" value="${fila.find('td').eq(2).text().trim()}">`;
-            inputs += `<input type="hidden" name="paquete_tracking_${id}" value="${fila.find('td').eq(3).text().trim()}">`;
-            inputs += `<input type="hidden" name="paquete_servicio_${id}" value="${fila.find('td').eq(4).text().trim()}">`;
-            inputs += `<input type="hidden" name="paquete_peso_${id}" value="${fila.find('td').eq(5).text().trim()}">`;
-            inputs += `<input type="hidden" name="paquete_tarifa_${id}" value="${parseFloat(fila.find('td').eq(6).text().replace('$','')) || 0}">`;
-            inputs += `<input type="hidden" name="paquete_valor_${id}" value="${parseFloat(fila.find('td').eq(7).text().replace('$','')) || 0}">`;
+            inputs += `<input type="hidden" name="paquete_descripcion_${id}" value="${notas}">`; // Usar las notas reales del paquete
+            inputs += `<input type="hidden" name="paquete_tracking_${id}" value="${fila.find('td').eq(2).text().trim()}">`;
+            inputs += `<input type="hidden" name="paquete_servicio_${id}" value="${fila.find('td').eq(3).text().trim()}">`;
+            inputs += `<input type="hidden" name="paquete_peso_${id}" value="${fila.find('td').eq(4).text().trim()}">`;
+            inputs += `<input type="hidden" name="paquete_tarifa_${id}" value="${parseFloat(fila.find('td').eq(5).text().replace('$','')) || 0}">`;
+            inputs += `<input type="hidden" name="paquete_valor_${id}" value="${parseFloat(fila.find('td').eq(6).text().replace('$','')) || 0}">`;
         });
         $('#inputs_paquetes').html(inputs);
+        
         // Habilita o deshabilita el botón guardar
         $('#btn_guardar_factura').prop('disabled', paquetesSeleccionados.length === 0);
+        
+        // Actualizar UI de selección
+        updateSelectAllCheckbox();
+        updateSelectionUI();
+        
         actualizarMontosFactura();
     });
 
@@ -581,5 +681,250 @@ $(document).ready(function() {
     }
     .fact-table tbody tr:hover {
         background: #F5F7FA !important;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(26,46,117,0.1);
+    }
+    
+    /* Estilos minimalistas para la sección de paquetes */
+    .paquetes-header {
+        background: #ffffff;
+        border-radius: 8px;
+        padding: 1rem 1.25rem;
+        border: 1px solid #e9ecef;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    
+    .paquetes-info h6 {
+        color: #495057;
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
+        font-weight: 600;
+    }
+    
+    .paquetes-info small {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+    
+    .paquetes-info .text-primary {
+        color: #1A2E75 !important;
+    }
+    
+    .paquetes-actions .btn-group {
+        box-shadow: none;
+    }
+    
+    .paquetes-actions .btn {
+        border-radius: 6px;
+        font-weight: 500;
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+        border: 1px solid #dee2e6;
+        background: #ffffff;
+        color: #6c757d;
+        transition: all 0.2s ease;
+    }
+    
+    .paquetes-actions .btn:hover {
+        background: #f8f9fa;
+        border-color: #1A2E75;
+        color: #1A2E75;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .paquetes-actions .btn:focus {
+        box-shadow: 0 0 0 0.2rem rgba(26,46,117,0.15);
+    }
+    
+    .paquetes-actions .btn.active {
+        background: #1A2E75;
+        border-color: #1A2E75;
+        color: #ffffff;
+    }
+    
+    /* Estilos para la tabla mejorada */
+    .fact-table {
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 16px rgba(26,46,117,0.08);
+        border: 1px solid #e9ecef;
+    }
+    
+    .fact-table thead th {
+        background: linear-gradient(135deg, #1A2E75 0%, #5C6AC4 100%) !important;
+        color: #fff !important;
+        font-weight: 600;
+        padding: 1rem 0.75rem;
+        border: none;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .fact-table tbody td {
+        padding: 1rem 0.75rem;
+        border-bottom: 1px solid #f1f3f4;
+        vertical-align: middle;
+    }
+    
+    .paquete-row {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .paquete-row:hover {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+    }
+    
+    /* Estilos para checkboxes */
+    .form-check-input {
+        width: 1.2rem;
+        height: 1.2rem;
+        border: 2px solid #1A2E75;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .form-check-input:checked {
+        background-color: #1A2E75;
+        border-color: #1A2E75;
+        box-shadow: 0 0 0 0.2rem rgba(26,46,117,0.25);
+    }
+    
+    .form-check-input:hover {
+        transform: scale(1.1);
+    }
+    
+    /* Badges mejorados */
+    .badge {
+        font-size: 0.8rem;
+        padding: 0.5rem 0.75rem;
+        border-radius: 6px;
+        font-weight: 500;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .paquetes-header {
+            padding: 1rem;
+        }
+        
+        .paquetes-info {
+            flex-direction: column;
+            text-align: center;
+            gap: 1rem;
+        }
+        
+        .paquetes-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 1.2rem;
+        }
+        
+        .paquetes-actions {
+            flex-direction: column;
+            gap: 0.5rem;
+            width: 100%;
+        }
+        
+        .paquetes-actions .btn {
+            width: 100%;
+            min-width: auto;
+        }
+        
+        .fact-table {
+            font-size: 0.85rem;
+        }
+        
+        .fact-table thead th {
+            padding: 0.75rem 0.5rem;
+            font-size: 0.8rem;
+        }
+        
+        .fact-table tbody td {
+            padding: 0.75rem 0.5rem;
+        }
+        
+        .badge {
+            font-size: 0.75rem;
+            padding: 0.4rem 0.6rem;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .paquetes-header {
+            padding: 0.75rem;
+        }
+        
+        .paquetes-info h5 {
+            font-size: 1.1rem;
+        }
+        
+        .paquetes-info p {
+            font-size: 0.85rem;
+        }
     }
 </style>
+
+<script>
+$(document).ready(function() {
+    console.log('Document ready - Inicializando sistema de selección...');
+    
+    // Función para actualizar el estado del checkbox principal
+    function updateSelectAllCheckbox() {
+        const totalCheckboxes = $('.paquete-checkbox').length;
+        const checkedCheckboxes = $('.paquete-checkbox:checked').length;
+        
+        console.log('Actualizando checkbox principal - Total:', totalCheckboxes, 'Checked:', checkedCheckboxes);
+        
+        if (checkedCheckboxes === 0) {
+            $('#select-all-checkbox').prop('indeterminate', false).prop('checked', false);
+        } else if (checkedCheckboxes === totalCheckboxes) {
+            $('#select-all-checkbox').prop('indeterminate', false).prop('checked', true);
+        } else {
+            $('#select-all-checkbox').prop('indeterminate', true);
+        }
+    }
+
+    // Función para actualizar la UI de selección
+    function updateSelectionUI() {
+        const checkedCount = $('.paquete-checkbox:checked').length;
+        const totalCount = $('.paquete-checkbox').length;
+        
+        console.log('Actualizando UI - Seleccionados:', checkedCount, 'Total:', totalCount);
+        
+        // Actualizar el contador en el header
+        $('.paquetes-info small .text-primary').text(checkedCount + '/' + totalCount);
+        
+        // Cambiar el color según la selección
+        if (checkedCount > 0) {
+            $('.paquetes-info small .text-primary').removeClass('text-primary').addClass('text-success');
+        } else {
+            $('.paquetes-info small .text-primary').removeClass('text-success').addClass('text-primary');
+        }
+        
+        // Actualizar estado de botones
+        if (checkedCount === totalCount && totalCount > 0) {
+            $('#select-all-packages').addClass('active');
+            $('#deselect-all-packages').removeClass('active');
+        } else if (checkedCount === 0) {
+            $('#select-all-packages').removeClass('active');
+            $('#deselect-all-packages').addClass('active');
+        } else {
+            $('#select-all-packages').removeClass('active');
+            $('#deselect-all-packages').removeClass('active');
+        }
+    }
+
+    // Inicializar cuando se cargan los paquetes
+    $(document).on('paquetesLoaded', function() {
+        console.log('Evento paquetesLoaded disparado');
+        updateSelectionUI();
+    });
+
+    // Inicializar al cargar la página
+    console.log('Sistema de selección inicializado');
+});
+</script>

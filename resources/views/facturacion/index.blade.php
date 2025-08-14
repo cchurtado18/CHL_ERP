@@ -168,6 +168,7 @@
                         <th>Cliente</th>
                         <th>Fecha</th>
                         <th>Acta</th>
+                        <th>Paquetes</th>
                         <th>Monto Total</th>
                         <th>Moneda</th>
                         <th>Estado</th>
@@ -184,6 +185,7 @@
                             </td>
                             <td>{{ $factura->fecha_factura }}</td>
                             <td>{{ $factura->numero_acta }}</td>
+                            <td><span class="badge bg-info">{{ $factura->cantidad_paquetes ?? count($factura->paquetes) }}</span></td>
                             <td><span class="fw-bold">${{ number_format($factura->monto_total, 2) }}</span></td>
                             <td>{{ $factura->moneda }}</td>
                             <td>

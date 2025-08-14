@@ -71,8 +71,9 @@ class FacturacionController extends Controller
             return back()->withErrors(['paquetes' => 'Uno o más paquetes seleccionados no pertenecen al cliente, ya han sido facturados o ya están entregados.'])->withInput();
         }
 
-        // Calcular monto total real
+        // Calcular monto total real y contar paquetes
         $monto_total = 0;
+        $cantidad_paquetes = count($paquetes);
         foreach ($paquetes as $p) {
             $peso = floatval($p->peso_lb ?? 0);
             $tarifa = floatval($p->tarifa_manual ?? $p->tarifa ?? 1);
@@ -86,6 +87,7 @@ class FacturacionController extends Controller
             'fecha_factura' => $request->fecha_factura,
             'numero_acta'   => $request->numero_acta,
             'monto_total'   => $monto_total,
+            'cantidad_paquetes' => $cantidad_paquetes,
             'moneda'        => $request->moneda,
             'tasa_cambio'   => $request->tasa_cambio,
             'monto_local'   => $request->monto_local,

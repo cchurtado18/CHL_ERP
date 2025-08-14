@@ -102,7 +102,14 @@
             background: #f8f9fa;
             padding: 7px 6px;
             border-bottom: 1px solid #dee2e6;
+            text-align: left;
+            vertical-align: middle;
+        }
+        .pdf-table td.text-center {
             text-align: center;
+        }
+        .pdf-table td.text-right {
+            text-align: right;
         }
         .pdf-table tr:nth-child(even) td {
             background: #e9ecef;
@@ -179,10 +186,10 @@
             @php $total = 0; @endphp
             @foreach($factura->paquetes as $paquete)
                 <tr>
-                    <td>{{ is_object($paquete) ? ($paquete->numero_guia ?? '-') : ($paquete['numero_guia'] ?? '-') }}</td>
+                    <td class="text-center">{{ is_object($paquete) ? ($paquete->numero_guia ?? '-') : ($paquete['numero_guia'] ?? '-') }}</td>
                     <td>{{ is_object($paquete) ? ($paquete->notas ?? '-') : ($paquete['notas'] ?? '-') }}</td>
-                    <td>{{ is_object($paquete) ? ($paquete->tracking_codigo ?? '-') : ($paquete['tracking_codigo'] ?? '-') }}</td>
-                    <td>
+                    <td class="text-center">{{ is_object($paquete) ? ($paquete->tracking_codigo ?? '-') : ($paquete['tracking_codigo'] ?? '-') }}</td>
+                    <td class="text-center">
                         @php $servicio = is_object($paquete) ? ($paquete->servicio ?? null) : ($paquete['servicio'] ?? null); @endphp
                         @if($servicio)
                             {{ is_object($servicio) ? ($servicio->tipo_servicio ?? '-') : ($servicio ?? '-') }}
@@ -190,9 +197,9 @@
                             -
                         @endif
                     </td>
-                    <td>{{ is_object($paquete) ? ($paquete->peso_lb ?? '-') : ($paquete['peso_lb'] ?? '-') }}</td>
-                    <td>${{ number_format(is_object($paquete) ? ($paquete->tarifa_manual ?? ($paquete->tarifa ?? 1.00)) : ($paquete['tarifa_manual'] ?? ($paquete['tarifa'] ?? 1.00)), 2) }}</td>
-                    <td>${{ number_format(is_object($paquete) ? ($paquete->monto_calculado ?? 0) : ($paquete['monto_calculado'] ?? 0), 2) }}</td>
+                    <td class="text-center">{{ is_object($paquete) ? ($paquete->peso_lb ?? '-') : ($paquete['peso_lb'] ?? '-') }}</td>
+                    <td class="text-right">${{ number_format(is_object($paquete) ? ($paquete->tarifa_manual ?? ($paquete->tarifa ?? 1.00)) : ($paquete['tarifa_manual'] ?? ($paquete['tarifa'] ?? 1.00)), 2) }}</td>
+                    <td class="text-right">${{ number_format(is_object($paquete) ? ($paquete->monto_calculado ?? 0) : ($paquete['monto_calculado'] ?? 0), 2) }}</td>
                 </tr>
                 @php $total += is_object($paquete) ? ($paquete->monto_calculado ?? 0) : ($paquete['monto_calculado'] ?? 0); @endphp
             @endforeach
@@ -242,6 +249,10 @@
     </div>
 
     <table class="totals">
+        <tr>
+            <td class="label text-right">Cantidad de Paquetes:</td>
+            <td class="text-right">{{ $factura->cantidad_paquetes ?? count($factura->paquetes) }}</td>
+        </tr>
         <tr>
             <td class="label text-right">Subtotal:</td>
             <td class="text-right">${{ number_format($total, 2) }}</td>
