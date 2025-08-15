@@ -45,21 +45,22 @@ class FacturacionController extends Controller
     // Guardar nueva factura
     public function store(Request $request)
     {
-        $request->validate([
-            'cliente_id'     => 'required|exists:clientes,id',
-            'fecha_factura'  => 'required|date',
-            'numero_acta'    => 'required|string|max:100|unique:facturacion,numero_acta',
-            'moneda'         => 'required|in:USD,NIO',
-            'tasa_cambio'    => 'nullable|numeric',
-            'monto_local'    => 'required|numeric',
-            'estado_pago'    => 'required|in:pendiente,parcial,pagado,entregado_pagado,entregado_sin_pagar,pagado_sin_entregar,facturado_npne',
-            'nota'           => 'nullable|string',
-            'paquetes'       => 'required|array|min:1',
-            'paquetes.*'     => 'exists:inventario,id',
-            'delivery'       => 'nullable|numeric',
-        ], [
-            'numero_acta.unique' => 'El número de acta ya ha sido utilizado en otra factura. Por favor, ingresa un número diferente.'
-        ]);
+        try {
+            $request->validate([
+                'cliente_id'     => 'required|exists:clientes,id',
+                'fecha_factura'  => 'required|date',
+                'numero_acta'    => 'required|string|max:100|unique:facturacion,numero_acta',
+                'moneda'         => 'required|in:USD,NIO',
+                'tasa_cambio'    => 'nullable|numeric',
+                'monto_local'    => 'nullable|numeric',
+                'estado_pago'    => 'required|in:pendiente,parcial,pagado,entregado_pagado,entregado_sin_pagar,pagado_sin_entregar,facturado_npne',
+                'nota'           => 'nullable|string',
+                'paquetes'       => 'required|array|min:1',
+                'paquetes.*'     => 'exists:inventario,id',
+                'delivery'       => 'nullable|numeric',
+            ], [
+                'numero_acta.unique' => 'El número de acta ya ha sido utilizado en otra factura. Por favor, ingresa un número diferente.'
+            ]);
 
         // Validar que los paquetes pertenezcan al cliente, no estén facturados y no estén entregados
         $paquetes = \App\Models\Inventario::whereIn('id', $request->paquetes)
@@ -90,7 +91,7 @@ class FacturacionController extends Controller
             'cantidad_paquetes' => $cantidad_paquetes,
             'moneda'        => $request->moneda,
             'tasa_cambio'   => $request->tasa_cambio,
-            'monto_local'   => $request->monto_local,
+            'monto_local'   => $request->monto_local ?? $monto_total,
             'estado_pago'   => $request->estado_pago,
             'nota'          => $request->nota,
             'delivery'      => $delivery,
@@ -105,6 +106,10 @@ class FacturacionController extends Controller
         }
 
         return redirect()->route('facturacion.index')->with('success', 'Factura registrada correctamente.');
+        } catch (\Exception $e) {
+            \Log::error('Error al guardar factura: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Error al guardar la factura: ' . $e->getMessage()])->withInput();
+        }
     }
 
     // Editar factura
@@ -127,7 +132,7 @@ class FacturacionController extends Controller
             'monto_total'    => 'required|numeric',
             'moneda'         => 'required|in:USD,NIO',
             'tasa_cambio'    => 'nullable|numeric',
-            'monto_local'    => 'required|numeric',
+            'monto_local'    => 'nullable|numeric',
             'estado_pago'    => 'required|in:pendiente,parcial,pagado,entregado_pagado,entregado_sin_pagar,pagado_sin_entregar,facturado_npne',
             'nota'           => 'nullable|string',
             'delivery'       => 'nullable|numeric',

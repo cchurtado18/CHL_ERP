@@ -109,7 +109,7 @@ Route::prefix('clientes')->group(function () {
 });
 
 // Rutas para facturación
-Route::prefix('facturacion')->group(function () {
+Route::middleware(['auth', 'role:admin,agente'])->prefix('facturacion')->group(function () {
     Route::get('/', [FacturacionController::class, 'index'])->name('facturacion.index');
     Route::get('/crear', [FacturacionController::class, 'create'])->name('facturacion.create');
     Route::post('/', [FacturacionController::class, 'store'])->name('facturacion.store');

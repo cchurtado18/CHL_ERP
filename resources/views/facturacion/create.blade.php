@@ -30,6 +30,15 @@
                     <div class="col-lg-6 p-3 border-end" style="min-width:320px;">
                         <form id="factura-form" action="{{ route('facturacion.store') }}" method="POST">
                             @csrf
+                            @if ($errors->any())
+                                <div class="alert alert-danger">
+                                    <ul class="mb-0">
+                                        @foreach ($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
                             <div class="mb-3 position-relative">
                                 <label for="cliente_id" class="form-label fw-semibold">Cliente</label>
                                 <div class="d-flex align-items-center" style="gap: 8px;">
@@ -91,6 +100,7 @@
                             <div id="inputs_paquetes"></div>
                             <input type="hidden" name="monto_total" id="monto_total" value="0">
                             <input type="hidden" name="monto_local" id="monto_local" value="0">
+                            <input type="hidden" name="tasa_cambio" id="tasa_cambio" value="">
                             <div class="d-flex gap-2 justify-content-end mt-4">
                                 <button type="submit" class="btn btn-primary px-4 py-2 fw-bold shadow-sm" id="btn_guardar_factura" style="border-radius:8px;">
                                     <i class="fas fa-save me-2"></i> Guardar
