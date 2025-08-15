@@ -46,6 +46,8 @@ class FacturacionController extends Controller
     public function store(Request $request)
     {
         try {
+            \Log::info('Iniciando guardado de factura', $request->all());
+            
             $request->validate([
                 'cliente_id'     => 'required|exists:clientes,id',
                 'fecha_factura'  => 'required|date',
@@ -82,6 +84,21 @@ class FacturacionController extends Controller
         }
         $delivery = floatval($request->delivery ?? 0);
         $monto_total += $delivery;
+
+        \Log::info('Datos para crear factura', [
+            'cliente_id' => $request->cliente_id,
+            'fecha_factura' => $request->fecha_factura,
+            'numero_acta' => $request->numero_acta,
+            'monto_total' => $monto_total,
+            'cantidad_paquetes' => $cantidad_paquetes,
+            'moneda' => $request->moneda,
+            'tasa_cambio' => $request->tasa_cambio,
+            'monto_local' => $request->monto_local ?? $monto_total,
+            'estado_pago' => $request->estado_pago,
+            'nota' => $request->nota,
+            'delivery' => $delivery,
+            'created_by' => \Auth::id(),
+        ]);
 
         $factura = Facturacion::create([
             'cliente_id'    => $request->cliente_id,
