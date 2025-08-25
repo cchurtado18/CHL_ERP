@@ -12,7 +12,13 @@ use App\Mail\FacturaMailable;
 
 class FacturacionController extends Controller
 {
-    // Listar facturas
+    /**
+     * Listar facturas con filtros persistentes
+     * Los filtros se mantienen al navegar entre páginas usando ->appends($request->query())
+     * 
+     * @param Request $request
+     * @return \Illuminate\View\View
+     */
     public function index(Request $request)
     {
         $facturas = Facturacion::with('cliente')
@@ -31,7 +37,9 @@ class FacturacionController extends Controller
                 $q->where('estado_pago', $request->estado);
             })
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->appends($request->query()); // Mantiene los filtros en la paginación
+        
         return view('facturacion.index', compact('facturas'));
     }
 
