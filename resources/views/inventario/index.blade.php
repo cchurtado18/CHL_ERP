@@ -1,744 +1,304 @@
-@extends('layouts.app')
+@extends('layouts.app-new')
 
-@section('title', 'Inventario - SkylinkOne CRM')
-@section('page-title', 'Inventario de Paquetes')
+@section('title', 'Inventario - CH LOGISTICS ERP')
+@section('navbar-title', 'Inventario de Paquetes')
 
 @section('content')
-{{-- Vista principal de inventario: lista, filtros y estadísticas --}}
-<div class="container-fluid px-4">
-    <!-- Header Section -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="rounded-4 shadow-sm px-4 py-4 mb-4 d-flex align-items-center justify-content-between" style="background: linear-gradient(90deg, #1A2E75 0%, #5C6AC4 100%); min-height:90px;">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="bg-white rounded-circle d-flex align-items-center justify-content-center" style="width:60px; height:60px; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
-                        <i class="fas fa-boxes text-primary" style="font-size:2.2rem;"></i>
-                    </div>
-                    <div>
-                        <h1 class="h3 mb-1 fw-bold text-white" style="letter-spacing:1px;">Inventario de Paquetes</h1>
-                        <p class="mb-0 text-white-50" style="font-size:1.1rem;">Gestiona todos los paquetes en el sistema</p>
-                    </div>
-                </div>
-                <a href="{{ route('inventario.create') }}" class="btn btn-lg fw-semibold shadow-sm px-4" style="background:#1A2E75; color:#fff;">
-                    <i class="fas fa-plus me-2"></i> Nuevo Paquete
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Success Message -->
+@php $esAgente = auth()->check() && (auth()->user()->rol ?? null) === 'agente'; @endphp
+<div class="mx-auto w-full max-w-[1400px] space-y-8">
+    {{-- Alert --}}
     @if (session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="fas fa-check-circle me-2"></i>
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
+    <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-base text-emerald-800" role="alert">
+        <span class="font-medium">{{ session('success') }}</span>
+    </div>
     @endif
 
-    <!-- Filters Section -->
-    <div class="collapse mb-4" id="filtersCollapse">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <label class="form-label fw-semibold">Buscar</label>
-                        <input type="text" class="form-control" id="searchInput" placeholder="Buscar por guía, cliente...">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label fw-semibold">Estado</label>
-                        <select class="form-select" id="statusFilter">
-                            <option value="">Todos</option>
-                            <option value="recibido">Recibido</option>
-                            <option value="entregado">Entregado</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label fw-semibold">Servicio</label>
-                        <select class="form-select" id="serviceFilter">
-                            <option value="">Todos</option>
-                            <option value="express">Pie Cúbico</option>
-                            <option value="estandar">Estándar</option>
-                            <option value="economico">Económico</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label fw-semibold">Rango de Fechas</label>
-                        <div class="input-group">
-                            <input type="date" class="form-control" id="dateFrom">
-                            <span class="input-group-text">a</span>
-                            <input type="date" class="form-control" id="dateTo">
-                        </div>
-                    </div>
-                    <div class="col-md-2 d-flex align-items-end">
-                        <button class="btn btn-outline-primary w-100" id="clearFilters">
-                            <i class="fas fa-times me-1"></i>
-                            Limpiar
-                        </button>
-                    </div>
+    {{-- Stats - tarjetas más grandes --}}
+    <div class="grid grid-cols-2 gap-5 lg:grid-cols-4">
+        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex items-center gap-4">
+                <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-[#15537c]/10 text-[#15537c] text-2xl"><i class="fas fa-boxes"></i></div>
+                <div>
+                    <p class="text-sm font-medium uppercase tracking-wide text-slate-500">Total</p>
+                    <p class="text-2xl font-bold text-slate-800">{{ $totalPaquetes }}</p>
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- Stats Cards -->
-    <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <div class="bg-primary bg-opacity-10 rounded-circle p-3">
-                                <i class="fas fa-boxes text-primary fs-4"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1 ms-3">
-                            <h6 class="card-title text-muted mb-1">Total Paquetes</h6>
-                            <h4 class="mb-0 fw-bold text-dark">{{ $totalPaquetes }}</h4>
-                        </div>
-                    </div>
+        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex items-center gap-4">
+                <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-amber-100 text-amber-600 text-2xl"><i class="fas fa-check-circle"></i></div>
+                <div>
+                    <p class="text-sm font-medium uppercase tracking-wide text-slate-500">Recibidos</p>
+                    <p class="text-2xl font-bold text-slate-800">{{ $totalRecibidos }}</p>
                 </div>
             </div>
         </div>
-        <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <div class="bg-warning bg-opacity-10 rounded-circle p-3">
-                                <i class="fas fa-check-circle text-warning fs-4"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1 ms-3">
-                            <h6 class="card-title text-muted mb-1">Recibidos</h6>
-                            <h4 class="mb-0 fw-bold text-dark">{{ $totalRecibidos }}</h4>
-                        </div>
-                    </div>
+        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex items-center gap-4">
+                <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 text-2xl"><i class="fas fa-box-open"></i></div>
+                <div>
+                    <p class="text-sm font-medium uppercase tracking-wide text-slate-500">Entregados</p>
+                    <p class="text-2xl font-bold text-slate-800">{{ $totalEntregados }}</p>
                 </div>
             </div>
         </div>
-        <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <div class="bg-success bg-opacity-10 rounded-circle p-3">
-                                <i class="fas fa-check-circle text-success fs-4"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1 ms-3">
-                            <h6 class="card-title text-muted mb-1">Entregados</h6>
-                            <h4 class="mb-0 fw-bold text-dark">{{ $totalEntregados }}</h4>
-                        </div>
-                    </div>
+        @if(auth()->user() && auth()->user()->rol === 'admin')
+        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex items-center gap-4">
+                <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-sky-100 text-sky-600 text-2xl"><i class="fas fa-dollar-sign"></i></div>
+                <div>
+                    <p class="text-sm font-medium uppercase tracking-wide text-slate-500">Valor total</p>
+                    <p class="text-2xl font-bold text-slate-800">${{ number_format($valorTotal, 2) }}</p>
                 </div>
             </div>
         </div>
-        @if(auth()->check() && auth()->user()->rol === 'admin')
-            <div class="col-xl-3 col-md-6 mb-3">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="flex-shrink-0">
-                                <div class="bg-info bg-opacity-10 rounded-circle p-3">
-                                    <i class="fas fa-dollar-sign text-info fs-4"></i>
-                                </div>
-                            </div>
-                            <div class="flex-grow-1 ms-3">
-                                <h6 class="card-title text-muted mb-1">Valor Total</h6>
-                                <h4 class="mb-0 fw-bold text-dark">${{ number_format($valorTotal, 2) }}</h4>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         @endif
     </div>
 
-    <!-- Main Table -->
-    <div class="card border-0 shadow-sm">
-        <div class="card-header bg-white border-0 py-3">
-            <div class="d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 fw-semibold text-dark">
-                    <i class="fas fa-list me-2 text-primary"></i>
-                    Lista de Paquetes
-                </h5>
-                <div class="d-flex gap-2">
-                    <div class="dropdown">
-                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-cog me-1"></i>
-                            Acciones
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{{ route('inventario.export-excel') }}"><i class="fas fa-file-excel me-2 text-success"></i>Exportar Excel</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="printInventarioTable(); return false;"><i class="fas fa-print me-2 text-primary"></i>Imprimir</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                        </ul>
-                    </div>
-                </div>
+    {{-- Filtros - inputs más grandes --}}
+    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <form method="GET" action="{{ route('inventario.index') }}" class="flex flex-wrap items-end gap-4">
+            <div class="min-w-[220px] flex-1">
+                <label class="mb-1.5 block text-sm font-medium text-slate-600">Buscar</label>
+                <input type="text" name="busqueda" value="{{ request('busqueda', $busqueda ?? '') }}" placeholder="Cliente, guía, tracking..." class="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-base focus:border-[#15537c] focus:ring-1 focus:ring-[#15537c]">
             </div>
+            <div class="w-44">
+                <label class="mb-1.5 block text-sm font-medium text-slate-600">Servicio</label>
+                <select name="servicio_id" class="w-full appearance-none rounded-lg border border-slate-300 bg-white bg-[length:1.25rem] bg-[right_0.75rem_center] bg-no-repeat px-4 py-2.5 pr-10 text-base focus:border-[#15537c] focus:ring-1 focus:ring-[#15537c]" style="background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 24 24%22 stroke=%22%2364758b%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%222%22 d=%22M19 9l-7 7-7-7%22/%3E%3C/svg%3E');">
+                    <option value="">Todos</option>
+                    @foreach($servicios as $s)
+                        <option value="{{ $s->id }}" {{ request('servicio_id', $servicio_id ?? '') == $s->id ? 'selected' : '' }}>{{ $s->tipo_servicio }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="w-40">
+                <label class="mb-1.5 block text-sm font-medium text-slate-600">Estado</label>
+                <select name="estado" class="w-full appearance-none rounded-lg border border-slate-300 bg-white bg-[length:1.25rem] bg-[right_0.75rem_center] bg-no-repeat px-4 py-2.5 pr-10 text-base focus:border-[#15537c] focus:ring-1 focus:ring-[#15537c]" style="background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 24 24%22 stroke=%22%2364758b%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%222%22 d=%22M19 9l-7 7-7-7%22/%3E%3C/svg%3E');">
+                    <option value="">Todos</option>
+                    <option value="recibido" {{ request('estado', $estado ?? '') == 'recibido' ? 'selected' : '' }}>Recibido</option>
+                    <option value="entregado" {{ request('estado', $estado ?? '') == 'entregado' ? 'selected' : '' }}>Entregado</option>
+                </select>
+            </div>
+            <div class="w-52">
+                <label class="mb-1.5 block text-sm font-medium text-slate-600">Cliente</label>
+                <select name="cliente_id" class="w-full appearance-none rounded-lg border border-slate-300 bg-white bg-[length:1.25rem] bg-[right_0.75rem_center] bg-no-repeat px-4 py-2.5 pr-10 text-base focus:border-[#15537c] focus:ring-1 focus:ring-[#15537c]" style="background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 24 24%22 stroke=%22%2364758b%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%222%22 d=%22M19 9l-7 7-7-7%22/%3E%3C/svg%3E');">
+                    <option value="">Todos</option>
+                    @foreach($clientes as $c)
+                        <option value="{{ $c->id }}" {{ request('cliente_id', $cliente_id ?? '') == $c->id ? 'selected' : '' }}>{{ $c->nombre_completo }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-[#15537c] px-5 py-2.5 text-base font-medium text-white hover:bg-[#0f3d5c]"><i class="fas fa-search"></i> Filtrar</button>
+            <a href="{{ route('inventario.index') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-5 py-2.5 text-base font-medium text-slate-600 hover:bg-slate-50">Limpiar</a>
+        </form>
+    </div>
+
+    {{-- Barra: vista + Nuevo Paquete + export --}}
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <div class="inline-flex rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+            <button type="button" id="viewTable" class="view-toggle rounded-lg px-4 py-2.5 text-base font-medium text-white bg-[#15537c]" title="Ver como tabla"><i class="fas fa-list mr-2"></i>Tabla</button>
+            <button type="button" id="viewGrid" class="view-toggle rounded-lg px-4 py-2.5 text-base font-medium text-slate-600 hover:bg-slate-100" title="Ver como tarjetas"><i class="fas fa-th-large mr-2"></i>Tarjetas</button>
         </div>
-        <div class="card-body p-0">
-            <div class="table-responsive-md">
-                <div class="card mb-3 p-3 shadow-sm border-0" style="border-radius: 16px;">
-                    <form class="row g-2 align-items-center flex-nowrap w-100" method="GET" action="{{ route('inventario.index') }}" style="gap:0.5rem 0;">
-                        <div class="col-12 col-md-4 d-flex align-items-center">
-                            <input type="text" name="busqueda" class="form-control rounded-3 filtro-sm" placeholder="Buscar cliente, tracking, guía..." value="{{ request('busqueda', $busqueda ?? '') }}">
-                        </div>
-                        <div class="col-6 col-md-3 d-flex align-items-center">
-                            <select name="servicio_id" class="form-select form-select-lg rounded-3 filtro-sm">
-                                <option value="">Todos los servicios</option>
-                                @foreach($servicios as $s)
-                                    <option value="{{ $s->id }}" {{ request('servicio_id', $servicio_id ?? '') == $s->id ? 'selected' : '' }}>{{ $s->tipo_servicio }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-6 col-md-2 d-flex align-items-center">
-                            <select name="estado" class="form-select form-select-lg rounded-3 filtro-sm">
-                                <option value="">Todos los estados</option>
-                                <option value="recibido" {{ request('estado', $estado ?? '') == 'recibido' ? 'selected' : '' }}>Recibido</option>
-                                <option value="entregado" {{ request('estado', $estado ?? '') == 'entregado' ? 'selected' : '' }}>Entregado</option>
-                            </select>
-                        </div>
-                        <div class="col-6 col-md-2 d-flex align-items-center">
-                            <select name="cliente_id" class="form-select form-select-lg rounded-3 filtro-sm">
-                                <option value="">Todos los clientes</option>
-                                @foreach($clientes as $cliente)
-                                    <option value="{{ $cliente->id }}" {{ request('cliente_id', $cliente_id ?? '') == $cliente->id ? 'selected' : '' }}>
-                                        {{ $cliente->nombre_completo }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-6 col-md-2 d-flex gap-2 align-items-center">
-                            <button type="submit" class="btn btn-primary px-4 filtro-sm d-flex align-items-center justify-content-center" style="height:48px;width:48px;"><i class="fas fa-search"></i></button>
-                            <a href="{{ route('inventario.index') }}" class="btn btn-outline-secondary px-3 filtro-sm d-flex align-items-center justify-content-center" style="height:48px;width:48px;"><i class="fas fa-eraser"></i></a>
-                        </div>
-                    </form>
-                </div>
-                <table class="table inventario-table table-hover align-middle mb-0" id="inventarioTable">
-                    <thead class="table-light align-middle">
-                        <tr>
-                            <th class="text-nowrap align-middle" style="min-width:120px;"><span class="d-inline-flex align-items-center"><i class="fas fa-user me-2"></i>Cliente</span></th>
-                            <th class="text-nowrap align-middle" style="min-width:90px;"><span class="d-inline-flex align-items-center"><i class="fas fa-shipping-fast me-2"></i>Servicio</span></th>
-                            <th class="text-nowrap align-middle" style="min-width:70px;"><span class="d-inline-flex align-items-center"><i class="fas fa-balance-scale me-2"></i>Peso</span></th>
-                            <th class="text-nowrap align-middle" style="min-width:90px;"><span class="d-inline-flex align-items-center"><i class="fas fa-barcode me-2"></i>Warehouse</span></th>
-                            <th class="text-nowrap align-middle" style="min-width:90px;"><span class="d-inline-flex align-items-center"><i class="fas fa-info-circle me-2"></i>Estado</span></th>
-                            <th class="text-nowrap align-middle" style="min-width:90px;"><span class="d-inline-flex align-items-center"><i class="fas fa-calendar-alt me-2"></i>Ingreso</span></th>
-                            <th class="text-nowrap align-middle" style="min-width:80px;"><span class="d-inline-flex align-items-center"><i class="fas fa-dollar-sign me-2"></i>Monto</span></th>
-                            <th class="text-nowrap align-middle" style="min-width:70px;"><span class="d-inline-flex align-items-center"><i class="fas fa-dollar-sign me-2"></i>P. Unit.</span></th>
-                            <th class="text-nowrap align-middle" style="min-width:80px;"><span class="d-inline-flex align-items-center"><i class="fas fa-cogs me-2"></i>Acciones</span></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($inventarios as $item)
-                            <tr class="align-middle">
-                                <td class="px-4 py-3">
-                                    <div class="d-flex align-items-center">
-                                        <div class="bg-primary bg-opacity-10 rounded-circle p-2 me-3">
-                                            <i class="fas fa-user text-primary"></i>
-                                        </div>
-                                        <div>
-                                            <div class="fw-semibold text-dark">{{ $item->cliente->nombre_completo }}</div>
-                                            <small class="text-muted d-none d-lg-block">{{ $item->cliente->correo ?? 'Sin email' }}</small>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-4 py-3">
-                                    <span class="badge bg-light text-dark border">
-                                        <i class="fas fa-shipping-fast me-1"></i>
-                                        {{ $item->servicio->tipo_servicio ?? 'N/A' }}
-                                    </span>
-                                </td>
-                                <td class="px-4 py-3">
-                                    <div class="fw-semibold">{{ number_format($item->peso_lb, 2) }} lb</div>
-                                </td>
-                                <td class="px-4 py-3">
-                                    <code class="bg-light px-2 py-1 rounded">{{ $item->numero_guia }}</code>
-                                </td>
-                                <td class="px-4 py-3">
-                                    @php
-                                        $statusColors = [
-                                            'recibido' => 'skylink-orange',
-                                            'en_transito' => 'warning',
-                                            'entregado' => 'skylink-green',
-                                            'pendiente' => 'secondary'
-                                        ];
-                                        $statusIcons = [
-                                            'recibido' => 'check-circle',
-                                            'en_transito' => 'truck',
-                                            'entregado' => 'box-open',
-                                            'pendiente' => 'clock'
-                                        ];
-                                        $color = $statusColors[$item->estado] ?? 'secondary';
-                                        $icon = $statusIcons[$item->estado] ?? 'question-circle';
-                                    @endphp
-                                    <span class="badge badge-estado-fixed @if($item->estado=='recibido') badge-skylink-orange @elseif($item->estado=='entregado') badge-skylink-green @else bg-{{ $color }} bg-opacity-10 text-{{ $color }} border border-{{ $color }} @endif">
-                                        <i class="fas fa-{{ $icon }} me-1"></i>
-                                        {{ ucfirst(str_replace('_', ' ', $item->estado)) }}
-                                    </span>
-                                </td>
-                                <td class="px-4 py-3 d-none d-md-table-cell">
-                                    <div class="text-muted">
-                                        {{ \Carbon\Carbon::parse($item->fecha_ingreso)->format('d/m/Y') }}
-                                    </div>
-                                    <small class="text-muted">
-                                        {{ \Carbon\Carbon::parse($item->fecha_ingreso)->diffForHumans() }}
-                                    </small>
-                                </td>
-                                <td class="px-4 py-3">
-                                    <div class="fw-bold text-success">${{ number_format($item->monto_calculado, 2) }}</div>
-                                </td>
-                                <td class="px-4 py-3 d-none d-md-table-cell">
-                                    ${{ number_format($item->tarifa_manual ?? ($item->tarifa ?? 1.00), 2) }}
-                                </td>
-                                <td class="px-4 py-3 text-center">
-                                    <div class="btn-group" role="group">
-                                        <a href="{{ route('inventario.edit', $item->id) }}" 
-                                           class="btn btn-inv-action btn-inv-edit" 
-                                           data-bs-toggle="tooltip" 
-                                           title="Editar paquete">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <a href="{{ route('inventario.show', $item->id) }}" 
-                                           class="btn btn-inv-action btn-inv-view" 
-                                           data-bs-toggle="tooltip" 
-                                           title="Ver detalles">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        @php $user = Auth::user(); @endphp
-                                        @if($user && $user->rol === 'admin')
-                                        <button type="button" 
-                                                class="btn btn-inv-action btn-inv-delete" 
-                                                onclick="confirmDelete({{ $item->id }})"
-                                                data-bs-toggle="tooltip" 
-                                                title="Eliminar paquete">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                        @endif
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="9" class="text-center py-5">
-                                    <div class="text-muted">
-                                        <i class="fas fa-box-open fa-3x mb-3"></i>
-                                        <h5>No hay paquetes registrados</h5>
-                                        <p>Comienza agregando tu primer paquete al inventario</p>
-                                        <a href="{{ route('inventario.create') }}" class="btn btn-primary">
-                                            <i class="fas fa-plus me-1"></i>
-                                            Registrar Paquete
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+        <div class="flex items-center gap-2">
+            <a href="{{ route('inventario.create') }}" class="inline-flex items-center gap-2 rounded-xl bg-[#15537c] px-5 py-2.5 text-base font-semibold text-white shadow-sm hover:bg-[#0f3d5c]"><i class="fas fa-plus"></i> Nuevo Paquete</a>
+            <a href="{{ route('inventario.export-excel') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2.5 text-base font-medium text-slate-600 hover:bg-slate-50"><i class="fas fa-file-excel text-emerald-600"></i> Exportar Excel</a>
         </div>
     </div>
 
-    <!-- Pagination -->
-    @if($inventarios->hasPages())
-        <div class="d-flex justify-content-center">
-            {{ $inventarios->links('vendor.pagination.custom') }}
+    {{-- Contenedor Tabla --}}
+    <div id="containerTable" class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="w-full table-fixed border-collapse text-left text-base text-black">
+                <colgroup>
+                    <col style="width:14%">
+                    <col style="width:10%">
+                    <col style="width:9%">
+                    <col style="width:10%">
+                    <col style="width:14%">
+                    <col style="width:10%">
+                    <col style="width:10%">
+                    @unless($esAgente)
+                    <col style="width:11%">
+                    @endunless
+                    <col style="width:12%">
+                </colgroup>
+                <thead class="border-b border-slate-200 bg-[#15537c] text-white">
+                    <tr>
+                        <th class="px-4 py-2 font-semibold">Cliente</th>
+                        <th class="px-4 py-2 font-semibold text-center">Servicio</th>
+                        <th class="px-4 py-2 font-semibold text-center">Peso</th>
+                        <th class="px-4 py-2 font-semibold text-center">Guía</th>
+                        <th class="px-4 py-2 font-semibold text-center">Tracking</th>
+                        <th class="px-4 py-2 font-semibold text-center">Estado</th>
+                        <th class="px-4 py-2 font-semibold text-center">Ingreso</th>
+                        @unless($esAgente)
+                        <th class="px-4 py-2 font-semibold text-center">Monto</th>
+                        @endunless
+                        <th class="px-4 py-2 font-semibold text-right">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($inventarios as $item)
+                    <tr class="border-b border-slate-100 {{ $loop->iteration % 2 === 0 ? 'bg-slate-50' : 'bg-white' }} hover:bg-slate-100">
+                        <td class="px-4 py-1.5">
+                            <div class="truncate font-medium text-black" title="{{ $item->cliente->nombre_completo ?? 'N/A' }}">{{ $item->cliente->nombre_completo ?? 'N/A' }}</div>
+                        </td>
+                        <td class="px-4 py-1.5 text-center"><span class="rounded-md bg-slate-100 px-2 py-0.5 text-sm font-medium text-black">{{ $item->servicio->tipo_servicio ?? 'N/A' }}</span></td>
+                        <td class="px-4 py-1.5 text-center font-medium text-black whitespace-nowrap">{{ number_format($item->peso_lb, 2) }} lb</td>
+                        <td class="px-4 py-1.5 text-center"><code class="rounded bg-slate-100 px-1.5 py-0.5 text-sm font-medium text-black">{{ $item->numero_guia }}</code></td>
+                        <td class="px-4 py-1.5 text-center">
+                            @if(!empty($item->tracking_codigo))
+                                <a href="{{ route('tracking.dashboard') }}?codigo={{ urlencode($item->tracking_codigo) }}" class="inline-block max-w-full truncate font-mono text-sm font-medium text-[#15537c] hover:underline" title="{{ $item->tracking_codigo }}">{{ $item->tracking_codigo }}</a>
+                            @else
+                                <span class="text-slate-400">—</span>
+                            @endif
+                        </td>
+                        <td class="px-4 py-1.5 text-center">
+                            @php
+                                $estadoBadge = match($item->estado) {
+                                    'recibido' => 'bg-amber-200 text-amber-900',
+                                    'entregado' => 'bg-emerald-200 text-emerald-900',
+                                    default => 'bg-slate-200 text-slate-900'
+                                };
+                            @endphp
+                            <span class="inline-flex items-center rounded-full px-2 py-0.5 text-sm font-semibold {{ $estadoBadge }}">{{ ucfirst(str_replace('_', ' ', $item->estado)) }}</span>
+                        </td>
+                        <td class="px-4 py-1.5 text-center font-medium text-slate-900">{{ \Carbon\Carbon::parse($item->fecha_ingreso)->format('d/m/Y') }}</td>
+                        @unless($esAgente)
+                        <td class="px-4 py-1.5 text-center font-semibold text-emerald-800">${{ number_format($item->monto_calculado, 2) }}</td>
+                        @endunless
+                        <td class="px-4 py-1.5 text-right">
+                            <div class="inline-flex items-center justify-end gap-3">
+                                <a href="{{ route('inventario.edit', $item->id) }}" class="rounded-lg p-2 text-slate-700 hover:bg-slate-100 hover:text-[#15537c]" title="Editar"><i class="fas fa-edit"></i></a>
+                                <a href="{{ route('inventario.show', $item->id) }}" class="rounded-lg p-2 text-slate-700 hover:bg-slate-100 hover:text-[#15537c]" title="Ver"><i class="fas fa-eye"></i></a>
+                                @if(auth()->user() && auth()->user()->rol === 'admin')
+                                <button type="button" onclick="confirmDelete({{ $item->id }})" class="rounded-lg p-2 text-slate-700 hover:bg-red-50 hover:text-red-700" title="Eliminar"><i class="fas fa-trash"></i></button>
+                                @endif
+                            </div>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr><td colspan="{{ $esAgente ? '8' : '9' }}" class="px-4 py-12 text-center text-base text-slate-700">No hay paquetes. <a href="{{ route('inventario.create') }}" class="font-medium text-[#15537c] hover:underline">Registrar uno</a>.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
+    </div>
+
+    {{-- Contenedor Grid (tarjetas) - más grandes --}}
+    <div id="containerGrid" class="hidden">
+        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            @forelse ($inventarios as $item)
+            <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0 flex-1">
+                        <p class="truncate text-lg font-semibold text-black">{{ $item->cliente->nombre_completo ?? 'N/A' }}</p>
+                        <p class="mt-1 text-sm font-medium text-slate-700">{{ $item->servicio->tipo_servicio ?? 'N/A' }} · {{ number_format($item->peso_lb, 2) }} lb</p>
+                    </div>
+                    @php $estadoBadge = $item->estado === 'recibido' ? 'bg-amber-200 text-amber-900' : ($item->estado === 'entregado' ? 'bg-emerald-200 text-emerald-900' : 'bg-slate-200 text-slate-900'); @endphp
+                    <span class="shrink-0 rounded-full px-3 py-1 text-sm font-semibold {{ $estadoBadge }}">{{ ucfirst($item->estado) }}</span>
+                </div>
+                <div class="mt-4 grid {{ $esAgente ? 'grid-cols-2' : 'grid-cols-3' }} gap-4 border-t border-slate-100 pt-4">
+                    <div class="min-w-0">
+                        <p class="text-sm font-medium text-slate-700">Guía</p>
+                        <p class="font-mono text-base font-semibold text-black truncate" title="{{ $item->numero_guia }}">{{ $item->numero_guia }}</p>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-sm font-medium text-slate-700">Tracking</p>
+                        @if(!empty($item->tracking_codigo))
+                        <a href="{{ route('tracking.dashboard') }}?codigo={{ urlencode($item->tracking_codigo) }}" class="block truncate text-base font-semibold text-[#15537c] hover:underline" title="{{ $item->tracking_codigo }}">{{ $item->tracking_codigo }}</a>
+                        @else
+                        <span class="text-slate-400">—</span>
+                        @endif
+                    </div>
+                    @unless($esAgente)
+                    <div class="min-w-0 text-right">
+                        <p class="text-sm font-medium text-slate-700">Monto</p>
+                        <p class="text-lg font-bold text-emerald-800">${{ number_format($item->monto_calculado, 2) }}</p>
+                    </div>
+                    @endunless
+                </div>
+                <div class="mt-4 flex gap-2">
+                    <a href="{{ route('inventario.edit', $item->id) }}" class="flex-1 rounded-lg border border-slate-300 py-2.5 text-center text-sm font-semibold text-slate-800 hover:bg-slate-50">Editar</a>
+                    <a href="{{ route('inventario.show', $item->id) }}" class="flex-1 rounded-lg bg-[#15537c] py-2.5 text-center text-sm font-semibold text-white hover:bg-[#0f3d5c]">Ver</a>
+                    @if(auth()->user() && auth()->user()->rol === 'admin')
+                    <button type="button" onclick="confirmDelete({{ $item->id }})" class="rounded-lg border border-red-300 py-2.5 px-3 font-semibold text-red-700 hover:bg-red-50" title="Eliminar"><i class="fas fa-trash"></i></button>
+                    @endif
+                </div>
+            </div>
+            @empty
+            <div class="col-span-full rounded-xl border border-slate-200 bg-white p-12 text-center text-base font-medium text-slate-700 sm:col-span-2 lg:col-span-3 xl:col-span-4">No hay paquetes. <a href="{{ route('inventario.create') }}" class="font-semibold text-[#15537c] hover:underline">Registrar uno</a>.</div>
+            @endforelse
+        </div>
+    </div>
+
+    {{-- Paginación --}}
+    @if($inventarios->hasPages())
+    <div class="flex justify-center pt-4">
+        {{ $inventarios->links('vendor.pagination.custom') }}
+    </div>
     @endif
 </div>
 
-<!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
-                    Confirmar Eliminación
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p>¿Estás seguro de que deseas eliminar este paquete? Esta acción no se puede deshacer.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <form id="deleteForm" method="POST" style="display: inline;">
+{{-- Modal eliminar --}}
+<div id="deleteModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-hidden="true">
+    <div class="flex min-h-full items-center justify-center p-6">
+        <div class="fixed inset-0 bg-slate-900/50 transition-opacity" onclick="closeDeleteModal()"></div>
+        <div class="relative w-full max-w-md rounded-xl bg-white p-8 shadow-xl">
+            <div class="flex items-center gap-4 text-amber-600"><i class="fas fa-exclamation-triangle text-2xl"></i><h3 class="text-xl font-semibold text-slate-800">Confirmar eliminación</h3></div>
+            <p class="mt-4 text-base text-slate-600">¿Eliminar este paquete? Esta acción no se puede deshacer.</p>
+            <div class="mt-8 flex justify-end gap-3">
+                <button type="button" onclick="closeDeleteModal()" class="rounded-lg border border-slate-300 px-5 py-2.5 text-base font-medium text-slate-600 hover:bg-slate-50">Cancelar</button>
+                <form id="deleteForm" method="POST" class="inline">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="btn btn-danger">
-                        <i class="fas fa-trash me-1"></i>
-                        Eliminar
-                    </button>
+                    <button type="submit" class="rounded-lg bg-red-600 px-5 py-2.5 text-base font-medium text-white hover:bg-red-700">Eliminar</button>
                 </form>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Font Awesome -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-<style>
-.card {
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-}
-
-.card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
-}
-
-.table tbody tr {
-    transition: background-color 0.2s ease-in-out;
-}
-
-.table tbody tr:hover {
-    background-color: rgba(0, 123, 255, 0.05) !important;
-}
-
-.btn-group .btn {
-    border-radius: 0.375rem !important;
-    margin: 0 1px;
-}
-
-.badge {
-    font-size: 0.75rem;
-    padding: 0.5em 0.75em;
-}
-
-.form-control:focus, .form-select:focus {
-    border-color: #0d6efd;
-    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
-}
-
-.alert {
-    border: none;
-    border-radius: 0.5rem;
-}
-
-.navbar-brand {
-    font-weight: 700;
-    font-size: 1.5rem;
-}
-
-@media (max-width: 768px) {
-    .btn-group {
-        flex-direction: column;
-    }
-    
-    .btn-group .btn {
-        margin: 1px 0;
-    }
-    
-    .table-responsive {
-        font-size: 0.875rem;
-    }
-}
-
-.inventario-table {
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(26,46,117,0.04);
-    border-collapse: separate;
-    border-spacing: 0;
-}
-.inventario-table th, .inventario-table td {
-    padding: 0.55rem 0.5rem !important;
-    font-size: 0.98rem;
-    white-space: nowrap;
-    vertical-align: middle !important;
-}
-.inventario-table th {
-    font-size: 1.01rem;
-    font-weight: 600;
-    background: #1A2E75 !important;
-    color: #fff !important;
-    border-bottom: 3px solid #5C6AC4;
-}
-.inventario-table th .fa {
-    color: #fff !important;
-    opacity: 0.92;
-}
-.inventario-table td {
-    vertical-align: middle;
-}
-.inventario-table thead th span {
-    display: flex;
-    align-items: center;
-    gap: 0.35em;
-    justify-content: flex-start;
-}
-.card.mb-3.p-3 {
-    background: #fff;
-    border-radius: 16px;
-    box-shadow: 0 2px 8px rgba(26,46,117,0.07);
-    margin-bottom: 1.5rem;
-}
-.card.mb-3.p-3 form .filtro-sm {
-    font-size: 0.97rem !important;
-    padding-top: 0.5rem !important;
-    padding-bottom: 0.5rem !important;
-    height: 48px !important;
-    box-shadow: none !important;
-}
-.card.mb-3.p-3 form .form-select.filtro-sm, .card.mb-3.p-3 form .form-control.filtro-sm {
-    min-width: 0;
-    width: 100%;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    overflow: visible;
-    height: 48px !important;
-}
-.card.mb-3.p-3 form .btn.filtro-sm {
-    height: 48px !important;
-    width: 48px !important;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    padding: 0 !important;
-}
-.card.mb-3.p-3 form .input-group-text {
-    display: none !important;
-}
-.card.mb-3.p-3 form .d-flex.align-items-center {
-    margin-bottom: 0 !important;
-}
-@media (max-width: 992px) {
-    .card.mb-3.p-3 form .filtro-sm {
-        font-size: 0.93rem !important;
-        height: 42px !important;
-    }
-    .card.mb-3.p-3 form .form-select.filtro-sm, .card.mb-3.p-3 form .form-control.filtro-sm {
-        height: 42px !important;
-    }
-    .card.mb-3.p-3 form .btn.filtro-sm {
-        height: 42px !important;
-        width: 42px !important;
-    }
-}
-.btn-inv-action {
-    border-radius: 8px !important;
-    min-width: 34px;
-    min-height: 34px;
-    padding: 0 10px;
-    font-size: 1rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: none;
-    box-shadow: none;
-    transition: background 0.15s;
-    margin-right: 4px;
-}
-.btn-inv-action:last-child {
-    margin-right: 0;
-}
-.btn-inv-view {
-    background: #1A2E75;
-    color: #fff;
-}
-.btn-inv-edit {
-    background: #5C6AC4;
-    color: #fff;
-}
-.btn-inv-delete {
-    background: #BF1E2E;
-    color: #fff;
-}
-.btn-inv-action:hover, .btn-inv-action:focus {
-    opacity: 0.92;
-    color: #fff;
-}
-
-.pagination {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-    margin: 32px 0 16px 0;
-    padding: 0;
-    list-style: none;
-}
-.pagination li {
-    display: inline-block;
-}
-.pagination a, .pagination span {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 38px;
-    min-height: 38px;
-    padding: 0 14px;
-    border-radius: 8px;
-    border: 1.5px solid #1A2E75;
-    background: #fff;
-    color: #1A2E75;
-    font-weight: 600;
-    font-size: 1.08rem;
-    text-decoration: none !important;
-    transition: background 0.15s, color 0.15s;
-    margin: 0 2px;
-}
-.pagination .active span, .pagination a.active {
-    background: #1A2E75;
-    color: #fff;
-    border-color: #1A2E75;
-    cursor: default;
-}
-.pagination a:hover, .pagination a:focus {
-    background: #5C6AC4;
-    color: #fff;
-    border-color: #5C6AC4;
-}
-.pagination .disabled span, .pagination .disabled a {
-    color: #b0b0b0;
-    background: #f5f7fa;
-    border-color: #e3e6f0;
-    cursor: not-allowed;
-}
-.pagination .page-arrow {
-    font-size: 1.3rem;
-    padding: 0 10px;
-    min-width: 38px;
-    min-height: 38px;
-    border-radius: 8px;
-    border: 1.5px solid #1A2E75;
-    background: #fff;
-    color: #1A2E75;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.15s, color 0.15s;
-}
-.pagination .page-arrow:hover, .pagination .page-arrow:focus {
-    background: #5C6AC4;
-    color: #fff;
-    border-color: #5C6AC4;
-}
-.badge-skylink-orange {
-    background: #F59E0B !important;
-    color: #fff !important;
-    border: 1.5px solid #F59E0B !important;
-}
-.badge-skylink-green {
-    background: #10B981 !important;
-    color: #fff !important;
-    border: 1.5px solid #10B981 !important;
-}
-.badge-estado-fixed {
-    min-width: 120px;
-    max-width: 120px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.98rem;
-    font-weight: 600;
-    padding: 0.45em 0;
-    border-radius: 8px !important;
-    text-align: center;
-    gap: 0.4em;
-}
-</style>
-
+@push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize tooltips
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
+(function() {
+    var containerTable = document.getElementById('containerTable');
+    var containerGrid = document.getElementById('containerGrid');
+    var viewTable = document.getElementById('viewTable');
+    var viewGrid = document.getElementById('viewGrid');
+    if (!containerTable || !containerGrid || !viewTable || !viewGrid) return;
 
-    // Search functionality
-    const searchInput = document.getElementById('searchInput');
-    const table = document.getElementById('inventarioTable');
-    const rows = table.getElementsByTagName('tr');
+    function showTable() {
+        containerTable.classList.remove('hidden');
+        containerGrid.classList.add('hidden');
+        viewTable.classList.add('bg-[#15537c]', 'text-white');
+        viewTable.classList.remove('text-slate-600');
+        viewGrid.classList.remove('bg-[#15537c]', 'text-white');
+        viewGrid.classList.add('text-slate-600');
+    }
+    function showGrid() {
+        containerTable.classList.add('hidden');
+        containerGrid.classList.remove('hidden');
+        viewGrid.classList.add('bg-[#15537c]', 'text-white');
+        viewGrid.classList.remove('text-slate-600');
+        viewTable.classList.remove('bg-[#15537c]', 'text-white');
+        viewTable.classList.add('text-slate-600');
+    }
 
-    searchInput.addEventListener('keyup', function() {
-        const searchTerm = this.value.toLowerCase();
-        
-        for (let i = 1; i < rows.length; i++) {
-            const row = rows[i];
-            const text = row.textContent.toLowerCase();
-            
-            if (text.includes(searchTerm)) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
-        }
-    });
-
-    // Status filter
-    const statusFilter = document.getElementById('statusFilter');
-    statusFilter.addEventListener('change', function() {
-        const selectedStatus = this.value.toLowerCase();
-        for (let i = 1; i < rows.length; i++) {
-            const row = rows[i];
-            const statusCell = row.querySelector('td:nth-child(6)');
-            if (statusCell) {
-                const status = statusCell.textContent.toLowerCase();
-                if (!selectedStatus || status.includes(selectedStatus)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            }
-        }
-    });
-
-    // Clear filters
-    document.getElementById('clearFilters').addEventListener('click', function() {
-        searchInput.value = '';
-        statusFilter.value = '';
-        document.getElementById('serviceFilter').value = '';
-        document.getElementById('dateFrom').value = '';
-        document.getElementById('dateTo').value = '';
-        
-        // Show all rows
-        for (let i = 1; i < rows.length; i++) {
-            rows[i].style.display = '';
-        }
-    });
-});
+    viewTable.addEventListener('click', showTable);
+    viewGrid.addEventListener('click', showGrid);
+})();
 
 function confirmDelete(id) {
-    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
-    const form = document.getElementById('deleteForm');
-    form.action = `/inventario/${id}`;
-    modal.show();
+    var form = document.getElementById('deleteForm');
+    var modal = document.getElementById('deleteModal');
+    if (form) form.action = '/inventario/' + id;
+    if (modal) modal.classList.remove('hidden');
 }
 
-// Imprimir solo la tabla de inventario
-function printInventarioTable() {
-    const table = document.getElementById('inventarioTable').outerHTML;
-    const win = window.open('', '', 'width=900,height=700');
-    win.document.write(`
-        <html>
-        <head>
-            <title>Imprimir Inventario</title>
-            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-            <style>
-                body { background: #f4f6fb; padding: 2rem; }
-                table { font-size: 0.98rem; }
-                th, td { padding: 0.55rem 0.5rem !important; }
-                th { background: #1A2E75 !important; color: #fff !important; }
-                .table { border-radius: 16px; overflow: hidden; }
-            </style>
-        </head>
-        <body>
-            <h2 style="color:#1A2E75; font-weight:700; margin-bottom:1.5rem;">Inventario de Paquetes</h2>
-            ${table}
-        </body>
-        </html>
-    `);
-    win.document.close();
-    win.focus();
-    setTimeout(() => win.print(), 500);
+function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.add('hidden');
 }
-
-document.getElementById('printBtn').addEventListener('click', printInventarioTable);
 </script>
+@endpush
 @endsection

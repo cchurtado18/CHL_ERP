@@ -1,279 +1,150 @@
-@extends('layouts.app')
+@extends('layouts.app-new')
 
-@section('title', 'Nuevo Paquete - SkylinkOne CRM')
-@section('page-title', 'Registrar Nuevo Paquete')
+@section('title', 'Nuevo Paquete - CH LOGISTICS ERP')
+@section('navbar-title', 'Nuevo Paquete')
 
 @section('content')
-<div class="container-fluid px-4">
-    <!-- Header Section -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="rounded-4 shadow-sm px-4 py-4 mb-4 d-flex align-items-center justify-content-between" style="background: linear-gradient(90deg, #1A2E75 0%, #5C6AC4 100%); min-height:90px;">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="bg-white rounded-circle d-flex align-items-center justify-content-center" style="width:60px; height:60px; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
-                        <i class="fas fa-plus-circle text-primary" style="font-size:2.2rem;"></i>
-                    </div>
-                    <div>
-                        <h1 class="h3 mb-1 fw-bold text-white" style="letter-spacing:1px;">Registrar Nuevo Paquete</h1>
-                        <p class="mb-0 text-white-50" style="font-size:1.1rem;">Completa la información del paquete para agregarlo al inventario</p>
-                    </div>
-                </div>
-                <a href="{{ route('inventario.index') }}" class="btn btn-outline-light fw-semibold shadow-sm px-4">
-                    <i class="fas fa-arrow-left me-2"></i> Volver al Inventario
-                </a>
-            </div>
+<div class="mx-auto w-full max-w-7xl px-4 sm:px-6 space-y-8">
+    {{-- Header --}}
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800">Registrar Nuevo Paquete</h1>
+            <p class="mt-1 text-slate-600">Completa la información del paquete para agregarlo al inventario</p>
         </div>
+        <a href="{{ route('inventario.index') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-5 py-2.5 text-base font-medium text-slate-600 hover:bg-slate-50">
+            <i class="fas fa-arrow-left"></i> Volver al Inventario
+        </a>
     </div>
 
-    <!-- Form Card -->
-    <div class="row">
-        <div class="col-lg-8">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-0 py-3">
-                    <h5 class="mb-0 fw-semibold text-dark">
-                        <i class="fas fa-box me-2 text-primary"></i>
-                        Información del Paquete
-                    </h5>
-                </div>
-                <div class="card-body p-4">
-                    <form action="{{ route('inventario.store') }}" method="POST" id="inventarioForm">
-                        @csrf
-
-                        <div class="row g-4">
-                            <!-- Cliente -->
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="clienteAutocomplete" class="form-label fw-semibold">
-                                        <i class="fas fa-user me-1 text-muted"></i>
-                                        Buscar cliente *
-                                    </label>
-                                    <div class="autocomplete-wrapper position-relative">
-                                        <input type="text" id="clienteAutocomplete" class="form-control filtro-input" placeholder="Escribe el nombre del cliente..." autocomplete="off" required>
-                                        <ul id="autocompleteList" class="list-group position-absolute w-100 shadow-sm" style="z-index:10; display:none; max-height:180px; overflow-y:auto;"></ul>
-                                        <input type="hidden" name="cliente_id" id="cliente_id" value="{{ old('cliente_id') }}">
-                                    </div>
-                                    @error('cliente_id')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
+    <div class="grid gap-8 lg:grid-cols-[1fr_320px]">
+        {{-- Formulario --}}
+        <div class="min-w-0">
+            <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+                <h2 class="text-lg font-semibold text-slate-800 border-b border-slate-100 pb-3 mb-6">
+                    <i class="fas fa-box text-[#15537c] mr-2"></i>Información del Paquete
+                </h2>
+                <form action="{{ route('inventario.store') }}" method="POST" id="inventarioForm">
+                    @csrf
+                    <div class="grid gap-5 sm:grid-cols-2">
+                        <div class="sm:col-span-2">
+                            <label for="clienteAutocomplete" class="mb-1.5 block text-sm font-medium text-slate-600">Buscar cliente <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <input type="text" id="clienteAutocomplete" class="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-base focus:border-[#15537c] focus:ring-1 focus:ring-[#15537c]" placeholder="Escribe el nombre del cliente..." autocomplete="off" required value="{{ old('cliente_nombre') }}">
+                                <input type="hidden" name="cliente_id" id="cliente_id" value="{{ old('cliente_id') }}">
+                                <ul id="autocompleteList" class="absolute left-0 right-0 top-full z-10 mt-1 max-h-48 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg hidden"></ul>
                             </div>
-
-                            <!-- Servicio -->
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="servicio_id" class="form-label fw-semibold">
-                                        <i class="fas fa-shipping-fast me-1 text-muted"></i>
-                                        Servicio *
-                                    </label>
-                                    <select name="servicio_id" class="form-select @error('servicio_id') is-invalid @enderror" required>
-                                        <option value="">Seleccione un servicio</option>
-                                        @foreach($servicios as $servicio)
-                                            <option value="{{ $servicio->id }}" {{ old('servicio_id') == $servicio->id ? 'selected' : '' }}>
-                                                {{ $servicio->tipo_servicio }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('servicio_id')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-
-                            <!-- Peso -->
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="peso_lb" class="form-label fw-semibold">
-                                        <i class="fas fa-weight-hanging me-1 text-muted"></i>
-                                        Peso (lb) *
-                                    </label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">lb</span>
-                                        <input type="number" step="0.01" name="peso_lb" class="form-control @error('peso_lb') is-invalid @enderror" 
-                                               value="{{ old('peso_lb') }}" required placeholder="0.00">
-                                    </div>
-                                    @error('peso_lb')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-
-                            <!-- Tracking -->
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="tracking_codigo" class="form-label fw-semibold">
-                                        <i class="fas fa-barcode me-1 text-muted"></i>
-                                        Código de Tracking
-                                    </label>
-                                    <input type="text" name="tracking_codigo" class="form-control @error('tracking_codigo') is-invalid @enderror" value="{{ old('tracking_codigo') }}" placeholder="Ingrese el código de tracking">
-                                    @error('tracking_codigo')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-
-                            <!-- Número de Guía -->
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="numero_guia" class="form-label fw-semibold">
-                                        <i class="fas fa-barcode me-1 text-muted"></i>
-                                        Número de Guía
-                                    </label>
-                                    <input type="text" name="numero_guia" id="numero_guia" class="form-control @error('numero_guia') is-invalid @enderror" 
-                                           value="{{ old('numero_guia') }}" placeholder="Ej: 1223113/1, 345463/2 o 12345678" required maxlength="9" minlength="6" title="Formato: números con barra o 6-9 dígitos">
-                                    <div id="guia-error" class="form-text text-danger" style="display:none;">El número de guía debe tener 6-9 caracteres o formato con barra (ej: 1223113/1)</div>
-                                    @error('numero_guia')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-
-                            <!-- Estado -->
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="estado" class="form-label fw-semibold">
-                                        <i class="fas fa-info-circle me-1 text-muted"></i>
-                                        Estado *
-                                    </label>
-                                    <select name="estado" class="form-select @error('estado') is-invalid @enderror" required disabled>
-                                        <option value="recibido" selected>📦 Recibido (entrada)</option>
-                                    </select>
-                                    <input type="hidden" name="estado" value="recibido">
-                                    @error('estado')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-
-                            <!-- Tarifa Manual -->
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="tarifa_manual" class="form-label fw-semibold">
-                                        <i class="fas fa-dollar-sign me-1 text-muted"></i>
-                                        Tarifa Manual (opcional)
-                                    </label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">$</span>
-                                        <input type="number" step="0.01" name="tarifa_manual" id="tarifa_manual" class="form-control @error('tarifa_manual') is-invalid @enderror" 
-                                               value="{{ old('tarifa_manual') }}" placeholder="0.00">
-                                        <span class="input-group-text" id="tarifa-loading" style="display:none;">
-                                            <i class="fas fa-spinner fa-spin text-primary"></i>
-                                        </span>
-                                    </div>
-                                    <small class="form-text text-muted">Dejar vacío para calcular automáticamente</small>
-                                    <small class="form-text text-success" id="tarifa-info" style="display:none;">
-                                        <i class="fas fa-check-circle"></i> Tarifa automática aplicada
-                                    </small>
-                                    @error('tarifa_manual')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-
-                            <!-- Monto Calculado -->
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="monto_calculado" class="form-label fw-semibold">
-                                        <i class="fas fa-calculator me-1 text-muted"></i>
-                                        Monto Calculado ($) *
-                                    </label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">$</span>
-                                        <input type="number" step="0.01" name="monto_calculado" class="form-control @error('monto_calculado') is-invalid @enderror" 
-                                               value="{{ old('monto_calculado') }}" required placeholder="0.00">
-                                    </div>
-                                    @error('monto_calculado')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-
-                            <!-- Notas -->
-                            <div class="col-12">
-                                <div class="form-group">
-                                    <label for="notas" class="form-label fw-semibold">
-                                        <i class="fas fa-sticky-note me-1 text-muted"></i>
-                                        Notas Adicionales
-                                    </label>
-                                    <textarea name="notas" class="form-control @error('notas') is-invalid @enderror" 
-                                              rows="4" placeholder="Información adicional sobre el paquete...">{{ old('notas') }}</textarea>
-                                    @error('notas')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
+                            @error('cliente_id')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                         </div>
 
-                        <!-- Form Actions -->
-                        <div class="row mt-4">
-                            <div class="col-12">
-                                <hr class="my-4">
-                                <div class="d-flex justify-content-end gap-2">
-                                    <a href="{{ route('inventario.index') }}" class="btn btn-outline-secondary">
-                                        <i class="fas fa-times me-1"></i>
-                                        Cancelar
-                                    </a>
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-save me-1"></i>
-                                        Guardar Paquete
-                                    </button>
-                                </div>
-                            </div>
+                        <div>
+                            <label for="servicio_id" class="mb-1.5 block text-sm font-medium text-slate-600">Servicio <span class="text-red-500">*</span></label>
+                            <select name="servicio_id" id="servicio_id" required class="w-full appearance-none rounded-lg border border-slate-300 bg-white bg-[length:1.25rem] bg-[right_0.75rem_center] bg-no-repeat px-4 py-2.5 pr-10 text-base focus:border-[#15537c] focus:ring-1 focus:ring-[#15537c]" style="background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 24 24%22 stroke=%22%2364758b%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%222%22 d=%22M19 9l-7 7-7-7%22/%3E%3C/svg%3E');">
+                                <option value="">Seleccione un servicio</option>
+                                @foreach($servicios as $servicio)
+                                    <option value="{{ $servicio->id }}" {{ old('servicio_id') == $servicio->id ? 'selected' : '' }}>{{ $servicio->tipo_servicio }}</option>
+                                @endforeach
+                            </select>
+                            @error('servicio_id')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                         </div>
-                    </form>
-                </div>
+
+                        <div>
+                            <label for="peso_lb" class="mb-1.5 block text-sm font-medium text-slate-600">Peso (lb) <span class="text-red-500">*</span></label>
+                            <div class="flex rounded-lg border border-slate-300 focus-within:ring-1 focus-within:ring-[#15537c] focus-within:border-[#15537c]">
+                                <span class="flex items-center rounded-l-lg border-r border-slate-300 bg-slate-50 px-3 text-slate-600">lb</span>
+                                <input type="number" step="0.01" name="peso_lb" id="peso_lb" value="{{ old('peso_lb') }}" required placeholder="0.00" class="min-w-0 flex-1 rounded-r-lg border-0 px-4 py-2.5 text-base">
+                            </div>
+                            @error('peso_lb')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                        </div>
+
+                        <div>
+                            <label for="tracking_codigo" class="mb-1.5 block text-sm font-medium text-slate-600">Código de Tracking</label>
+                            <input type="text" name="tracking_codigo" value="{{ old('tracking_codigo') }}" placeholder="Código de tracking" class="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-base focus:border-[#15537c] focus:ring-1 focus:ring-[#15537c]">
+                            @error('tracking_codigo')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                        </div>
+
+                        <div>
+                            <label for="numero_guia" class="mb-1.5 block text-sm font-medium text-slate-600">Número de Guía <span class="text-red-500">*</span></label>
+                            <input type="text" name="numero_guia" id="numero_guia" value="{{ old('numero_guia') }}" required maxlength="9" minlength="6" placeholder="Ej: 1223113/1 o 12345678" class="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-base focus:border-[#15537c] focus:ring-1 focus:ring-[#15537c]">
+                            <p id="guia-error" class="mt-1 text-sm text-red-600 hidden">El número de guía debe tener 6-9 caracteres o formato con barra (ej: 1223113/1)</p>
+                            @error('numero_guia')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                        </div>
+
+                        <div>
+                            <label class="mb-1.5 block text-sm font-medium text-slate-600">Estado</label>
+                            <div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-600">Recibido (entrada)</div>
+                            <input type="hidden" name="estado" value="recibido">
+                        </div>
+
+                        <div>
+                            <label for="tarifa_manual" class="mb-1.5 block text-sm font-medium text-slate-600">Tarifa manual (opcional)</label>
+                            <div class="flex rounded-lg border border-slate-300 focus-within:ring-1 focus-within:ring-[#15537c] focus-within:border-[#15537c]">
+                                <span class="flex items-center rounded-l-lg border-r border-slate-300 bg-slate-50 px-3 text-slate-600">$</span>
+                                <input type="number" step="0.01" name="tarifa_manual" id="tarifa_manual" value="{{ old('tarifa_manual') }}" placeholder="0.00" class="min-w-0 flex-1 rounded-r-lg border-0 px-4 py-2.5 text-base">
+                                <span id="tarifa-loading" class="flex items-center pr-3 text-slate-400 hidden"><i class="fas fa-spinner fa-spin"></i></span>
+                            </div>
+                            <p class="mt-1 text-xs text-slate-500">Dejar vacío para calcular automáticamente</p>
+                            <p id="tarifa-info" class="mt-1 text-xs text-emerald-600 hidden"><i class="fas fa-check-circle mr-1"></i>Tarifa automática aplicada</p>
+                            @error('tarifa_manual')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                        </div>
+
+                        <div>
+                            <label for="monto_calculado" class="mb-1.5 block text-sm font-medium text-slate-600">Monto calculado ($) <span class="text-red-500">*</span></label>
+                            <div class="flex rounded-lg border border-slate-300 focus-within:ring-1 focus-within:ring-[#15537c] focus-within:border-[#15537c]">
+                                <span class="flex items-center rounded-l-lg border-r border-slate-300 bg-slate-50 px-3 text-slate-600">$</span>
+                                <input type="number" step="0.01" name="monto_calculado" id="monto_calculado" value="{{ old('monto_calculado') }}" required placeholder="0.00" class="min-w-0 flex-1 rounded-r-lg border-0 px-4 py-2.5 text-base">
+                            </div>
+                            @error('monto_calculado')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <label for="notas" class="mb-1.5 block text-sm font-medium text-slate-600">Notas adicionales</label>
+                            <textarea name="notas" id="notas" rows="3" placeholder="Información adicional sobre el paquete..." class="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-base focus:border-[#15537c] focus:ring-1 focus:ring-[#15537c]">{{ old('notas') }}</textarea>
+                            @error('notas')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                        </div>
+                    </div>
+
+                    <div class="mt-8 flex flex-wrap justify-end gap-3 border-t border-slate-200 pt-6">
+                        <a href="{{ route('inventario.index') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-5 py-2.5 text-base font-medium text-slate-600 hover:bg-slate-50">
+                            <i class="fas fa-times"></i> Cancelar
+                        </a>
+                        <button type="submit" id="btnSubmit" class="inline-flex items-center gap-2 rounded-xl bg-[#15537c] px-5 py-2.5 text-base font-semibold text-white shadow-sm hover:bg-[#0f3d5c] disabled:opacity-60 disabled:cursor-not-allowed">
+                            <i class="fas fa-save"></i> Guardar Paquete
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
 
-        <!-- Sidebar Info -->
-        <div class="col-lg-4">
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white border-0 py-3">
-                    <h6 class="mb-0 fw-semibold text-dark">
-                        <i class="fas fa-info-circle me-2 text-info"></i>
-                        Información Útil
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <h6 class="fw-semibold text-dark mb-2">
-                            <i class="fas fa-lightbulb text-warning me-1"></i>
-                            Consejos
-                        </h6>
-                        <ul class="list-unstyled small text-muted">
-                            <li class="mb-2">• Asegúrate de verificar el peso y volumen</li>
-                            <li class="mb-2">• El número de guía es opcional pero recomendado</li>
-                            <li class="mb-2">• Las notas ayudan a identificar el paquete</li>
-                            <li>• El estado se puede actualizar después</li>
-                        </ul>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <h6 class="fw-semibold text-dark mb-2">
-                            <i class="fas fa-calculator text-primary me-1"></i>
-                            Cálculo de Tarifa
-                        </h6>
-                        <p class="small text-muted mb-0">
-                            La tarifa se calcula automáticamente basada en el peso, volumen y tipo de servicio seleccionado.
-                        </p>
-                    </div>
+        {{-- Sidebar --}}
+        <div class="lg:col-span-1 space-y-6">
+            <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                <h3 class="text-base font-semibold text-slate-800 border-b border-slate-100 pb-2 mb-3">
+                    <i class="fas fa-info-circle text-[#15537c] mr-2"></i>Información útil
+                </h3>
+                <div class="space-y-3 text-sm text-slate-600">
+                    <p class="font-semibold text-slate-700"><i class="fas fa-lightbulb text-amber-500 mr-1"></i>Consejos</p>
+                    <ul class="list-disc list-inside space-y-1 text-slate-600">
+                        <li>Verifica el peso y volumen</li>
+                        <li>El número de guía es recomendado</li>
+                        <li>Las notas ayudan a identificar el paquete</li>
+                        <li>El estado se puede actualizar después</li>
+                    </ul>
+                    <p class="font-semibold text-slate-700 pt-2"><i class="fas fa-calculator text-[#15537c] mr-1"></i>Cálculo</p>
+                    <p class="text-slate-600">La tarifa se calcula según peso, volumen y tipo de servicio.</p>
                 </div>
             </div>
-
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-0 py-3">
-                    <h6 class="mb-0 fw-semibold text-dark">
-                        <i class="fas fa-clock text-success me-2"></i>
-                        Estados Disponibles
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="d-flex align-items-center mb-2">
-                        <span class="badge bg-success bg-opacity-10 text-success me-2">📦</span>
-                        <small class="text-muted">Recibido - Paquete en almacén</small>
+            <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                <h3 class="text-base font-semibold text-slate-800 border-b border-slate-100 pb-2 mb-3">
+                    <i class="fas fa-clock text-emerald-600 mr-2"></i>Estados
+                </h3>
+                <div class="space-y-2 text-sm">
+                    <div class="flex items-center gap-2">
+                        <span class="rounded-full bg-amber-200 px-2 py-0.5 text-xs font-semibold text-amber-900">Recibido</span>
+                        <span class="text-slate-600">Paquete en almacén</span>
                     </div>
-                    <div class="d-flex align-items-center mb-2">
-                        <span class="badge bg-primary bg-opacity-10 text-primary me-2">✅</span>
-                        <small class="text-muted">Entregado - Completado</small>
+                    <div class="flex items-center gap-2">
+                        <span class="rounded-full bg-emerald-200 px-2 py-0.5 text-xs font-semibold text-emerald-900">Entregado</span>
+                        <span class="text-slate-600">Completado</span>
                     </div>
                 </div>
             </div>
@@ -281,593 +152,151 @@
     </div>
 </div>
 
-<style>
-.form-control:focus, .form-select:focus {
-    border-color: #0d6efd;
-    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
-}
-
-.card {
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-}
-
-.card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
-}
-
-.btn {
-    transition: all 0.3s ease;
-}
-
-.btn:hover {
-    transform: translateY(-1px);
-}
-
-.form-label {
-    color: #495057;
-}
-
-.input-group-text {
-    background-color: #f8f9fa;
-    border-color: #dee2e6;
-    color: #6c757d;
-    border-radius: 0.6rem 0 0 0.6rem !important;
-    font-size: 1rem;
-    min-height: 40px !important;
-    padding: 0.45rem 0.9rem !important;
-}
-
-/* Mejoras avanzadas para Select2 y campos compactos */
-.select2-container--bootstrap4 .select2-selection {
-    min-height: 40px;
-    border-radius: 0.6rem;
-    font-size: 1rem;
-    border: 1.3px solid #ced4da;
-    padding: 0.45rem 0.9rem;
-    background: #fff;
-    box-shadow: 0 1px 4px rgba(26,46,117,0.03);
-    transition: border-color 0.2s, box-shadow 0.2s;
-    display: flex;
-    align-items: center;
-}
-.select2-container--bootstrap4 .select2-selection:focus,
-.select2-container--bootstrap4 .select2-selection--single:focus {
-    border-color: #1A2E75;
-    box-shadow: 0 0 0 0.13rem rgba(26,46,117,0.10);
-}
-.select2-container--bootstrap4 .select2-selection--single .select2-selection__rendered {
-    color: #495057;
-    font-size: 1rem;
-    line-height: 1.5rem;
-    padding-left: 0;
-}
-.select2-container--bootstrap4 .select2-selection--single .select2-selection__arrow {
-    height: 40px;
-    right: 14px;
-    top: 50%;
-    width: 22px;
-    transform: translateY(-50%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.select2-container--bootstrap4 .select2-selection--single .select2-selection__arrow b {
-    border-color: #1A2E75 transparent transparent transparent;
-    border-width: 6px 6px 0 6px;
-    margin-top: 0;
-}
-.select2-container--bootstrap4 .select2-dropdown {
-    border-radius: 0.6rem;
-    box-shadow: 0 4px 16px rgba(26,46,117,0.08);
-    font-size: 1rem;
-    border: 1.3px solid #ced4da;
-    margin-top: 2px;
-}
-.select2-container--bootstrap4 .select2-results__option {
-    padding: 0.6rem 1rem;
-    font-size: 1rem;
-    border-radius: 0.4rem;
-    margin: 2px 0;
-}
-.select2-container--bootstrap4 .select2-results__option--highlighted {
-    background: #1A2E75 !important;
-    color: #fff !important;
-}
-.select2-container--bootstrap4 .select2-results__option[aria-selected=true] {
-    background: #5C6AC4 !important;
-    color: #fff !important;
-}
-.select2-container--bootstrap4 .select2-selection__clear {
-    color: #BF1E2E;
-    font-size: 1.2em;
-    margin-right: 8px;
-    display: flex;
-    align-items: center;
-    height: 100%;
-    position: absolute;
-    left: 0.8rem;
-    top: 50%;
-    transform: translateY(-50%);
-}
-.select2-container--bootstrap4 .select2-selection--single {
-    display: flex;
-    align-items: center;
-    position: relative;
-    padding-left: 0 !important;
-}
-.select2-container--bootstrap4 .select2-selection--single .select2-selection__rendered {
-    flex: 1 1 auto;
-    display: flex;
-    align-items: center;
-    padding-left: 0.5em;
-}
-.select2-container--bootstrap4 .select2-selection--single .select2-selection__clear {
-    color: #BF1E2E;
-    font-size: 1.1em;
-    margin-right: 0.5em;
-    position: static;
-    display: flex;
-    align-items: center;
-    height: auto;
-    top: auto;
-    left: auto;
-    transform: none;
-}
-.select2-container--bootstrap4 .select2-selection--single .select2-selection__arrow {
-    height: 40px;
-    right: 14px;
-    top: 50%;
-    width: 22px;
-    transform: translateY(-50%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: absolute;
-}
-.select2-container--bootstrap4 {
-    width: 100% !important;
-}
-.select2-container--bootstrap4 .select2-selection--single {
-    height: 40px !important;
-    line-height: 40px !important;
-}
-
-/* Unifica y compacta todos los campos del formulario */
-.form-control, .form-select, textarea {
-    border-radius: 0.6rem !important;
-    border: 1.3px solid #ced4da !important;
-    font-size: 1rem !important;
-    min-height: 40px !important;
-    box-shadow: 0 1px 4px rgba(26,46,117,0.03) !important;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    background: #fff !important;
-    padding: 0.45rem 0.9rem !important;
-}
-.form-control:focus, .form-select:focus, textarea:focus {
-    border-color: #1A2E75 !important;
-    box-shadow: 0 0 0 0.13rem rgba(26,46,117,0.10) !important;
-}
-.input-group-text {
-    background-color: #f8f9fa;
-    border-color: #dee2e6;
-    color: #6c757d;
-    border-radius: 0.6rem 0 0 0.6rem !important;
-    font-size: 1rem;
-    min-height: 40px !important;
-    padding: 0.45rem 0.9rem !important;
-}
-textarea.form-control {
-    min-height: 90px !important;
-    padding-top: 0.7rem !important;
-}
-/* Alineación vertical de los campos en grid */
-.row.g-4 > [class^='col-'],
-.row.g-4 > [class*=' col-'] {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-}
-
-.autocomplete-wrapper { position: relative; }
-#clienteAutocomplete {
-    border-radius: 0.75rem;
-    border: 1.5px solid #1A2E75;
-    font-size: 1.08rem;
-    padding: 0.5rem 1.2rem;
-    background: #f8fafc;
-    color: #1A2E75;
-    height: 48px;
-    box-shadow: none;
-    transition: border 0.18s;
-}
-#clienteAutocomplete:focus {
-    border-color: #5C6AC4;
-    box-shadow: 0 0 0 0.15rem rgba(92,106,196,0.10);
-}
-#autocompleteList {
-    border-radius: 0.75rem;
-    background: #fff;
-    margin-top: 2px;
-    border: 1.5px solid #e3e8f0;
-    font-size: 1.05rem;
-    box-shadow: 0 2px 8px rgba(26,46,117,0.07);
-    padding: 0;
-    z-index: 20;
-}
-#autocompleteList li {
-    cursor: pointer;
-    padding: 0.6rem 1rem;
-    border-bottom: 1px solid #f0f0f0;
-    transition: background 0.13s;
-    list-style: none;
-    font-size: 1.08rem;
-    color: #1A2E75;
-    background: #fff;
-}
-#autocompleteList li:last-child { border-bottom: none; }
-#autocompleteList li:hover, #autocompleteList li.active {
-    background: #F0F4FF;
-    color: #1A2E75;
-    font-weight: 600;
-}
-</style>
-
-<script>
-const clientesList = @json($clientes ?? []);
-let selectedClienteId = null;
-const input = document.getElementById('clienteAutocomplete');
-const list = document.getElementById('autocompleteList');
-const hiddenInput = document.getElementById('cliente_id');
-
-function showSuggestions(term) {
-    list.innerHTML = '';
-    const filtered = clientesList.filter(c => c.nombre_completo.toLowerCase().includes(term.toLowerCase()));
-    if (filtered.length === 0) {
-        list.style.display = 'none';
-        return;
-    }
-    filtered.forEach(cliente => {
-        const li = document.createElement('li');
-        li.textContent = cliente.nombre_completo;
-        li.onclick = () => {
-            input.value = cliente.nombre_completo;
-            selectedClienteId = cliente.id;
-            hiddenInput.value = cliente.id;
-            list.style.display = 'none';
-            // Llamar a la función para obtener tarifa automáticamente
-            setTimeout(() => {
-                if (typeof obtenerTarifaCliente === 'function') obtenerTarifaCliente();
-                if (typeof calculateMonto === 'function') calculateMonto();
-            }, 100);
-        };
-        list.appendChild(li);
-    });
-    list.style.display = 'block';
-}
-
-input.addEventListener('input', function() {
-    const term = this.value.trim();
-    if (term.length === 0) {
-        list.style.display = 'none';
-        selectedClienteId = null;
-        hiddenInput.value = '';
-        return;
-    }
-    showSuggestions(term);
-});
-
-input.addEventListener('focus', function() {
-    if (this.value.trim().length > 0) showSuggestions(this.value.trim());
-});
-
-document.addEventListener('click', function(e) {
-    if (!list.contains(e.target) && e.target !== input) {
-        list.style.display = 'none';
-    }
-});
-</script>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Auto-calculate monto based on peso and servicio
-    const pesoInput = document.querySelector('input[name="peso_lb"]');
-    const servicioSelect = document.querySelector('select[name="servicio_id"]');
-    const clienteSelect = document.querySelector('select[name="cliente_id"]');
-    const montoInput = document.querySelector('input[name="monto_calculado"]');
-    const tarifaManualInput = document.querySelector('input[name="tarifa_manual"]');
-    
-    function calculateMonto() {
-        const peso = parseFloat(pesoInput.value) || 0;
-        let rate = 0;
-        if (tarifaManualInput.value) {
-            rate = parseFloat(tarifaManualInput.value) || 0;
-        } else if (clienteSelect.value && servicioSelect.value) {
-            rate = parseFloat(tarifaManualInput.value) || 0;
-        } else {
-            rate = 1.00;
-        }
-        const monto = peso * rate;
-        montoInput.value = monto.toFixed(2);
-    }
-    
-    pesoInput.addEventListener('input', calculateMonto);
-    servicioSelect.addEventListener('change', function() {
-        obtenerTarifaCliente();
-        calculateMonto();
-    });
-    // También escuchar cambios en el campo de cliente autocompletado
-    document.getElementById('cliente_id').addEventListener('change', function() {
-        obtenerTarifaCliente();
-        calculateMonto();
-    });
-    tarifaManualInput.addEventListener('input', calculateMonto);
-
-    function obtenerTarifaCliente() {
-        const clienteId = document.getElementById('cliente_id').value;
-        const servicioId = servicioSelect.value;
-        const tarifaLoading = document.getElementById('tarifa-loading');
-        const tarifaInfo = document.getElementById('tarifa-info');
-        
-        console.log('Obteniendo tarifa para cliente:', clienteId, 'servicio:', servicioId);
-        
-        // Ocultar indicadores previos
-        tarifaInfo.style.display = 'none';
-        
-        if (clienteId && servicioId) {
-            // Mostrar loading
-            tarifaLoading.style.display = 'inline-flex';
-            
-            fetch("{{ route('inventario.obtener-tarifa') }}", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('input[name=_token]').value
-                },
-                body: JSON.stringify({ cliente_id: clienteId, servicio_id: servicioId })
-            })
-            .then(res => res.json())
-            .then(data => {
-                console.log('Tarifa obtenida:', data);
-                // Ocultar loading
-                tarifaLoading.style.display = 'none';
-                
-                if (data.tarifa !== null && data.tarifa !== undefined) {
-                    tarifaManualInput.value = data.tarifa;
-                    console.log('Tarifa aplicada:', data.tarifa);
-                    // Mostrar indicador de éxito
-                    tarifaInfo.style.display = 'block';
-                } else {
-                    tarifaManualInput.value = '';
-                    console.log('No se encontró tarifa para esta combinación');
-                }
-                calculateMonto();
-            })
-            .catch(error => {
-                console.error('Error al obtener tarifa:', error);
-                tarifaManualInput.value = '';
-                tarifaLoading.style.display = 'none';
-                calculateMonto();
-            });
-        } else {
-            console.log('Faltan datos: clienteId =', clienteId, 'servicioId =', servicioId);
-            tarifaManualInput.value = '';
-            calculateMonto();
-        }
-    }
-    
-    // Form validation
-    const form = document.getElementById('inventarioForm');
-    form.addEventListener('submit', function(e) {
-        const requiredFields = form.querySelectorAll('[required]');
-        let isValid = true;
-        requiredFields.forEach(field => {
-            if (!field.value.trim()) {
-                field.classList.add('is-invalid');
-                isValid = false;
-            } else {
-                field.classList.remove('is-invalid');
-            }
-        });
-        if (!isValid) {
-            e.preventDefault();
-            alert('Por favor, completa todos los campos requeridos.');
-        }
-    });
-
-    // Validación dinámica para número de guía
-    const numeroGuiaInput = document.getElementById('numero_guia');
-    const guiaError = document.getElementById('guia-error');
-    const btnGuardar = document.getElementById('btn_guardar_inventario') || document.querySelector('button[type=submit]');
-    const errorAjax = document.createElement('div');
-    errorAjax.className = 'text-danger';
-    errorAjax.style.fontSize = '1rem';
-    errorAjax.style.marginTop = '4px';
-    numeroGuiaInput.parentNode.appendChild(errorAjax);
-
-    let lastValue = '';
-    numeroGuiaInput.addEventListener('blur', validarNumeroGuiaAjax);
-    numeroGuiaInput.addEventListener('input', function() {
-        if (this.value !== lastValue) {
-            errorAjax.textContent = '';
-            if (btnGuardar) btnGuardar.disabled = false;
-        }
-    });
-
-    function validarNumeroGuiaAjax() {
-        const valor = numeroGuiaInput.value.trim();
-        if (!valor) return;
-        fetch("{{ route('inventario.validar-numero-guia') }}", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('input[name=_token]').value
-            },
-            body: JSON.stringify({ numero_guia: valor })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.exists) {
-                errorAjax.textContent = data.message;
-                if (btnGuardar) btnGuardar.disabled = true;
-            } else {
-                errorAjax.textContent = '';
-                if (btnGuardar) btnGuardar.disabled = false;
-            }
-            lastValue = valor;
-        });
-    }
-    // Validar al enviar el formulario
-    const inventarioForm = document.getElementById('inventarioForm');
-    inventarioForm.addEventListener('submit', function(e) {
-        const value = numeroGuiaInput.value.trim();
-        // Nueva validación: 6-9 caracteres o formato con barra
-        const validFormat = /^(\d+\/\d+|\d{6,9})$/;
-        if (value.length < 6 || value.length > 9 || !validFormat.test(value)) {
-            guiaError.style.display = 'block';
-            numeroGuiaInput.focus();
-            e.preventDefault();
-        }
-    });
-});
-</script>
-
 @push('scripts')
-<!-- Select2 CSS y JS con tema Bootstrap4 -->
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<link href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@1.5.2/dist/select2-bootstrap4.min.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    $('#selectCliente').select2({
-        theme: 'bootstrap4',
-        width: '100%',
-        placeholder: 'Seleccione un cliente',
-        allowClear: true,
-        dropdownParent: $('#selectCliente').parent()
-    });
-});
-</script>
-<style>
-/* Mejoras avanzadas para Select2 y campos compactos */
-.select2-container--bootstrap4 .select2-selection {
-    min-height: 40px;
-    border-radius: 0.6rem;
-    font-size: 1rem;
-    border: 1.3px solid #ced4da;
-    padding: 0.45rem 0.9rem;
-    background: #fff;
-    box-shadow: 0 1px 4px rgba(26,46,117,0.03);
-    transition: border-color 0.2s, box-shadow 0.2s;
-    display: flex;
-    align-items: center;
-}
-.select2-container--bootstrap4 .select2-selection:focus,
-.select2-container--bootstrap4 .select2-selection--single:focus {
-    border-color: #1A2E75;
-    box-shadow: 0 0 0 0.13rem rgba(26,46,117,0.10);
-}
-.select2-container--bootstrap4 .select2-selection--single .select2-selection__rendered {
-    color: #495057;
-    font-size: 1rem;
-    line-height: 1.5rem;
-    padding-left: 0;
-}
-.select2-container--bootstrap4 .select2-selection--single .select2-selection__arrow {
-    height: 40px;
-    right: 14px;
-    top: 50%;
-    width: 22px;
-    transform: translateY(-50%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.select2-container--bootstrap4 .select2-selection--single .select2-selection__arrow b {
-    border-color: #1A2E75 transparent transparent transparent;
-    border-width: 6px 6px 0 6px;
-    margin-top: 0;
-}
-.select2-container--bootstrap4 .select2-dropdown {
-    border-radius: 0.6rem;
-    box-shadow: 0 4px 16px rgba(26,46,117,0.08);
-    font-size: 1rem;
-    border: 1.3px solid #ced4da;
-    margin-top: 2px;
-}
-.select2-container--bootstrap4 .select2-results__option {
-    padding: 0.6rem 1rem;
-    font-size: 1rem;
-    border-radius: 0.4rem;
-    margin: 2px 0;
-}
-.select2-container--bootstrap4 .select2-results__option--highlighted {
-    background: #1A2E75 !important;
-    color: #fff !important;
-}
-.select2-container--bootstrap4 .select2-results__option[aria-selected=true] {
-    background: #5C6AC4 !important;
-    color: #fff !important;
-}
-.select2-container--bootstrap4 .select2-selection__clear {
-    color: #BF1E2E;
-    font-size: 1.2em;
-    margin-right: 8px;
-    display: flex;
-    align-items: center;
-    height: 100%;
-    position: absolute;
-    left: 0.8rem;
-    top: 50%;
-    transform: translateY(-50%);
-}
-.select2-container--bootstrap4 .select2-selection--single {
-    position: relative;
-    padding-left: 2.1em !important;
-}
-.select2-container--bootstrap4 {
-    width: 100% !important;
-}
-.select2-container--bootstrap4 .select2-selection--single {
-    height: 40px !important;
-    line-height: 40px !important;
-}
+(function() {
+    var clientesList = @json($clientes ?? []);
+    var input = document.getElementById('clienteAutocomplete');
+    var list = document.getElementById('autocompleteList');
+    var hiddenInput = document.getElementById('cliente_id');
 
-/* Unifica y compacta todos los campos del formulario */
-.form-control, .form-select, textarea {
-    border-radius: 0.6rem !important;
-    border: 1.3px solid #ced4da !important;
-    font-size: 1rem !important;
-    min-height: 40px !important;
-    box-shadow: 0 1px 4px rgba(26,46,117,0.03) !important;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    background: #fff !important;
-    padding: 0.45rem 0.9rem !important;
-}
-.form-control:focus, .form-select:focus, textarea:focus {
-    border-color: #1A2E75 !important;
-    box-shadow: 0 0 0 0.13rem rgba(26,46,117,0.10) !important;
-}
-.input-group-text {
-    background-color: #f8f9fa;
-    border-color: #dee2e6;
-    color: #6c757d;
-    border-radius: 0.6rem 0 0 0.6rem !important;
-    font-size: 1rem;
-    min-height: 40px !important;
-    padding: 0.45rem 0.9rem !important;
-}
-textarea.form-control {
-    min-height: 90px !important;
-    padding-top: 0.7rem !important;
-}
-/* Alineación vertical de los campos en grid */
-.row.g-4 > [class^='col-'],
-.row.g-4 > [class*=' col-'] {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-}
-</style>
+    function showSuggestions(term) {
+        if (!list) return;
+        list.innerHTML = '';
+        var filtered = clientesList.filter(function(c) { return (c.nombre_completo || '').toLowerCase().indexOf((term || '').toLowerCase()) !== -1; });
+        if (filtered.length === 0) { list.classList.add('hidden'); return; }
+        filtered.forEach(function(cliente) {
+            var li = document.createElement('li');
+            li.className = 'cursor-pointer px-4 py-2.5 hover:bg-slate-100 border-b border-slate-100 last:border-0 text-slate-800';
+            li.textContent = cliente.nombre_completo;
+            li.onclick = function() {
+                input.value = cliente.nombre_completo;
+                hiddenInput.value = cliente.id;
+                list.classList.add('hidden');
+                if (typeof obtenerTarifaCliente === 'function') setTimeout(obtenerTarifaCliente, 100);
+                if (typeof calculateMonto === 'function') setTimeout(calculateMonto, 100);
+            };
+            list.appendChild(li);
+        });
+        list.classList.remove('hidden');
+    }
+    if (input) {
+        input.addEventListener('input', function() {
+            var term = this.value.trim();
+            if (!term) { list.classList.add('hidden'); hiddenInput.value = ''; return; }
+            showSuggestions(term);
+        });
+        input.addEventListener('focus', function() { if (this.value.trim()) showSuggestions(this.value.trim()); });
+    }
+    document.addEventListener('click', function(e) {
+        if (list && !list.contains(e.target) && e.target !== input) list.classList.add('hidden');
+    });
+
+    var pesoInput = document.getElementById('peso_lb');
+    var servicioSelect = document.getElementById('servicio_id');
+    var montoInput = document.getElementById('monto_calculado');
+    var tarifaManualInput = document.getElementById('tarifa_manual');
+
+    window.calculateMonto = function() {
+        if (!pesoInput || !montoInput) return;
+        var peso = parseFloat(pesoInput.value) || 0;
+        var rate = parseFloat(tarifaManualInput && tarifaManualInput.value ? tarifaManualInput.value : 0) || 1;
+        montoInput.value = (peso * rate).toFixed(2);
+    };
+
+    window.obtenerTarifaCliente = function() {
+        var clienteId = hiddenInput && hiddenInput.value;
+        var servicioId = servicioSelect && servicioSelect.value;
+        var tarifaLoading = document.getElementById('tarifa-loading');
+        var tarifaInfo = document.getElementById('tarifa-info');
+        if (tarifaInfo) tarifaInfo.classList.add('hidden');
+        if (!clienteId || !servicioId) {
+            if (tarifaManualInput) tarifaManualInput.value = '';
+            calculateMonto();
+            return;
+        }
+        if (tarifaLoading) tarifaLoading.classList.remove('hidden');
+        fetch("{{ route('inventario.obtener-tarifa') }}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('input[name=_token]').value },
+            body: JSON.stringify({ cliente_id: clienteId, servicio_id: servicioId })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (tarifaLoading) tarifaLoading.classList.add('hidden');
+            if (data.tarifa != null) {
+                if (tarifaManualInput) tarifaManualInput.value = data.tarifa;
+                if (tarifaInfo) tarifaInfo.classList.remove('hidden');
+            } else if (tarifaManualInput) tarifaManualInput.value = '';
+            calculateMonto();
+        })
+        .catch(function() {
+            if (tarifaLoading) tarifaLoading.classList.add('hidden');
+            if (tarifaManualInput) tarifaManualInput.value = '';
+            calculateMonto();
+        });
+    };
+
+    if (pesoInput) pesoInput.addEventListener('input', calculateMonto);
+    if (servicioSelect) servicioSelect.addEventListener('change', function() { obtenerTarifaCliente(); calculateMonto(); });
+    if (hiddenInput) hiddenInput.addEventListener('change', function() { obtenerTarifaCliente(); calculateMonto(); });
+    if (tarifaManualInput) tarifaManualInput.addEventListener('input', calculateMonto);
+
+    var form = document.getElementById('inventarioForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            var required = form.querySelectorAll('[required]');
+            var valid = true;
+            required.forEach(function(f) {
+                if (!f.value.trim()) { valid = false; f.classList.add('border-red-500'); } else { f.classList.remove('border-red-500'); }
+            });
+            var numeroGuia = document.getElementById('numero_guia');
+            var guiaError = document.getElementById('guia-error');
+            if (numeroGuia && guiaError) {
+                var val = numeroGuia.value.trim();
+                var ok = /^(\d{6,9}|\d+\/\d+)$/.test(val);
+                if (!ok && val) {
+                    guiaError.textContent = 'El número de guía debe tener 6-9 caracteres o formato con barra (ej: 1223113/1)';
+                    guiaError.classList.remove('hidden');
+                    e.preventDefault();
+                    return;
+                }
+                guiaError.classList.add('hidden');
+            }
+            if (!valid) { e.preventDefault(); alert('Completa todos los campos requeridos.'); }
+        });
+    }
+
+    var numeroGuiaInput = document.getElementById('numero_guia');
+    var guiaError = document.getElementById('guia-error');
+    if (numeroGuiaInput && guiaError) {
+        var btnSubmit = document.getElementById('btnSubmit');
+        numeroGuiaInput.addEventListener('blur', function() {
+            var valor = numeroGuiaInput.value.trim();
+            if (!valor) { if (btnSubmit) btnSubmit.disabled = false; return; }
+            fetch("{{ route('inventario.validar-numero-guia') }}", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('input[name=_token]').value },
+                body: JSON.stringify({ numero_guia: valor })
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.exists) {
+                    guiaError.textContent = data.message || 'Esta guía ya está registrada.';
+                    guiaError.classList.remove('hidden');
+                    if (btnSubmit) btnSubmit.disabled = true;
+                } else {
+                    guiaError.classList.add('hidden');
+                    if (btnSubmit) btnSubmit.disabled = false;
+                }
+            });
+        });
+        numeroGuiaInput.addEventListener('input', function() {
+            guiaError.classList.add('hidden');
+            if (btnSubmit) btnSubmit.disabled = false;
+        });
+    }
+})();
+</script>
 @endpush
 @endsection

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Usuarios - SkylinkOne CRM')
+@section('title', 'Usuarios - CH Logistics ERP')
 @section('page-title', 'Gestión de Usuarios')
 
 @section('content')
@@ -8,7 +8,7 @@
     <!-- Header Section -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="rounded-4 shadow-sm px-4 py-4 mb-4 d-flex align-items-center justify-content-between" style="background: linear-gradient(90deg, #1A2E75 0%, #5C6AC4 100%); min-height:90px;">
+            <div class="rounded-4 shadow-sm px-4 py-4 mb-4 d-flex align-items-center justify-content-between" style="background: linear-gradient(90deg, #15537c 0%, #2d6a9a 100%); min-height:90px;">
                 <div class="d-flex align-items-center gap-3">
                     <div class="bg-white rounded-circle d-flex align-items-center justify-content-center" style="width:60px; height:60px; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
                         <i class="fas fa-users text-primary" style="font-size:2.2rem;"></i>
@@ -18,7 +18,7 @@
                         <p class="mb-0 text-white-50" style="font-size:1.1rem;">Registra nuevos usuarios para el sistema</p>
                     </div>
                 </div>
-                <a href="{{ route('usuarios.create') }}" class="btn btn-lg fw-semibold shadow-sm px-4" style="background:#1A2E75; color:#fff;">
+                <a href="{{ route('usuarios.create') }}" class="btn btn-lg fw-semibold shadow-sm px-4" style="background:#15537c; color:#fff;">
                     <i class="fas fa-user-plus me-2"></i> Nuevo Usuario
                 </a>
             </div>

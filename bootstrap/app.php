@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -13,6 +14,13 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias(['role' => \App\Http\Middleware\RoleMiddleware::class]);
+        $middleware->web(append: [
+            \App\Http\Middleware\AuditChangesMiddleware::class,
+        ]);
+    })
+    ->withSchedule(function (Schedule $schedule): void {
+        $schedule->command('facturacion:alertar-morosidad')->dailyAt('08:00');
+        $schedule->command('leads:recordar-seguimientos')->hourly();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

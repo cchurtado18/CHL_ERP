@@ -1,503 +1,241 @@
-@extends('layouts.app')
+@extends('layouts.app-new')
 
-@section('title', 'Dashboard de Tracking - SkylinkOne CRM')
+@section('title', 'Dashboard de Tracking - CH LOGISTICS ERP')
+@section('navbar-title', 'Dashboard Tracking')
 
 @section('content')
-<div class="container-fluid px-4">
-    <!-- Header Section -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="rounded-4 shadow-sm px-4 py-4 mb-4 d-flex align-items-center justify-content-between" style="background: linear-gradient(90deg, #1A2E75 0%, #5C6AC4 100%); min-height:90px;">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="bg-white rounded-circle d-flex align-items-center justify-content-center" style="width:60px; height:60px; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
-                        <i class="fas fa-chart-line text-primary" style="font-size:2.2rem;"></i>
-                    </div>
-                    <div>
-                        <h1 class="h3 mb-1 fw-bold text-white" style="letter-spacing:1px;">Dashboard de Tracking</h1>
-                        <p class="mb-0 text-white-50" style="font-size:1.1rem;">Monitoreo y control de seguimientos con temporizadores</p>
-                    </div>
+<div class="mx-auto w-full max-w-[1400px] space-y-8">
+    @if (session('success'))
+    <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-base text-emerald-800" role="alert">
+        <span class="font-medium">{{ session('success') }}</span>
+    </div>
+    @endif
+
+    {{-- Barra: título + acciones --}}
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800">Dashboard de Tracking</h1>
+            <p class="mt-1 text-slate-600">Monitoreo y control de seguimientos con temporizadores</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+            <a href="{{ route('tracking.index') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2.5 text-base font-medium text-slate-600 hover:bg-slate-50"><i class="fas fa-list"></i> Ver Todos</a>
+            <a href="{{ route('tracking.index') }}" class="inline-flex items-center gap-2 rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-2.5 text-base font-medium text-emerald-800 hover:bg-emerald-100">Completados</a>
+            <a href="{{ route('tracking.create') }}" class="inline-flex items-center gap-2 rounded-xl bg-[#15537c] px-5 py-2.5 text-base font-semibold text-white shadow-sm hover:bg-[#0f3d5c]"><i class="fas fa-plus"></i> Nuevo Tracking</a>
+        </div>
+    </div>
+
+    {{-- Stats --}}
+    <div class="grid grid-cols-2 gap-5 lg:grid-cols-4">
+        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex items-center gap-4">
+                <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-[#15537c]/10 text-[#15537c] text-2xl"><i class="fas fa-calendar-alt"></i></div>
+                <div>
+                    <p class="text-sm font-medium uppercase tracking-wide text-slate-500">Total</p>
+                    <p class="text-2xl font-bold text-slate-800">{{ $totalTrackings }}</p>
                 </div>
-                <a href="{{ route('tracking.create') }}" class="btn btn-lg fw-semibold shadow-sm px-4" style="background:#1A2E75; color:#fff;">
-                    <i class="fas fa-plus me-2"></i> Nuevo Tracking
-                </a>
             </div>
-            <!-- Botones secundarios arriba de las tarjetas de estadísticas -->
-            <div class="row mb-3">
-                <div class="col-12 d-flex justify-content-start gap-2">
-                    <a href="{{ route('tracking.index') }}" class="btn btn-outline-secondary d-flex align-items-center gap-2 px-4 py-2 fw-semibold shadow-sm" style="font-size:1.01em; border-radius:0.75rem;">
-                        <i class="fas fa-list me-1"></i> Ver Todos
-                    </a>
-                    <a href="{{ route('tracking.index', ['estado' => 'completado']) }}" class="btn btn-success d-flex align-items-center gap-2 px-4 py-2 fw-semibold shadow-sm" style="font-size:1.01em; border-radius:0.75rem;">
-                        <i class="fas fa-check-circle me-1"></i> Ver Completados
-                    </a>
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex items-center gap-4">
+                <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-amber-100 text-amber-600 text-2xl"><i class="fas fa-clock"></i></div>
+                <div>
+                    <p class="text-sm font-medium uppercase tracking-wide text-slate-500">Pendientes</p>
+                    <p class="text-2xl font-bold text-slate-800">{{ $trackingsPendientes }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex items-center gap-4">
+                <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-red-100 text-red-600 text-2xl"><i class="fas fa-exclamation-triangle"></i></div>
+                <div>
+                    <p class="text-sm font-medium uppercase tracking-wide text-slate-500">Vencidos</p>
+                    <p class="text-2xl font-bold text-red-700">{{ $trackingsVencidos }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex items-center gap-4">
+                <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 text-2xl"><i class="fas fa-check-circle"></i></div>
+                <div>
+                    <p class="text-sm font-medium uppercase tracking-wide text-slate-500">Completados</p>
+                    <p class="text-2xl font-bold text-slate-800">{{ $trackingsCompletados }}</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Stats Cards -->
-    <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <div class="bg-primary bg-opacity-10 rounded-circle p-3">
-                                <i class="fas fa-calendar text-primary fs-4"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1 ms-3">
-                            <h6 class="card-title text-muted mb-1">TOTAL TRACKINGS</h6>
-                            <h4 class="mb-0 fw-bold text-dark">{{ $totalTrackings }}</h4>
-                        </div>
-                    </div>
-                </div>
+    {{-- Búsqueda rápida --}}
+    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <label class="mb-2 block text-sm font-medium text-slate-600">Buscar por código</label>
+        <div class="flex flex-wrap items-center gap-3">
+            <div class="relative flex-1 min-w-[200px]">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                <input type="text" id="codigoTracking" class="w-full rounded-lg border border-slate-300 py-2.5 pl-10 pr-4 text-base focus:border-[#15537c] focus:ring-1 focus:ring-[#15537c]" placeholder="Código de tracking...">
             </div>
+            <button type="button" onclick="buscarTracking()" class="inline-flex items-center gap-2 rounded-lg bg-[#15537c] px-5 py-2.5 text-base font-medium text-white hover:bg-[#0f3d5c]"><i class="fas fa-search"></i> Buscar</button>
+            <button type="button" onclick="cargarProximosVencer()" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2.5 text-base font-medium text-slate-600 hover:bg-slate-50"><i class="fas fa-clock"></i> Próximos a Vencer</button>
         </div>
-        <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <div class="bg-warning bg-opacity-10 rounded-circle p-3">
-                                <i class="fas fa-clock text-warning fs-4"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1 ms-3">
-                            <h6 class="card-title text-muted mb-1">PENDIENTES</h6>
-                            <h4 class="mb-0 fw-bold text-dark">{{ $trackingsPendientes }}</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #dc3545 !important;">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <div class="bg-danger bg-opacity-10 rounded-circle p-3">
-                                <i class="fas fa-exclamation-triangle text-danger fs-4"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1 ms-3">
-                            <h6 class="card-title text-muted mb-1">VENCIDOS</h6>
-                            <h4 class="mb-0 fw-bold text-danger">{{ $trackingsVencidos }}</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <div class="bg-success bg-opacity-10 rounded-circle p-3">
-                                <i class="fas fa-check-circle text-success fs-4"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1 ms-3">
-                            <h6 class="card-title text-muted mb-1">COMPLETADOS</h6>
-                            <h4 class="mb-0 fw-bold text-dark">{{ $trackingsCompletados }}</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <div id="resultadoBusqueda" class="mt-4"></div>
     </div>
 
-    <!-- Búsqueda Rápida -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-md-8 mb-2 mb-md-0">
-                            <div class="input-group">
-                                <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-primary"></i></span>
-                                <input type="text" id="codigoTracking" class="form-control border-start-0" placeholder="Ingresa el código de tracking...">
-                                <button class="btn btn-primary" type="button" onclick="buscarTracking()">
-                                    <i class="fas fa-search me-2"></i>Buscar
-                                </button>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <button class="btn btn-outline-info w-100" onclick="cargarProximosVencer()">
-                                <i class="fas fa-clock me-2"></i>Próximos a Vencer
-                            </button>
-                        </div>
-                    </div>
-                    <div id="resultadoBusqueda" class="mt-3"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Trackings Vencidos -->
+    {{-- Trackings vencidos --}}
     @if($trackingsVencidos > 0)
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card border-danger shadow-sm" style="border-left: 4px solid #dc3545 !important;">
-                <div class="card-header bg-danger text-white border-0 py-3 d-flex justify-content-between align-items-center">
-                    <h6 class="mb-0 fw-semibold">
-                        <i class="fas fa-exclamation-triangle me-2"></i>Trackings Vencidos
-                    </h6>
-                    <span class="badge bg-white text-danger fw-bold">{{ $trackingsVencidos }}</span>
-                </div>
-                <div class="card-body">
-                    <div class="alert alert-danger border-0" role="alert">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        <strong>¡Atención!</strong> Hay {{ $trackingsVencidos }} tracking(s) que han vencido su tiempo límite. 
-                        <a href="{{ route('tracking.index', ['estado' => 'vencido']) }}" class="alert-link">Ver todos los vencidos</a>
-                    </div>
-                    
-                    @if($trackingsVencidosList->count() > 0)
-                    <div class="row">
-                        @foreach($trackingsVencidosList->take(5) as $tracking)
-                        <div class="col-md-6 col-lg-4 mb-3">
-                            <div class="card border-danger h-100" style="border-left: 4px solid #dc3545 !important;">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <h6 class="card-title text-danger mb-0">
-                                            {{ $tracking->tracking_codigo }}
-                                        </h6>
-                                        <span class="badge bg-danger text-white">
-                                            VENCIDO
-                                        </span>
-                                    </div>
-                                    <p class="card-text small text-muted mb-2">
-                                        <strong>Cliente:</strong> {{ $tracking->cliente->nombre_completo }}
-                                    </p>
-                                    <p class="card-text small text-danger mb-3">
-                                        <strong>Venció:</strong> {{ \Carbon\Carbon::parse($tracking->recordatorio_fecha)->format('d/m/Y H:i') }}
-                                        <br>
-                                        <small>{{ \Carbon\Carbon::parse($tracking->recordatorio_fecha)->diffForHumans() }}</small>
-                                    </p>
-                                    <div class="d-flex gap-2">
-                                        <button class="btn btn-sm btn-outline-primary" onclick="verTracking({{ $tracking->id }})">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-success" onclick="marcarCompletado({{ $tracking->id }})">
-                                            <i class="fas fa-check"></i> Completar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        @endforeach
-                    </div>
-                    @endif
-                </div>
+    <div class="overflow-hidden rounded-xl border-2 border-red-200 bg-white shadow-sm">
+        <div class="border-b border-red-200 bg-red-50 px-5 py-3 flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-red-800"><i class="fas fa-exclamation-triangle mr-2"></i>Trackings Vencidos</h2>
+            <span class="rounded-full bg-red-200 px-3 py-1 text-sm font-bold text-red-900">{{ $trackingsVencidos }}</span>
+        </div>
+        <div class="p-5">
+            <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+                <strong>Atención:</strong> Hay {{ $trackingsVencidos }} tracking(s) vencidos.
+                <a href="{{ route('tracking.index') }}" class="font-semibold text-[#15537c] hover:underline ml-1">Ver lista</a>
             </div>
+            @if($trackingsVencidosList->count() > 0)
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                @foreach($trackingsVencidosList->take(6) as $tracking)
+                <div class="rounded-xl border-2 border-red-200 bg-white p-4">
+                    <div class="flex items-start justify-between gap-2 mb-2">
+                        <span class="font-semibold text-[#15537c]">{{ $tracking->tracking_codigo }}</span>
+                        <span class="rounded-full bg-red-200 px-2 py-0.5 text-xs font-bold text-red-900">VENCIDO</span>
+                    </div>
+                    <p class="text-sm text-slate-600 mb-1"><strong>Cliente:</strong> {{ $tracking->cliente->nombre_completo ?? 'N/D' }}</p>
+                    <p class="text-sm text-red-700 mb-3">Vencido: {{ \Carbon\Carbon::parse($tracking->recordatorio_fecha)->format('d/m/Y H:i') }}</p>
+                    <div class="flex gap-2">
+                        <a href="{{ route('tracking.show', $tracking) }}" class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"><i class="fas fa-eye mr-1"></i>Ver</a>
+                        <button type="button" onclick="marcarCompletado({{ $tracking->id }})" class="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700"><i class="fas fa-check mr-1"></i>Completar</button>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+            @endif
         </div>
     </div>
     @endif
 
-    <!-- Próximos a Vencer -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
-                    <h6 class="mb-0 fw-semibold text-warning">
-                        <i class="fas fa-exclamation-triangle me-2"></i>Próximos a Vencer (7 días)
-                    </h6>
-                    <span class="badge bg-warning text-dark" id="contadorProximos">0</span>
-                </div>
-                <div class="card-body">
-                    <div id="proximosVencerList" class="row">
-                        @forelse($proximosVencer as $tracking)
-                        <div class="col-md-6 col-lg-4 mb-3">
-                            <div class="card border-warning h-100">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <h6 class="card-title text-warning mb-0">
-                                            {{ $tracking->tracking_codigo }}
-                                        </h6>
-                                        <span class="badge bg-warning text-dark">
-                                            {{ \Carbon\Carbon::parse($tracking->recordatorio_fecha)->diffForHumans() }}
-                                        </span>
-                                    </div>
-                                    <p class="card-text small text-muted mb-2">
-                                        <strong>Cliente:</strong> {{ $tracking->cliente->nombre }}
-                                    </p>
-                                    <p class="card-text small text-muted mb-3">
-                                        <strong>Vence:</strong> {{ \Carbon\Carbon::parse($tracking->recordatorio_fecha)->format('d/m/Y H:i') }}
-                                    </p>
-                                    <div class="d-flex gap-2">
-                                        <button class="btn btn-sm btn-outline-primary" onclick="verTracking({{ $tracking->id }})">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-success" onclick="marcarCompletado({{ $tracking->id }})">
-                                            <i class="fas fa-check"></i> Completar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        @empty
-                        <div class="col-12 text-center text-muted py-4">
-                            <i class="fas fa-check-circle fa-3x mb-3"></i>
-                            <p>No hay trackings próximos a vencer</p>
-                        </div>
-                        @endforelse
+    {{-- Próximos a vencer --}}
+    <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div class="border-b border-slate-200 bg-white px-5 py-3 flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-amber-800"><i class="fas fa-clock mr-2"></i>Próximos a Vencer (7 días)</h2>
+            <span class="rounded-full bg-amber-100 px-3 py-1 text-sm font-bold text-amber-900" id="contadorProximos">{{ $proximosVencer->count() }}</span>
+        </div>
+        <div class="p-5">
+            <div id="proximosVencerList" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                @forelse($proximosVencer as $tracking)
+                <div class="rounded-xl border border-amber-200 bg-amber-50/50 p-4">
+                    <div class="flex items-start justify-between gap-2 mb-2">
+                        <span class="font-semibold text-[#15537c]">{{ $tracking->tracking_codigo }}</span>
+                        <span class="rounded-full bg-amber-200 px-2 py-0.5 text-xs font-semibold text-amber-900">{{ \Carbon\Carbon::parse($tracking->recordatorio_fecha)->diffForHumans() }}</span>
+                    </div>
+                    <p class="text-sm text-slate-600 mb-1"><strong>Cliente:</strong> {{ $tracking->cliente->nombre_completo ?? 'N/D' }}</p>
+                    <p class="text-sm text-slate-700 mb-3">Vence: {{ \Carbon\Carbon::parse($tracking->recordatorio_fecha)->format('d/m/Y H:i') }}</p>
+                    <div class="flex gap-2">
+                        <a href="{{ route('tracking.show', $tracking) }}" class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"><i class="fas fa-eye mr-1"></i>Ver</a>
+                        <button type="button" onclick="marcarCompletado({{ $tracking->id }})" class="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700"><i class="fas fa-check mr-1"></i>Completar</button>
                     </div>
                 </div>
+                @empty
+                <div class="col-span-full rounded-xl border border-slate-200 bg-slate-50 py-12 text-center text-slate-600">
+                    <i class="fas fa-check-circle text-4xl text-emerald-500 mb-3 block"></i>
+                    <p>No hay trackings próximos a vencer</p>
+                </div>
+                @endforelse
             </div>
         </div>
     </div>
 
-    <!-- Temporizadores Activos -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-0 py-3">
-                    <h6 class="mb-0 fw-semibold text-info">
-                        <i class="fas fa-stopwatch me-2"></i>Temporizadores Activos
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div id="temporizadoresActivos" class="row">
-                        <!-- Los temporizadores se cargarán dinámicamente -->
-                    </div>
-                </div>
-            </div>
+    {{-- Temporizadores activos --}}
+    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 class="text-lg font-semibold text-slate-800 mb-4"><i class="fas fa-stopwatch mr-2 text-[#15537c]"></i>Temporizadores activos</h2>
+        <div id="temporizadoresActivos" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {{-- Opcional: contenido dinámico --}}
         </div>
     </div>
 </div>
 
-<!-- Font Awesome -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-<!-- Estilos de inventario aplicados a dashboard de tracking -->
-<style>
-.card {
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-}
-.card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
-}
-.bg-primary.bg-opacity-10, .bg-warning.bg-opacity-10, .bg-danger.bg-opacity-10, .bg-success.bg-opacity-10 {
-    background-color: rgba(26,46,117,0.08) !important;
-}
-.card-title, .card-body h6, .card-header h6 {
-    font-size: 0.98rem !important;
-}
-.btn, .btn-lg, .btn-primary, .btn-outline-secondary, .btn-outline-info, .btn-success {
-    font-size: 0.97rem !important;
-    border-radius: 0.75rem !important;
-}
-.badge {
-    font-size: 0.75rem;
-    padding: 0.5em 0.75em;
-    border-radius: 0.75rem;
-}
-</style>
-
-<!-- Modal para Detalles del Tracking -->
-<div class="modal fade" id="trackingModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Detalles del Tracking</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="modalContent">
-                <!-- Contenido dinámico -->
-            </div>
-        </div>
-    </div>
-</div>
-
-@endsection
-
-@section('scripts')
+@push('scripts')
 <script>
-// Variables globales
-let temporizadores = {};
-
-// Función para buscar tracking
 function buscarTracking() {
-    const codigo = document.getElementById('codigoTracking').value;
+    var codigo = document.getElementById('codigoTracking').value.trim();
     if (!codigo) {
-        mostrarAlerta('Por favor ingresa un código de tracking', 'warning');
+        mostrarAlerta('Ingresa un código de tracking', 'warning');
         return;
     }
-
-    fetch(`/tracking/buscar?codigo=${encodeURIComponent(codigo)}`)
-        .then(response => response.json())
-        .then(data => {
-            const resultadoDiv = document.getElementById('resultadoBusqueda');
-            
+    var token = document.querySelector('meta[name="csrf-token"]');
+    fetch('/tracking/buscar?codigo=' + encodeURIComponent(codigo))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var div = document.getElementById('resultadoBusqueda');
             if (data.success) {
-                const tracking = data.tracking;
-                resultadoDiv.innerHTML = `
-                    <div class="alert alert-success">
-                        <div class="row">
-                            <div class="col-md-8">
-                                <h6><strong>Código:</strong> ${tracking.tracking_codigo}</h6>
-                                <p><strong>Cliente:</strong> ${tracking.cliente.nombre}</p>
-                                <p><strong>Estado:</strong> <span class="badge bg-${getEstadoColor(tracking.estado)}">${tracking.estado}</span></p>
-                                <p><strong>Vence:</strong> ${new Date(tracking.recordatorio_fecha).toLocaleString()}</p>
-                            </div>
-                            <div class="col-md-4 text-end">
-                                <button class="btn btn-primary btn-sm" onclick="verTracking(${tracking.id})">
-                                    <i class="fas fa-eye me-1"></i>Ver Detalles
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                var t = data.tracking;
+                div.innerHTML = '<div class="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-emerald-800">' +
+                    '<p class="font-semibold">' + t.tracking_codigo + '</p>' +
+                    '<p class="text-sm"><strong>Cliente:</strong> ' + (t.cliente ? (t.cliente.nombre_completo || t.cliente.nombre) : 'N/D') + '</p>' +
+                    '<p class="text-sm"><strong>Estado:</strong> ' + t.estado + '</p>' +
+                    '<p class="text-sm"><strong>Vence:</strong> ' + (t.recordatorio_fecha ? new Date(t.recordatorio_fecha).toLocaleString() : '-') + '</p>' +
+                    '<a href="/tracking/' + t.id + '" class="mt-2 inline-flex items-center gap-1 rounded-lg bg-[#15537c] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#0f3d5c]"><i class="fas fa-eye"></i> Ver detalles</a>' +
+                    '</div>';
             } else {
-                resultadoDiv.innerHTML = `
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle me-2"></i>${data.message}
-                    </div>
-                `;
+                div.innerHTML = '<div class="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-800"><i class="fas fa-exclamation-triangle mr-2"></i>' + (data.message || 'No encontrado') + '</div>';
             }
         })
-        .catch(error => {
-            console.error('Error:', error);
-            mostrarAlerta('Error al buscar el tracking', 'danger');
+        .catch(function() {
+            mostrarAlerta('Error al buscar', 'danger');
         });
 }
-
-// Función para cargar próximos a vencer
 function cargarProximosVencer() {
     fetch('/tracking/proximos-vencer')
-        .then(response => response.json())
-        .then(data => {
-            const contador = document.getElementById('contadorProximos');
-            contador.textContent = data.length;
-            
-            // Actualizar la lista si es necesario
-            if (data.length > 0) {
-                // Aquí podrías actualizar la lista dinámicamente
-                mostrarAlerta(`Se encontraron ${data.length} trackings próximos a vencer`, 'info');
-            }
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var el = document.getElementById('contadorProximos');
+            if (el) el.textContent = Array.isArray(data) ? data.length : 0;
+            mostrarAlerta('Próximos a vencer: ' + (Array.isArray(data) ? data.length : 0), 'info');
         })
-        .catch(error => {
-            console.error('Error:', error);
-        });
+        .catch(function() {});
 }
-
-// Función para ver tracking
 function verTracking(id) {
-    window.location.href = `/tracking/${id}`;
+    window.location.href = '/tracking/' + id;
 }
-
-// Función para marcar como completado
 function marcarCompletado(id) {
-    if (confirm('¿Estás seguro de que quieres marcar este tracking como completado?')) {
-        fetch(`/tracking/${id}/completar`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
+    if (!confirm('¿Marcar este tracking como completado?')) return;
+    var token = document.querySelector('meta[name="csrf-token"]');
+    var headers = { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' };
+    if (token) headers['X-CSRF-TOKEN'] = token.getAttribute('content');
+    fetch('/tracking/' + id + '/completar', { method: 'POST', headers: headers })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
             if (data.success) {
-                mostrarAlerta('Tracking marcado como completado', 'success');
-                setTimeout(() => location.reload(), 1000);
+                mostrarAlerta('Tracking completado', 'success');
+                setTimeout(function() { location.reload(); }, 1000);
             } else {
-                mostrarAlerta('No se pudo completar el tracking', 'danger');
+                mostrarAlerta('No se pudo completar', 'danger');
             }
         })
-        .catch(error => {
-            console.error('Error:', error);
-            mostrarAlerta('Error al actualizar el estado', 'danger');
+        .catch(function() {
+            mostrarAlerta('Error al actualizar', 'danger');
         });
-    }
 }
-
-// Función para obtener color del estado
-function getEstadoColor(estado) {
-    switch (estado) {
-        case 'pendiente': return 'warning';
-        case 'en_proceso': return 'info';
-        case 'completado': return 'success';
-        case 'vencido': return 'danger';
-        default: return 'secondary';
-    }
-}
-
-// Función para mostrar alertas
 function mostrarAlerta(mensaje, tipo) {
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${tipo} alert-dismissible fade show`;
-    alertDiv.innerHTML = `
-        ${mensaje}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    
-    document.querySelector('.container-fluid').insertBefore(alertDiv, document.querySelector('.container-fluid').firstChild);
-    
-    setTimeout(() => {
-        alertDiv.remove();
-    }, 5000);
-}
-
-// Función para crear temporizador
-function crearTemporizador(trackingId, fechaVencimiento) {
-    const ahora = new Date().getTime();
-    const vencimiento = new Date(fechaVencimiento).getTime();
-    const diferencia = vencimiento - ahora;
-    
-    if (diferencia <= 0) {
-        return null; // Ya venció
+    var classes = {
+        success: 'rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-emerald-800',
+        warning: 'rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-amber-800',
+        danger: 'rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-red-800',
+        info: 'rounded-xl border border-sky-200 bg-sky-50 px-5 py-4 text-sky-800'
+    };
+    var wrap = document.createElement('div');
+    wrap.className = (classes[tipo] || classes.info) + ' mb-4';
+    wrap.textContent = mensaje;
+    var container = document.querySelector('.mx-auto.w-full.max-w-\\[1400px\\]');
+    if (container && container.firstChild) {
+        container.insertBefore(wrap, container.firstChild);
+        setTimeout(function() { wrap.remove(); }, 5000);
+    } else {
+        alert(mensaje);
     }
-    
-    const temporizador = setInterval(() => {
-        const tiempoRestante = new Date(fechaVencimiento).getTime() - new Date().getTime();
-        
-        if (tiempoRestante <= 0) {
-            clearInterval(temporizador);
-            mostrarAlerta(`¡El tracking ${trackingId} ha vencido!`, 'danger');
-            delete temporizadores[trackingId];
-        } else {
-            // Actualizar el display del temporizador si existe
-            const displayElement = document.getElementById(`temporizador-${trackingId}`);
-            if (displayElement) {
-                const dias = Math.floor(tiempoRestante / (1000 * 60 * 60 * 24));
-                const horas = Math.floor((tiempoRestante % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutos = Math.floor((tiempoRestante % (1000 * 60 * 60)) / (1000 * 60));
-                const segundos = Math.floor((tiempoRestante % (1000 * 60)) / 1000);
-                
-                displayElement.innerHTML = `
-                    <div class="text-center">
-                        <div class="h4 text-danger">${dias}d ${horas}h ${minutos}m ${segundos}s</div>
-                        <small class="text-muted">Tiempo restante</small>
-                    </div>
-                `;
-            }
-        }
-    }, 1000);
-    
-    return temporizador;
 }
-
-// Inicializar temporizadores al cargar la página
 document.addEventListener('DOMContentLoaded', function() {
-    // Cargar temporizadores para trackings próximos a vencer
-    @foreach($proximosVencer as $tracking)
-        const temporizador{{ $tracking->id }} = crearTemporizador({{ $tracking->id }}, '{{ $tracking->recordatorio_fecha }}');
-        if (temporizador{{ $tracking->id }}) {
-            temporizadores[{{ $tracking->id }}] = temporizador{{ $tracking->id }};
-        }
-    @endforeach
-    
-    // Actualizar contador de próximos a vencer
-    document.getElementById('contadorProximos').textContent = {{ $proximosVencer->count() }};
-});
-
-// Limpiar temporizadores al salir de la página
-window.addEventListener('beforeunload', function() {
-    Object.values(temporizadores).forEach(temporizador => {
-        clearInterval(temporizador);
-    });
+    var c = document.getElementById('contadorProximos');
+    if (c) c.textContent = {{ $proximosVencer->count() }};
 });
 </script>
-@endsection 
+@endpush
+@endsection

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'SkylinkOne CRM')</title>
+    <title>@yield('title', 'CH Logistics ERP')</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- jQuery (debe ir antes de select2 y de cualquier script que use $) -->
@@ -14,15 +14,15 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <style>
         :root {
-            --primary-color: #1A1A5E; /* Azul oscuro */
-            --secondary-color: #D7263D; /* Rojo */
+            --primary-color: #15537c; /* Azul */
+            --secondary-color: #2d6a9a; /* Azul claro */
             --text-color: #222222; /* Gris oscuro */
             --background-color: #FFFFFF; /* Blanco */
             --muted-bg: #F4F4F4; /* Gris claro */
             --sidebar-width: 240px;
             --sidebar-bg: #fff; /* Sidebar blanco */
-            --sidebar-link: #1A1A5E; /* Azul oscuro */
-            --sidebar-link-active: #D7263D; /* Rojo */
+            --sidebar-link: #15537c; /* Azul */
+            --sidebar-link-active: #2d6a9a; /* Azul claro */
             --navbar-bg: #fff;
             --navbar-link: var(--primary-color);
             --card-bg: #fff;
@@ -38,7 +38,7 @@
             width: var(--sidebar-width);
             background: var(--sidebar-bg);
             color: var(--sidebar-link);
-            box-shadow: 2px 0 10px rgba(26,26,94,0.04);
+            box-shadow: 2px 0 10px rgba(21,83,124,0.04);
         }
         .sidebar .sidebar-logo {
             display: flex;
@@ -64,7 +64,7 @@
             margin-bottom: 0.25rem;
         }
         .sidebar .nav-link.active, .sidebar .nav-link:hover {
-            background: rgba(215,38,61,0.08);
+            background: rgba(21,83,124,0.12);
             color: var(--sidebar-link-active);
             border-left: 4px solid var(--sidebar-link-active);
         }
@@ -88,8 +88,8 @@
             border-color: var(--primary-color);
         }
         .btn-primary:hover, .btn-primary:focus {
-            background: #15154a;
-            border-color: #15154a;
+            background: #0f3d5c;
+            border-color: #0f3d5c;
         }
         .btn-accent, .btn-danger {
             background: var(--secondary-color);
@@ -97,14 +97,14 @@
             color: #fff;
         }
         .btn-accent:hover, .btn-danger:hover {
-            background: #b81e32;
-            border-color: #b81e32;
+            background: #1e5a82;
+            border-color: #1e5a82;
         }
         .card {
             background: var(--card-bg);
             border: 1px solid var(--card-border);
             border-radius: 1rem;
-            box-shadow: 0 2px 8px rgba(26,26,94,0.04);
+            box-shadow: 0 2px 8px rgba(21,83,124,0.04);
         }
         .card-title {
             color: var(--primary-color);
@@ -118,7 +118,7 @@
         }
         .form-control:focus {
             border-color: var(--secondary-color);
-            box-shadow: 0 0 0 0.2rem rgba(215,38,61,0.15);
+            box-shadow: 0 0 0 0.2rem rgba(21,83,124,0.2);
         }
         /* Notificaciones */
         .notification-badge {
@@ -196,13 +196,15 @@
 <body>
     @php
         $hideSidebar = request()->routeIs('facturacion.create') || request()->routeIs('facturacion.edit');
+        $inventarioEditSinSidebar = request()->routeIs('inventario.edit');
+        $mainSinMargenSidebar = $hideSidebar || $inventarioEditSinSidebar;
         $user = Auth::user();
     @endphp
     @if(Auth::check())
     <div class="d-flex">
-        @if(!$hideSidebar && !request()->routeIs('inventario.edit'))
+        @if(!$hideSidebar && !$inventarioEditSinSidebar)
         <!-- Sidebar -->
-        <nav id="sidebar" class="sidebar d-flex flex-column p-3" style="background: #fff; box-shadow: 2px 0 10px rgba(26,46,117,0.04); position: fixed; top: 0; left: 0; height: 100vh; width: 260px; z-index: 1040;">
+        <nav id="sidebar" class="sidebar d-flex flex-column p-3" style="background: #fff; box-shadow: 2px 0 10px rgba(21,83,124,0.04); position: fixed; top: 0; left: 0; height: 100vh; width: 260px; z-index: 1040;">
             <div class="sidebar-logo d-flex justify-content-center align-items-center" style="background: #fff; border-radius: 1.5rem; margin-bottom: 2.5rem; padding-top: 3.5rem; padding-bottom: 3.5rem;">
                 <img src="/logo_skylinkone.png" alt="SkyLink One Logo" style="height: 200px; max-width: 260px; width: auto; display: block;">
             </div>
@@ -210,12 +212,10 @@
         </nav>
         @endif
         <!-- Main content -->
-        <div class="flex-grow-1" style="margin-left: 260px;">
-            <nav class="navbar navbar-expand-lg px-4 py-2 sticky-top shadow-sm" style="background: #f4f6fb; color: #1A2E75; z-index:1050;">
+        <div class="flex-grow-1" style="margin-left: {{ $mainSinMargenSidebar ? '0' : '260px' }};">
+            <nav class="navbar navbar-expand-lg px-3 px-lg-4 py-2 sticky-top shadow-sm @if($hideSidebar) d-none @endif" style="background: #f4f6fb; color: #15537c; z-index:1050;">
                 <div class="container-fluid">
-                    @if(!$hideSidebar)
                     @include('layouts.navbar-menu', ['user' => $user])
-                    @endif
                 </div>
             </nav>
             <main class="p-4">

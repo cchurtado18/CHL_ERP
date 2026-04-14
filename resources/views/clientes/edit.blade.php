@@ -1,13 +1,13 @@
 @extends('layouts.app')
 
-@section('title', 'Editar Cliente - SkylinkOne CRM')
+@section('title', 'Editar Cliente - CH Logistics ERP')
 @section('page-title', 'Editar Cliente')
 
 @section('content')
 <div class="container-fluid px-4">
     <div class="row mb-4">
         <div class="col-12">
-            <div class="rounded-4 shadow-sm px-4 py-4 mb-4 d-flex align-items-center justify-content-between" style="background: linear-gradient(90deg, #1A2E75 0%, #5C6AC4 100%); min-height:90px;">
+            <div class="rounded-4 shadow-sm px-4 py-4 mb-4 d-flex align-items-center justify-content-between" style="background: linear-gradient(90deg, #15537c 0%, #2d6a9a 100%); min-height:90px;">
                 <div class="d-flex align-items-center gap-3">
                     <div class="bg-white rounded-circle d-flex align-items-center justify-content-center" style="width:60px; height:60px; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
                         <i class="fas fa-user-edit text-primary" style="font-size:2.2rem;"></i>
@@ -17,7 +17,7 @@
                         <p class="mb-0 text-white-50" style="font-size:1.1rem;">Modifica los datos del cliente seleccionado</p>
                     </div>
                 </div>
-                <a href="{{ route('clientes.index') }}" class="btn btn-lg fw-semibold shadow-sm px-4" style="background:#fff; color:#1A2E75; border:2px solid #1A2E75; box-shadow:0 2px 8px rgba(26,46,117,0.08); font-size:1.2rem;">
+                <a href="{{ route('clientes.index') }}" class="btn btn-lg fw-semibold shadow-sm px-4" style="background:#fff; color:#15537c; border:2px solid #15537c; box-shadow:0 2px 8px rgba(21,83,124,0.08); font-size:1.2rem;">
                     <i class="fas fa-arrow-left me-2"></i> Volver
                 </a>
             </div>
@@ -94,7 +94,7 @@
 <style>
     .card {
         border-radius: 18px;
-        box-shadow: 0 2px 8px rgba(26,46,117,0.04);
+        box-shadow: 0 2px 8px rgba(21,83,124,0.04);
     }
     .form-control, .form-select {
         border-radius: 8px !important;
@@ -102,25 +102,25 @@
         padding: 0.7rem 1.1rem;
         border: 1.5px solid #e3e8f0;
         background: #f8fafc;
-        color: #1A2E75;
+        color: #15537c;
         font-weight: 500;
         box-shadow: none;
         transition: border 0.18s;
     }
     .form-control:focus, .form-select:focus {
-        border-color: #5C6AC4;
+        border-color: #2d6a9a;
         outline: none;
         background: #fff;
     }
     .btn-primary {
-        background: linear-gradient(90deg, #1A2E75 0%, #5C6AC4 100%);
+        background: linear-gradient(90deg, #15537c 0%, #2d6a9a 100%);
         border: none;
         color: #fff;
         font-weight: 700;
         border-radius: 8px;
     }
     .btn-primary:hover, .btn-primary:focus {
-        background: linear-gradient(90deg, #5C6AC4 0%, #1A2E75 100%);
+        background: linear-gradient(90deg, #2d6a9a 0%, #15537c 100%);
         color: #fff;
     }
     .btn-outline-secondary {
@@ -132,7 +132,7 @@
     }
     .btn-outline-secondary:hover, .btn-outline-secondary:focus {
         background: #e3e8f0;
-        color: #1A2E75;
+        color: #15537c;
     }
 </style>
 @endsection

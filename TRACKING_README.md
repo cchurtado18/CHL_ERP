@@ -1,4 +1,4 @@
-# 📋 Módulo de Tracking con Temporizador - SkylinkOne CRM
+# 📋 Módulo de Tracking con Temporizador - CH Logistics ERP
 
 ## 🎯 Descripción
 
@@ -264,4 +264,4 @@ Para soporte técnico o consultas sobre el módulo de Tracking:
 
 ---
 
-**Desarrollado con ❤️ para SkylinkOne CRM** 
+**Desarrollado con ❤️ para CH Logistics ERP** 

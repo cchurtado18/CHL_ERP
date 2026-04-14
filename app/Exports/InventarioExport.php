@@ -36,7 +36,7 @@ class InventarioExport implements FromCollection, WithMapping, WithStyles, WithT
 
     public function styles(Worksheet $sheet)
     {
-        // Encabezados azul Skylink y negrita en la fila 3
+        // Encabezados azul CH Logistics y negrita en la fila 3
         $sheet->getStyle('A3:H3')->applyFromArray([
             'font' => [
                 'bold' => true,
@@ -73,7 +73,7 @@ class InventarioExport implements FromCollection, WithMapping, WithStyles, WithT
 
     public function title(): string
     {
-        return 'Inventario SkylinkOne';
+        return 'Inventario CH Logistics';
     }
 
     public function registerEvents(): array
@@ -83,7 +83,7 @@ class InventarioExport implements FromCollection, WithMapping, WithStyles, WithT
                 // Logo en la fila 1 (A1:H1) y título grande en la fila 2 (A2:H2)
                 $event->sheet->mergeCells('A1:H1');
                 $event->sheet->mergeCells('A2:H2');
-                $event->sheet->setCellValue('A2', 'Inventario de Paquetes - SkylinkOne CRM');
+                $event->sheet->setCellValue('A2', 'Inventario de Paquetes - CH Logistics ERP');
                 // Encabezados manualmente en la fila 3
                 $headers = ['Cliente', 'Servicio', 'Peso', 'Warehouse', 'Estado', 'Ingreso', 'Monto', 'P. Unit.'];
                 $col = 'A';
@@ -106,8 +106,8 @@ class InventarioExport implements FromCollection, WithMapping, WithStyles, WithT
     public function drawings()
     {
         $drawing = new Drawing();
-        $drawing->setName('Logo SkylinkOne');
-        $drawing->setDescription('Logo SkylinkOne');
+        $drawing->setName('Logo CH Logistics');
+        $drawing->setDescription('Logo CH Logistics');
         $drawing->setPath(public_path('logo_skylinkone.png'));
         $drawing->setHeight(120);
         $drawing->setCoordinates('E1'); // Centrado en la fila 1

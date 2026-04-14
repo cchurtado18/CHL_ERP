@@ -1,40 +1,27 @@
 @extends('layouts.app')
 
-@section('title', 'Editar Factura - SkylinkOne CRM')
+@section('title', 'Editar Factura - CH Logistics ERP')
 @section('page-title', '')
 
 @section('content')
-<div class="container-fluid px-4 pt-4">
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="rounded-4 shadow-sm px-4 py-4 mb-4 d-flex align-items-center justify-content-between" style="background: linear-gradient(90deg, #1A2E75 0%, #5C6AC4 100%); min-height:90px;">
-                <div class="d-flex align-items-center gap-3">
-                    <a href="{{ route('facturacion.index') }}" class="btn btn-lg fw-semibold shadow-sm px-4" style="background:#fff; color:#1A2E75; border:2px solid #1A2E75; box-shadow:0 2px 8px rgba(26,46,117,0.08); font-size:1.2rem;">
-                        <i class="fas fa-arrow-left me-2"></i> Volver
-                    </a>
-                    <div class="bg-white rounded-circle d-flex align-items-center justify-content-center" style="width:60px; height:60px; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
-                        <i class="fas fa-file-invoice-dollar text-primary" style="font-size:2.2rem;"></i>
-                    </div>
-                    <div>
-                        <h1 class="h3 mb-1 fw-bold text-white" style="letter-spacing:1px;">Editar Factura</h1>
-                        <p class="mb-0 text-white-50" style="font-size:1.1rem;">Modifica los datos de la factura seleccionada</p>
-                    </div>
-                </div>
-                <div class="d-flex align-items-center gap-3">
-                    <a class="nav-link position-relative" href="#" title="Notificaciones"><i class="fas fa-bell fa-lg text-white"></i></a>
-                    <div class="dropdown">
-                        <a class="nav-link dropdown-toggle d-flex align-items-center text-white" href="#" id="userDropdownHeader" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-user-circle fa-lg me-1"></i> Usuario
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdownHeader">
-                            <li><a class="dropdown-item" href="#">Perfil</a></li>
-                            <li><a class="dropdown-item" href="#">Cerrar sesión</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
+@php
+    $editEsEncFamiliar = ($factura->tipo_factura ?? '') === 'encomienda_familiar';
+@endphp
+<div class="facturacion-page-shell">
+    <div class="facturacion-top-banner d-flex align-items-center justify-content-between flex-wrap gap-2 gap-md-3" role="banner">
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <span class="mb-0">CH LOGISTICS ERP</span>
+            @if($editEsEncFamiliar)
+                <span class="badge rounded-pill px-3 py-2 fw-semibold" style="background: linear-gradient(135deg, #b45309 0%, #d97706 100%); color: #fff;"><i class="fas fa-people-carry me-1"></i>Encomienda familiar</span>
+            @else
+                <span class="badge rounded-pill px-3 py-2 fw-semibold text-white" style="background: #15537c;"><i class="fas fa-boxes me-1"></i>Paquetería</span>
+            @endif
         </div>
+        <a href="{{ route('facturacion.index') }}" class="btn btn-light btn-sm fw-semibold rounded-pill px-3 py-2 shadow-sm border-0 flex-shrink-0 facturacion-btn-volver">
+            <i class="fas fa-arrow-left me-1" aria-hidden="true"></i> Volver
+        </a>
     </div>
+    <div class="container-fluid px-3 px-lg-4 pt-3 pb-2">
     <div class="row justify-content-center">
         <div class="col-lg-10">
             <div class="card p-4">
@@ -55,20 +42,39 @@
                             <div id="cliente_resumen" class="mb-3"></div>
                             <div id="paquetes_container" class="mb-3"></div>
                             <div id="facturas_historial" class="mb-3"></div>
+                            @if(($factura->tipo_factura ?? '') !== 'encomienda_familiar')
                             <div class="mb-3">
                                 <label for="delivery" class="form-label fw-semibold">Costo Delivery (opcional)</label>
                                 <input type="number" step="0.01" min="0" name="delivery" id="delivery" class="form-control" value="{{ old('delivery', $factura->delivery) }}">
                             </div>
+                            @else
+                            <input type="hidden" name="delivery" id="delivery" value="{{ old('delivery', $factura->delivery) }}">
+                            @endif
                             <div class="mb-3">
                                 <label for="fecha_factura" class="form-label fw-semibold">Fecha de Factura</label>
                                 <input type="date" name="fecha_factura" class="form-control" value="{{ old('fecha_factura', $factura->fecha_factura) }}">
                                 @error('fecha_factura') <div class="text-danger">{{ $message }}</div> @enderror
                             </div>
                             <div class="mb-3">
-                                <label for="numero_acta" class="form-label fw-semibold">Número de Acta</label>
-                                <input type="text" name="numero_acta" class="form-control" value="{{ old('numero_acta', $factura->numero_acta) }}">
+                                <label for="numero_acta" class="form-label fw-semibold">Número de Acta <span class="text-muted fw-normal">(opcional)</span></label>
+                                <input type="text" name="numero_acta" class="form-control" value="{{ old('numero_acta', $factura->numero_acta) }}" placeholder="Puede dejarse vacío" autocomplete="off">
                                 @error('numero_acta') <div class="text-danger">{{ $message }}</div> @enderror
                             </div>
+                            <div class="mb-3">
+                                <label for="tipo_factura" class="form-label fw-semibold">Tipo</label>
+                                <select name="tipo_factura" id="tipo_factura" class="form-select" required>
+                                    <option value="paqueteria" {{ old('tipo_factura', $factura->tipo_factura ?? 'paqueteria') == 'paqueteria' ? 'selected' : '' }}>Paquetería</option>
+                                    <option value="encomienda_familiar" {{ old('tipo_factura', $factura->tipo_factura ?? '') == 'encomienda_familiar' ? 'selected' : '' }}>Encomienda familiar</option>
+                                </select>
+                                @error('tipo_factura') <div class="text-danger">{{ $message }}</div> @enderror
+                            </div>
+                            @if(($factura->tipo_factura ?? '') === 'encomienda_familiar' && $factura->encomienda_id && $factura->encomienda)
+                                <div class="mb-3 rounded border border-info bg-light p-3 small">
+                                    <strong>Encomienda vinculada:</strong> {{ $factura->encomienda->codigo }}
+                                    — {{ $factura->encomienda->remitente->nombre_completo ?? '—' }} → {{ $factura->encomienda->destinatario->nombre_completo ?? '—' }}
+                                    <a href="{{ route('encomiendas.show', $factura->encomienda_id) }}" class="ms-2">Ver encomienda</a>
+                                </div>
+                            @endif
                             <div class="mb-3">
                                 <label for="moneda" class="form-label fw-semibold">Moneda</label>
                                 <select name="moneda" class="form-select" required>
@@ -91,9 +97,27 @@
                                 @error('estado_pago') <div class="text-danger">{{ $message }}</div> @enderror
                             </div>
                             <div class="mb-3">
-                                <label for="nota" class="form-label fw-semibold">Nota</label>
-                                <textarea name="nota" class="form-control" rows="3">{{ old('nota', $factura->nota) }}</textarea>
+                                <label for="nota" class="form-label fw-semibold">Nota interna</label>
+                                <p class="small text-muted mb-2 mb-0">Solo uso interno; no aparece en el PDF. Consúltala en el <a href="{{ route('facturacion.show', $factura->id) }}">detalle de la factura</a>.</p>
+                                <textarea name="nota" id="nota" class="form-control" rows="3" placeholder="Ej. Pago acordado por transferencia">{{ old('nota', $factura->nota) }}</textarea>
                                 @error('nota') <div class="text-danger">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Datos de entrega</label>
+                                <div class="row g-2">
+                                    <div class="col-12">
+                                        <input type="text" name="entrega_nombre" class="form-control" placeholder="Entrega a (nombre receptor)" value="{{ old('entrega_nombre', $factura->entrega_nombre) }}">
+                                        @error('entrega_nombre') <div class="text-danger">{{ $message }}</div> @enderror
+                                    </div>
+                                    <div class="col-md-6">
+                                        <input type="text" name="entrega_cedula" class="form-control" placeholder="Cédula receptor" value="{{ old('entrega_cedula', $factura->entrega_cedula) }}">
+                                        @error('entrega_cedula') <div class="text-danger">{{ $message }}</div> @enderror
+                                    </div>
+                                    <div class="col-md-6">
+                                        <input type="text" name="entrega_telefono" class="form-control" placeholder="Teléfono entrega" value="{{ old('entrega_telefono', $factura->entrega_telefono) }}">
+                                        @error('entrega_telefono') <div class="text-danger">{{ $message }}</div> @enderror
+                                    </div>
+                                </div>
                             </div>
                             <div id="inputs_paquetes"></div>
                             <input type="hidden" name="monto_total" id="monto_total" value="{{ old('monto_total', $factura->monto_total) }}">
@@ -113,6 +137,7 @@
                 </div>
             </div>
         </div>
+    </div>
     </div>
 </div>
 @push('head')
@@ -257,38 +282,95 @@ $(document).ready(function() {
         $('#monto_local').val(total.toFixed(2)); // Si tienes lógica de moneda local, cámbiala aquí
     }
 
-    // PDF Preview (mantener tu lógica actual)
+    // PDF Preview: debounce + abort (misma ruta y datos que antes)
+    var previewXhr = null;
+    var previewScheduleTimer = null;
+    var lastPreviewPayloadHash = '';
+    var previewObjectUrl = null;
+
+    function hashFormDataForPreview(fd) {
+        var pairs = [];
+        try {
+            fd.forEach(function(v, k) {
+                if (v instanceof File) return;
+                pairs.push(k + '=' + String(v));
+            });
+        } catch (e) { return ''; }
+        pairs.sort();
+        return pairs.join('|');
+    }
+
+    function schedulePreview(delayMs) {
+        clearTimeout(previewScheduleTimer);
+        previewScheduleTimer = setTimeout(function() {
+            previewScheduleTimer = null;
+            updatePreview();
+        }, delayMs);
+    }
+
+    var SLOW_PREVIEW_NAMES = { entrega_nombre: 1, entrega_cedula: 1, entrega_telefono: 1, numero_acta: 1 };
+
+    function previewDelayForElement(el, evtKind) {
+        if (!el) return 400;
+        var tag = el.tagName;
+        if (tag === 'SELECT') return 350;
+        var typ = el.type || '';
+        if (typ === 'checkbox' || typ === 'radio') return 350;
+        if (SLOW_PREVIEW_NAMES[el.name]) return evtKind === 'focusout' ? 0 : 900;
+        if (el.classList && el.classList.contains('delivery-item-monto')) return 500;
+        if (typ === 'number' || typ === 'text' || typ === 'tel' || typ === 'search') return 600;
+        return 450;
+    }
+
     function updatePreview() {
         var form = document.getElementById('factura-form');
         var formData = new FormData(form);
         var cliente = getClienteData();
-        formData.append('cliente_nombre', cliente.nombre_completo || '');
-        formData.append('cliente_direccion', cliente.direccion || '');
-        formData.append('cliente_telefono', cliente.telefono || '');
+        formData.set('cliente_nombre', cliente.nombre_completo || '');
+        formData.set('cliente_direccion', cliente.direccion || '');
+        formData.set('cliente_telefono', cliente.telefono || '');
 
-        // Si no hay paquetes seleccionados, limpiar el PDF y no enviar nada
         if ($('.paquete-checkbox:checked').length === 0) {
             document.getElementById('preview-pdf').src = '';
+            lastPreviewPayloadHash = '';
             return;
         }
-        // Ya no agregamos los paquetes manualmente, los inputs ocultos lo hacen
 
-        // Enviar delivery
         var deliveryInput = document.getElementById('delivery');
         if (deliveryInput && deliveryInput.value) {
             formData.set('delivery', deliveryInput.value);
         }
 
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', '{{ route('facturacion.preview-live') }}', true);
-        xhr.responseType = 'blob';
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                var url = URL.createObjectURL(xhr.response) + '#toolbar=0&navpanes=0&scrollbar=0';
-                document.getElementById('preview-pdf').src = url;
+        try { formData.delete('nota'); } catch (e) {}
+
+        var payloadHash = hashFormDataForPreview(formData);
+        if (payloadHash && payloadHash === lastPreviewPayloadHash) {
+            return;
+        }
+
+        if (previewXhr) {
+            try { previewXhr.abort(); } catch (e) {}
+        }
+
+        var req = new XMLHttpRequest();
+        previewXhr = req;
+        req.open('POST', '{{ route('facturacion.preview-live') }}', true);
+        req.responseType = 'blob';
+        req.onload = function() {
+            if (previewXhr !== req) return;
+            previewXhr = null;
+            if (req.status !== 200) return;
+            if (previewObjectUrl) {
+                try { URL.revokeObjectURL(previewObjectUrl.split('#')[0]); } catch (e) {}
             }
+            previewObjectUrl = URL.createObjectURL(req.response);
+            document.getElementById('preview-pdf').src = previewObjectUrl + '#toolbar=0&navpanes=0&scrollbar=0';
+            lastPreviewPayloadHash = payloadHash;
         };
-        xhr.send(formData);
+        req.onerror = function() {
+            if (previewXhr === req) previewXhr = null;
+        };
+        req.send(formData);
     }
 
     function getClienteData() {
@@ -339,23 +421,81 @@ $(document).ready(function() {
         } else {
             $('.numero-acta-error').remove();
             $('input[name="numero_acta"]').removeClass('is-invalid');
+            $('#btn_guardar_factura').prop('disabled', false);
         }
     });
 
-    // Llamar updatePreview cuando se selecciona cliente o paquetes o cambia algún campo relevante
-    $('#cliente_id').on('change', function() { setTimeout(updatePreview, 300); });
-    $(document).on('change', '.paquete-checkbox', function() { setTimeout(updatePreview, 300); });
-    $('#factura-form').on('input change', 'input, select, textarea', function() { setTimeout(updatePreview, 300); });
+    $('#cliente_id').on('change', function() { schedulePreview(350); });
+    $(document).on('change', '.paquete-checkbox', function() { schedulePreview(350); });
+    $('#factura-form').on('input', 'input, select, textarea', function(e) {
+        if (e.target.name === 'nota') return;
+        schedulePreview(previewDelayForElement(e.target, 'input'));
+    });
+    $('#factura-form').on('change', 'input, select, textarea', function(e) {
+        if (e.target.name === 'nota') return;
+        var el = e.target;
+        var tag = el.tagName;
+        var typ = el.type || '';
+        if (tag === 'SELECT' || typ === 'checkbox' || typ === 'radio') {
+            schedulePreview(350);
+            return;
+        }
+        schedulePreview(previewDelayForElement(el, 'change'));
+    });
+    $('#factura-form').on('focusout', 'input, textarea', function(e) {
+        if (e.target.name === 'nota') return;
+        if (SLOW_PREVIEW_NAMES[e.target.name]) {
+            schedulePreview(0);
+        }
+    });
 });
 </script>
 @endsection
 
 <style>
+    .facturacion-page-shell {
+        margin: 0;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        overflow-x: visible;
+    }
+    .facturacion-top-banner {
+        background: linear-gradient(90deg, #15537c 0%, #1a5f8f 48%, #2d6a9a 100%);
+        color: #fff;
+        font-size: 1.2rem;
+        font-weight: 700;
+        line-height: 1.4;
+        letter-spacing: 0.02em;
+        padding: 1rem 1.5rem;
+        margin-bottom: 1.25rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(21, 83, 124, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+    @media (min-width: 992px) {
+        .facturacion-top-banner {
+            padding: 1.1rem 2rem;
+            font-size: 1.3rem;
+        }
+    }
+    .facturacion-btn-volver {
+        color: #15537c !important;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .facturacion-btn-volver:hover {
+        color: #0f3d5c !important;
+        background: #fff !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12) !important;
+    }
     .fact-table thead th {
-        background: #1A2E75 !important;
+        background: #15537c !important;
         color: #fff !important;
         border-radius: 0 !important;
-        border-bottom: 3px solid #5C6AC4;
+        border-bottom: 3px solid #2d6a9a;
         font-weight: 600;
         letter-spacing: 0.5px;
         border-right: 1px solid #e3e6f0 !important;
@@ -369,7 +509,7 @@ $(document).ready(function() {
     .fact-table {
         border-radius: 12px;
         overflow: hidden;
-        box-shadow: 0 2px 8px rgba(26,46,117,0.04);
+        box-shadow: 0 2px 8px rgba(21,83,124,0.04);
     }
     .fact-table tbody tr {
         background: #fff;
@@ -386,9 +526,9 @@ $(document).ready(function() {
     }
     .resumen-cliente-card {
         background: #fff;
-        border: 2px solid #5C6AC4;
+        border: 2px solid #2d6a9a;
         border-radius: 14px;
-        box-shadow: 0 2px 8px rgba(26,46,117,0.04);
+        box-shadow: 0 2px 8px rgba(21,83,124,0.04);
         padding: 1.2rem 1.5rem;
         margin-bottom: 1rem;
         display: flex;
@@ -396,7 +536,7 @@ $(document).ready(function() {
         gap: 18px;
     }
     .resumen-cliente-icon {
-        color: #1A2E75;
+        color: #15537c;
         font-size: 2.2rem;
         flex-shrink: 0;
         margin-top: 2px;
@@ -405,7 +545,7 @@ $(document).ready(function() {
         font-size: 1.08rem;
     }
     .resumen-cliente-info strong {
-        color: #1A2E75;
+        color: #15537c;
         font-weight: 600;
     }
     .select2-container .select2-selection--single {
@@ -421,10 +561,10 @@ $(document).ready(function() {
     }
     .card {
         border-radius: 18px;
-        box-shadow: 0 2px 8px rgba(26,46,117,0.04);
+        box-shadow: 0 2px 8px rgba(21,83,124,0.04);
     }
     .btn-primary {
-        background: #1A2E75;
+        background: #15537c;
         border: none;
         border-radius: 8px;
         font-weight: 600;
@@ -436,7 +576,7 @@ $(document).ready(function() {
         border-radius: 8px;
     }
     .table-primary {
-        background: #1A2E75 !important;
+        background: #15537c !important;
         color: #fff !important;
     }
     .alert-secondary {

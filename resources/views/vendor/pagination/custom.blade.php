@@ -1,60 +1,59 @@
 @if ($paginator->hasPages())
-    <nav>
-        <ul class="pagination justify-content-center" style="gap: 10px; margin-top: 24px;">
-            {{-- Previous Page Link --}}
+    <nav class="flex w-full justify-center" role="navigation" aria-label="Paginación">
+        <ul class="m-0 flex list-none flex-row flex-wrap items-center justify-center gap-2 p-0 sm:gap-2.5">
+            {{-- Anterior --}}
             @if ($paginator->onFirstPage())
-                <li class="disabled" aria-disabled="true" aria-label="Anterior">
-                    <span style="display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:10px;border:2px solid #e3e8f0;background:#fff;font-size:1.2rem;color:#b0b0b0;">
+                <li class="flex list-none" aria-disabled="true" aria-label="Anterior">
+                    <span class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border-2 border-slate-200 bg-white text-lg text-slate-400">
                         <i class="fas fa-chevron-left"></i>
                     </span>
                 </li>
             @else
-                <li>
+                <li class="flex list-none">
                     <a href="{{ $paginator->previousPageUrl() }}" rel="prev" aria-label="Anterior"
-                       style="display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:10px;border:2px solid #1A2E75;background:#fff;font-size:1.2rem;color:#1A2E75;transition:all 0.15s;">
+                       class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border-2 border-[#15537c] bg-white text-lg text-[#15537c] transition hover:bg-[#15537c]/5">
                         <i class="fas fa-chevron-left"></i>
                     </a>
                 </li>
             @endif
 
-            {{-- Pagination Elements --}}
             @foreach ($elements as $element)
-                {{-- "Three Dots" Separator --}}
                 @if (is_string($element))
-                    <li class="disabled"><span style="width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;">{{ $element }}</span></li>
+                    <li class="flex list-none items-center" aria-hidden="true">
+                        <span class="inline-flex h-11 min-w-[2.75rem] items-center justify-center px-1 text-slate-500">{{ $element }}</span>
+                    </li>
                 @endif
 
-                {{-- Array Of Links --}}
                 @if (is_array($element))
                     @foreach ($element as $page => $url)
                         @if ($page == $paginator->currentPage())
-                            <li class="active" aria-current="page">
-                                <span style="display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:10px;background:#1A2E75;color:#fff;font-size:1.2rem;font-weight:700;border:2px solid #1A2E75;">{{ $page }}</span>
+                            <li class="flex list-none" aria-current="page">
+                                <span class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border-2 border-[#15537c] bg-[#15537c] text-lg font-bold text-white">{{ $page }}</span>
                             </li>
                         @else
-                            <li>
-                                <a href="{{ $url }}" style="display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:10px;border:2px solid #1A2E75;background:#fff;color:#1A2E75;font-size:1.2rem;font-weight:700;transition:all 0.15s;">{{ $page }}</a>
+                            <li class="flex list-none">
+                                <a href="{{ $url }}" class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border-2 border-[#15537c] bg-white text-lg font-bold text-[#15537c] transition hover:bg-[#15537c]/5">{{ $page }}</a>
                             </li>
                         @endif
                     @endforeach
                 @endif
             @endforeach
 
-            {{-- Next Page Link --}}
+            {{-- Siguiente --}}
             @if ($paginator->hasMorePages())
-                <li>
+                <li class="flex list-none">
                     <a href="{{ $paginator->nextPageUrl() }}" rel="next" aria-label="Siguiente"
-                       style="display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:10px;border:2px solid #1A2E75;background:#fff;font-size:1.2rem;color:#1A2E75;transition:all 0.15s;">
+                       class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border-2 border-[#15537c] bg-white text-lg text-[#15537c] transition hover:bg-[#15537c]/5">
                         <i class="fas fa-chevron-right"></i>
                     </a>
                 </li>
             @else
-                <li class="disabled" aria-disabled="true" aria-label="Siguiente">
-                    <span style="display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:10px;border:2px solid #e3e8f0;background:#fff;font-size:1.2rem;color:#b0b0b0;">
+                <li class="flex list-none" aria-disabled="true" aria-label="Siguiente">
+                    <span class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border-2 border-slate-200 bg-white text-lg text-slate-400">
                         <i class="fas fa-chevron-right"></i>
                     </span>
                 </li>
             @endif
         </ul>
     </nav>
-@endif 
+@endif

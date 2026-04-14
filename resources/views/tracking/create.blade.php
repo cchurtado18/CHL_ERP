@@ -1,13 +1,13 @@
 @extends('layouts.app')
 
-@section('title', 'Nuevo Tracking - SkylinkOne CRM')
+@section('title', 'Nuevo Tracking - CH Logistics ERP')
 
 @section('content')
 <div class="container-fluid px-4">
     <!-- Header Section -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="rounded-4 shadow-sm px-4 py-4 mb-4 d-flex align-items-center justify-content-between" style="background: linear-gradient(90deg, #1A2E75 0%, #5C6AC4 100%); min-height:90px;">
+            <div class="rounded-4 shadow-sm px-4 py-4 mb-4 d-flex align-items-center justify-content-between" style="background: linear-gradient(90deg, #15537c 0%, #2d6a9a 100%); min-height:90px;">
                 <div class="d-flex align-items-center gap-3">
                     <div class="bg-white rounded-circle d-flex align-items-center justify-content-center" style="width:60px; height:60px; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
                         <i class="fas fa-stopwatch text-primary" style="font-size:2.2rem;"></i>

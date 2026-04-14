@@ -58,6 +58,13 @@ class NotificacionController extends Controller
      */
     public function show(Notificacion $notificacion)
     {
+        if (Auth::check()
+            && (int) $notificacion->user_id === (int) Auth::id()
+            && ! $notificacion->leido) {
+            $notificacion->update(['leido' => true]);
+            $notificacion->refresh();
+        }
+
         return view('notificaciones.show', compact('notificacion'));
     }
 

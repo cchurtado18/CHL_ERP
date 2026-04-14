@@ -11,26 +11,41 @@ class Facturacion extends Model
 
     protected $table = 'facturacion';
 
+    protected $casts = [
+        'contabilidad_pendiente' => 'boolean',
+    ];
+
     protected $fillable = [
         'cliente_id',
+        'encomienda_id',
         'fecha_factura',
         'numero_acta',
+        'tipo_factura',
         'monto_total',
         'moneda',
         'tasa_cambio',
         'monto_local',
         'estado_pago',
+        'contabilidad_pendiente',
         'nota',
         'created_by',
         'updated_by',
         'delivery',
         'cantidad_paquetes',
+        'entrega_nombre',
+        'entrega_cedula',
+        'entrega_telefono',
     ];
 
     // Cliente relacionado
     public function cliente()
     {
         return $this->belongsTo(Cliente::class);
+    }
+
+    public function encomienda()
+    {
+        return $this->belongsTo(Encomienda::class);
     }
 
     // Usuario que creó la factura
@@ -55,5 +70,11 @@ class Facturacion extends Model
     public function pagos()
     {
         return $this->hasMany(Pago::class, 'factura_id');
+    }
+
+    /** Cuenta por cobrar contable (CxC) asociada a esta factura */
+    public function contaCxc()
+    {
+        return $this->hasOne(ContaCxc::class, 'factura_id');
     }
 }

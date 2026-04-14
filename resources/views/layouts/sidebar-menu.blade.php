@@ -6,9 +6,9 @@
         display: flex;
     }
     .nav-link.active, .nav-link:focus, .nav-link:hover {
-        color: #D7263D !important;
-        background: rgba(215,38,61,0.08);
-        border-left: 4px solid #D7263D;
+        color: #2d6a9a !important;
+        background: rgba(21,83,124,0.12);
+        border-left: 4px solid #2d6a9a;
     }
 </style>
 <ul class="nav flex-column">
@@ -17,6 +17,12 @@
             <a class="nav-link d-flex @if(request()->is('inventario*')) active @endif" href="{{ url('/inventario') }}">
                 <i class="fas fa-box"></i>
                 <span>Inventario</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link d-flex @if(request()->is('encomiendas*')) active @endif" href="{{ url('/encomiendas') }}">
+                <i class="fas fa-people-carry-box"></i>
+                <span>Encomiendas</span>
             </a>
         </li>
         <li class="nav-item">
@@ -44,6 +50,12 @@
             <a class="nav-link d-flex @if(request()->is('inventario*')) active @endif" href="{{ url('/inventario') }}">
                 <i class="fas fa-box"></i>
                 <span>Inventario</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link d-flex @if(request()->is('encomiendas*')) active @endif" href="{{ url('/encomiendas') }}">
+                <i class="fas fa-people-carry-box"></i>
+                <span>Encomiendas</span>
             </a>
         </li>
         <li class="nav-item">

@@ -11,9 +11,7 @@ class RoleMiddleware
     /**
      * Maneja una solicitud entrante.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
-     * @param  mixed ...$roles
+     * @param  mixed  ...$roles
      * @return mixed
      */
     public function handle(Request $request, Closure $next, ...$roles)
@@ -24,16 +22,20 @@ class RoleMiddleware
             $allowed = [
                 'inventario.index', 'inventario.create', 'inventario.store', 'inventario.edit', 'inventario.update', 'inventario.show',
                 'notificaciones.index', 'notificaciones.create', 'notificaciones.store', 'notificaciones.edit', 'notificaciones.update', 'notificaciones.show',
-                // agrega aquí cualquier otra ruta de inventario o notificaciones
+                'leads.calendar', 'leads.index', 'leads.create', 'leads.store', 'leads.show', 'leads.edit', 'leads.update',
+                'leads.interacciones.store', 'leads.cambiar-etapa', 'leads.contactado-rapido',
+                'leads.agenda-eventos.store', 'leads.agenda-eventos.destroy',
             ];
-            if (!in_array($route, $allowed)) {
+            if (! in_array($route, $allowed)) {
                 abort(403, 'No tienes permiso para acceder a esta sección.');
             }
+
             return $next($request);
         }
-        if (!$user || !in_array($user->rol, ['admin', 'auditor', 'agente'])) {
+        if (! $user || ! in_array($user->rol, ['admin', 'auditor', 'agente'])) {
             abort(403, 'No tienes permiso para acceder a esta sección.');
         }
+
         return $next($request);
     }
 }

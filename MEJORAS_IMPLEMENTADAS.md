@@ -2,7 +2,7 @@
 
 ## Resumen de Cambios
 
-Se han implementado exitosamente todas las mejoras solicitadas en el sistema CRM Logístico de SkylinkOne. A continuación se detallan las modificaciones realizadas:
+Se han implementado exitosamente todas las mejoras solicitadas en el sistema CRM Logístico de CH Logistics. A continuación se detallan las modificaciones realizadas:
 
 ## 1. Campo Warehouse/Guía - Validación Mejorada
 

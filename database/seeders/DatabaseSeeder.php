@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
             ServicioSeeder::class,
             NotificacionSeeder::class,
             TrackingSeeder::class,
+            ContaCuentaSeeder::class,
         ]);
     }
 }

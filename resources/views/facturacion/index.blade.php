@@ -1,50 +1,47 @@
-@extends('layouts.app')
+@extends('layouts.app-new')
 
-@section('title', 'Facturación - SkylinkOne CRM')
-@section('page-title', 'Facturación')
+@section('title', 'Facturación - CH LOGISTICS ERP')
+@section('navbar-title', 'Facturación')
 
 @section('content')
-{{-- Vista principal de facturación: lista, filtros y acciones --}}
-<div class="container-fluid px-4">
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="rounded-4 shadow-sm px-4 py-4 mb-4 d-flex align-items-center justify-content-between" style="background: linear-gradient(90deg, #1A2E75 0%, #5C6AC4 100%); min-height:90px;">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="bg-white rounded-circle d-flex align-items-center justify-content-center" style="width:60px; height:60px; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
-                        <i class="fas fa-file-invoice-dollar text-primary" style="font-size:2.2rem;"></i>
-                    </div>
-                    <div>
-                        <h1 class="h3 mb-1 fw-bold text-white" style="letter-spacing:1px;">Facturación</h1>
-                        <p class="mb-0 text-white-50" style="font-size:1.1rem;">Gestiona todas las facturas del sistema</p>
-                    </div>
-                </div>
-                <a href="{{ route('facturacion.create') }}" class="btn btn-lg fw-semibold shadow-sm px-4" style="background:#1A2E75; color:#fff;">
-                    <i class="fas fa-plus me-2"></i> Nueva Factura
-                </a>
-            </div>
-        </div>
+<div class="mx-auto w-full max-w-[1400px] space-y-8">
+    @if (session('success'))
+    <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-base text-emerald-800" role="alert">
+        <span class="font-medium">{{ session('success') }}</span>
     </div>
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
     @endif
-    <div class="card p-3">
-        {{-- Filtros de búsqueda por cliente, fecha, acta y estado --}}
-        <form method="GET" class="row g-2 mb-3 align-items-end">
-            <div class="col-md-3">
-                <label class="form-label">Cliente</label>
-                <input type="text" name="cliente" value="{{ request('cliente') }}" class="form-control" placeholder="Buscar cliente...">
+    @if (session('info_contabilidad'))
+    <div class="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-base text-amber-900" role="alert">
+        <span class="font-medium"><i class="fas fa-calculator mr-2"></i>{{ session('info_contabilidad') }}</span>
+    </div>
+    @endif
+
+    {{-- Filtros --}}
+    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <form method="GET" action="{{ route('facturacion.index') }}" class="flex flex-wrap items-end gap-4">
+            <div class="min-w-[180px] flex-1">
+                <label class="mb-1.5 block text-sm font-medium text-slate-600">Cliente</label>
+                <input type="text" name="cliente" value="{{ request('cliente') }}" placeholder="Buscar cliente..." class="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-base focus:border-[#15537c] focus:ring-1 focus:ring-[#15537c]">
             </div>
-            <div class="col-md-2">
-                <label class="form-label">Fecha</label>
-                <input type="date" name="fecha" value="{{ request('fecha') }}" class="form-control">
+            <div class="w-40">
+                <label class="mb-1.5 block text-sm font-medium text-slate-600">Fecha</label>
+                <input type="date" name="fecha" value="{{ request('fecha') }}" class="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-base focus:border-[#15537c] focus:ring-1 focus:ring-[#15537c]">
             </div>
-            <div class="col-md-2">
-                <label class="form-label">Acta</label>
-                <input type="text" name="acta" value="{{ request('acta') }}" class="form-control" placeholder="N° de acta">
+            <div class="w-36">
+                <label class="mb-1.5 block text-sm font-medium text-slate-600">Acta</label>
+                <input type="text" name="acta" value="{{ request('acta') }}" placeholder="N° acta" class="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-base focus:border-[#15537c] focus:ring-1 focus:ring-[#15537c]">
             </div>
-            <div class="col-md-2">
-                <label class="form-label">Estado</label>
-                <select name="estado" class="form-select">
+            <div class="w-52">
+                <label class="mb-1.5 block text-sm font-medium text-slate-600">Tipo de factura</label>
+                <select name="tipo_factura" class="w-full appearance-none rounded-lg border border-slate-300 bg-white bg-[length:1.25rem] bg-[right_0.75rem_center] bg-no-repeat px-4 py-2.5 pr-10 text-base focus:border-[#15537c] focus:ring-1 focus:ring-[#15537c]" style="background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 24 24%22 stroke=%22%2364758b%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%222%22 d=%22M19 9l-7 7-7-7%22/%3E%3C/svg%3E');">
+                    <option value="">Todos</option>
+                    <option value="paqueteria" {{ request('tipo_factura') === 'paqueteria' ? 'selected' : '' }}>Paquetería</option>
+                    <option value="encomienda_familiar" {{ request('tipo_factura') === 'encomienda_familiar' ? 'selected' : '' }}>Encomienda familiar</option>
+                </select>
+            </div>
+            <div class="w-48">
+                <label class="mb-1.5 block text-sm font-medium text-slate-600">Estado</label>
+                <select name="estado" class="w-full appearance-none rounded-lg border border-slate-300 bg-white bg-[length:1.25rem] bg-[right_0.75rem_center] bg-no-repeat px-4 py-2.5 pr-10 text-base focus:border-[#15537c] focus:ring-1 focus:ring-[#15537c]" style="background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 24 24%22 stroke=%22%2364758b%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%222%22 d=%22M19 9l-7 7-7-7%22/%3E%3C/svg%3E');">
                     <option value="">Todos</option>
                     <option value="entregado_pagado" {{ request('estado')=='entregado_pagado'?'selected':'' }}>Entregado y Pagado</option>
                     <option value="entregado_sin_pagar" {{ request('estado')=='entregado_sin_pagar'?'selected':'' }}>Entregado sin Pagar</option>
@@ -52,291 +49,184 @@
                     <option value="facturado_npne" {{ request('estado')=='facturado_npne'?'selected':'' }}>Facturado NPNE</option>
                 </select>
             </div>
-            <div class="col-md-3 filter-btn-group">
-                <button class="btn-filter" type="submit"><i class="fas fa-search"></i> Filtrar</button>
-                <a href="{{ route('facturacion.index') }}" class="btn-clear"><i class="fas fa-eraser"></i> Limpiar filtros</a>
-            </div>
+            <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-[#15537c] px-5 py-2.5 text-base font-medium text-white hover:bg-[#0f3d5c]"><i class="fas fa-search"></i> Filtrar</button>
+            <a href="{{ route('facturacion.index') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-5 py-2.5 text-base font-medium text-slate-600 hover:bg-slate-50">Limpiar</a>
         </form>
-        <div class="table-responsive">
-            <style>
-                .fact-table thead th {
-                    background: #1A2E75 !important;
-                    color: #fff !important;
-                    border-radius: 0 !important;
-                    border-bottom: 3px solid #5C6AC4;
-                    font-weight: 600;
-                    letter-spacing: 0.5px;
-                }
-                .fact-table thead tr {
-                    border-radius: 0 !important;
-                }
-                .fact-table {
-                    border-radius: 12px;
-                    overflow: hidden;
-                    box-shadow: 0 2px 8px rgba(26,46,117,0.04);
-                }
-                .fact-table tbody tr {
-                    background: #fff;
-                    transition: background 0.2s;
-                }
-                .fact-table tbody tr:hover {
-                    background: #F5F7FA !important;
-                }
-                .btn-fact {
-                    border-radius: 8px !important;
-                    min-width: 38px;
-                    min-height: 38px;
-                    padding: 0 12px;
-                    font-size: 1.1rem;
-                    display: inline-flex;
-                    align-items: center;
-                    justify-content: center;
-                    border: none;
-                    box-shadow: none;
-                    transition: background 0.15s;
-                }
-                .btn-fact-view {
-                    background: #1A2E75;
-                    color: #fff;
-                }
-                .btn-fact-pdf {
-                    background: #5C6AC4;
-                    color: #fff;
-                }
-                .btn-fact-delete {
-                    background: #BF1E2E;
-                    color: #fff;
-                }
-                .btn-fact:hover, .btn-fact:focus {
-                    opacity: 0.92;
-                    color: #fff;
-                }
-                .btn-filter {
-                    background: #1A2E75;
-                    color: #fff;
-                    border-radius: 8px;
-                    border: none;
-                    min-width: 120px;
-                    min-height: 42px;
-                    font-weight: 600;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 8px;
-                    font-size: 1rem;
-                    box-shadow: none;
-                    transition: background 0.15s;
-                }
-                .btn-filter:hover, .btn-filter:focus {
-                    background: #223a7a;
-                    color: #fff;
-                }
-                .btn-clear {
-                    background: #F5F7FA;
-                    color: #1A2E75;
-                    border: 1.5px solid #1A2E75;
-                    border-radius: 8px;
-                    min-width: 140px;
-                    min-height: 42px;
-                    font-weight: 600;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 8px;
-                    font-size: 1rem;
-                    box-shadow: none;
-                    transition: background 0.15s;
-                    text-decoration: none !important;
-                }
-                .btn-clear:hover, .btn-clear:focus {
-                    background: #e9ecef;
-                    color: #1A2E75;
-                    border-color: #223a7a;
-                }
-                .filter-btn-group {
-                    display: flex;
-                    gap: 10px;
-                    align-items: center;
-                    justify-content: flex-end;
-                }
-            </style>
-            {{-- Tabla de facturas con acciones --}}
-            <table class="table fact-table table-hover align-middle mb-0">
-                <thead>
+    </div>
+
+    {{-- Barra: leyenda + Nueva Factura --}}
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+            <p class="font-medium text-slate-600">
+                Total: <span class="font-bold text-slate-800">{{ $facturas->total() }}</span> facturas
+            </p>
+            <div class="flex flex-wrap items-center gap-4 text-xs text-slate-500" aria-hidden="true">
+                <span class="inline-flex items-center gap-2 font-medium">
+                    <span class="h-3 w-1 shrink-0 rounded-sm bg-[#15537c]" title="Paquetería"></span>
+                    Paquetería
+                </span>
+                <span class="inline-flex items-center gap-2 font-medium">
+                    <span class="h-3 w-1 shrink-0 rounded-sm bg-amber-500" title="Encomienda familiar"></span>
+                    Encomienda familiar
+                </span>
+            </div>
+        </div>
+        <a href="{{ route('facturacion.create') }}" class="inline-flex items-center gap-2 rounded-xl bg-[#15537c] px-5 py-2.5 text-base font-semibold text-white shadow-sm hover:bg-[#0f3d5c]"><i class="fas fa-plus"></i> Nueva Factura</a>
+    </div>
+
+    {{-- Tabla --}}
+    <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="w-full table-fixed border-collapse text-left text-base text-black">
+                <colgroup>
+                    <col style="width:4%">
+                    <col style="width:13%">
+                    <col style="width:12%">
+                    <col style="width:9%">
+                    <col style="width:11%">
+                    <col style="width:7%">
+                    <col style="width:10%">
+                    <col style="width:7%">
+                    <col style="width:15%">
+                    <col style="width:12%">
+                </colgroup>
+                <thead class="border-b border-slate-200 bg-[#15537c] text-white">
                     <tr>
-                        <th>#</th>
-                        <th>Cliente</th>
-                        <th>Fecha</th>
-                        <th>Acta</th>
-                        <th>Paquetes</th>
-                        <th>Monto Total</th>
-                        <th>Moneda</th>
-                        <th>Estado</th>
-                        <th>Opciones</th>
+                        <th class="px-3 py-2 font-semibold text-center">#</th>
+                        <th class="px-3 py-2 font-semibold text-center">Tipo</th>
+                        <th class="px-4 py-2 font-semibold">Cliente</th>
+                        <th class="px-4 py-2 font-semibold text-center">Fecha</th>
+                        <th class="px-4 py-2 font-semibold text-center">Acta</th>
+                        <th class="px-4 py-2 font-semibold text-center">Paq.</th>
+                        <th class="px-4 py-2 font-semibold text-center">Monto</th>
+                        <th class="px-4 py-2 font-semibold text-center">Moneda</th>
+                        <th class="px-4 py-2 font-semibold text-center">Estado</th>
+                        <th class="px-4 py-2 font-semibold text-right">Opciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($facturas as $factura)
-                        <tr>
-                            <td>{{ $factura->id }}</td>
-                            <td>
-                                <div class="fw-semibold text-dark">{{ $factura->cliente->nombre_completo ?? 'N/D' }}</div>
-                                <small class="text-muted d-none d-lg-block">{{ $factura->cliente->correo ?? 'Sin email' }}</small>
-                            </td>
-                            <td>{{ $factura->fecha_factura }}</td>
-                            <td>{{ $factura->numero_acta }}</td>
-                            <td><span class="badge bg-info">{{ $factura->cantidad_paquetes ?? count($factura->paquetes) }}</span></td>
-                            <td><span class="fw-bold">${{ number_format($factura->monto_total, 2) }}</span></td>
-                            <td>{{ $factura->moneda }}</td>
-                            <td>
-                                <form method="POST" action="{{ route('facturacion.cambiar-estado', $factura->id) }}" class="d-inline">
-                                    @csrf
-                                    <select name="estado_pago" class="form-select form-select-sm d-inline w-auto" onchange="this.form.submit()" @if($factura->estado_pago=='entregado_pagado') disabled @endif>
-                                        <option value="entregado_pagado" {{ $factura->estado_pago=='entregado_pagado'?'selected':'' }}>Entregado y Pagado</option>
-                                        <option value="entregado_sin_pagar" {{ $factura->estado_pago=='entregado_sin_pagar'?'selected':'' }}>Entregado sin Pagar</option>
-                                        <option value="pagado_sin_entregar" {{ $factura->estado_pago=='pagado_sin_entregar'?'selected':'' }}>Pagado sin Entregar</option>
-                                        <option value="facturado_npne" {{ $factura->estado_pago=='facturado_npne'?'selected':'' }}>Facturado NPNE</option>
-                                    </select>
-                                </form>
-                            </td>
-                            <td class="d-flex gap-2">
-                                <a href="{{ route('facturacion.preview', $factura->id) }}" class="btn-fact btn-fact-view" title="Previsualizar" target="_blank"><i class="fas fa-eye"></i></a>
-                                <a href="{{ route('facturacion.pdf', $factura->id) }}" class="btn-fact btn-fact-pdf" title="Descargar PDF" target="_blank"><i class="fas fa-file-pdf"></i></a>
-                                <button type="button" class="btn-fact btn-fact-mail {{ $factura->cliente && $factura->cliente->correo ? '' : 'disabled' }}" title="Enviar por correo" data-bs-toggle="modal" data-bs-target="#modalEnviarCorreo" data-factura-id="{{ $factura->id }}" data-cliente-correo="{{ $factura->cliente->correo ?? '' }}" {{ $factura->cliente && $factura->cliente->correo ? '' : 'disabled' }}>
-                                    <i class="fas fa-envelope"></i>
-                                </button>
-                                @php $user = Auth::user(); @endphp
-                                @if($user && $user->rol === 'admin')
-                                <form action="{{ route('facturacion.destroy', $factura->id) }}" method="POST" onsubmit="return confirm('¿Seguro que deseas eliminar esta factura?')">
+                    @php
+                        $tipoFactura = ($factura->tipo_factura ?? '') === 'encomienda_familiar' ? 'encomienda_familiar' : 'paqueteria';
+                        $filaTipoClass = $tipoFactura === 'encomienda_familiar'
+                            ? 'border-l-[5px] border-l-amber-500'
+                            : 'border-l-[5px] border-l-[#15537c]';
+                    @endphp
+                    <tr class="border-b border-slate-100 {{ $filaTipoClass }} {{ $loop->iteration % 2 === 0 ? 'bg-slate-50' : 'bg-white' }} hover:bg-slate-100/90">
+                        <td class="px-3 py-1.5 text-center font-medium text-slate-700">{{ $factura->id }}</td>
+                        <td class="px-2 py-1.5 text-center align-middle">
+                            @if($tipoFactura === 'encomienda_familiar')
+                                <span class="inline-flex max-w-full items-center justify-center gap-1 rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-900 ring-1 ring-amber-200/80" title="Factura por encomienda familiar">
+                                    <i class="fas fa-people-carry shrink-0 text-[10px] opacity-90"></i>
+                                    <span class="truncate">Encomienda</span>
+                                </span>
+                            @else
+                                <span class="inline-flex max-w-full items-center justify-center gap-1 rounded-full bg-[#15537c]/12 px-2 py-1 text-xs font-semibold text-[#15537c] ring-1 ring-[#15537c]/20" title="Factura de paquetería (inventario)">
+                                    <i class="fas fa-box shrink-0 text-[10px] opacity-90"></i>
+                                    <span class="truncate">Paquetería</span>
+                                </span>
+                            @endif
+                        </td>
+                        <td class="px-4 py-1.5">
+                            @php
+                                $nombreFacturaCliente = optional($factura->cliente)->nombre_completo
+                                    ?? optional(optional($factura->encomienda)->remitente)->nombre_completo
+                                    ?? '—';
+                            @endphp
+                            <div class="truncate font-medium text-black" title="{{ $nombreFacturaCliente }}">{{ $nombreFacturaCliente }}</div>
+                        </td>
+                        <td class="px-4 py-1.5 text-center font-medium text-slate-900 whitespace-nowrap">{{ \Carbon\Carbon::parse($factura->fecha_factura)->format('d/m/Y') }}</td>
+                        <td class="px-4 py-1.5 text-center font-medium text-slate-900">{{ $factura->numero_acta ?: '—' }}</td>
+                        <td class="px-4 py-1.5 text-center">
+                            <span class="inline-flex items-center rounded-full bg-sky-100 px-2 py-0.5 text-sm font-semibold text-sky-800">{{ $factura->cantidad_paquetes ?? 0 }}</span>
+                        </td>
+                        <td class="px-4 py-1.5 text-center font-semibold text-emerald-800">${{ number_format($factura->monto_total, 2) }}</td>
+                        <td class="px-4 py-1.5 text-center font-medium text-slate-900">{{ $factura->moneda }}</td>
+                        <td class="px-4 py-1.5 text-center">
+                            <form method="POST" action="{{ route('facturacion.cambiar-estado', $factura->id) }}" class="inline">
+                                @csrf
+                                <select name="estado_pago" class="rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm focus:border-[#15537c] focus:ring-1 focus:ring-[#15537c]" onchange="this.form.submit()" {{ $factura->estado_pago === 'entregado_pagado' ? 'disabled' : '' }}>
+                                    <option value="entregado_pagado" {{ $factura->estado_pago=='entregado_pagado'?'selected':'' }}>Ent. y Pagado</option>
+                                    <option value="entregado_sin_pagar" {{ $factura->estado_pago=='entregado_sin_pagar'?'selected':'' }}>Ent. sin Pagar</option>
+                                    <option value="pagado_sin_entregar" {{ $factura->estado_pago=='pagado_sin_entregar'?'selected':'' }}>Pagado sin Ent.</option>
+                                    <option value="facturado_npne" {{ $factura->estado_pago=='facturado_npne'?'selected':'' }}>Fact. NPNE</option>
+                                </select>
+                                @if($factura->estado_pago === 'entregado_pagado' && ($factura->contabilidad_pendiente ?? false))
+                                    <div class="mt-1.5">
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900 ring-1 ring-amber-200" title="Registrar cobro en Contabilidad">
+                                            <i class="fas fa-calculator"></i> Contab. pendiente
+                                        </span>
+                                    </div>
+                                @endif
+                            </form>
+                        </td>
+                        <td class="px-4 py-1.5 text-right">
+                            <div class="inline-flex items-center justify-end gap-2">
+                                <a href="{{ route('facturacion.show', $factura->id) }}" class="rounded-lg p-2 text-slate-700 hover:bg-slate-100 hover:text-[#15537c]" title="Ver detalle y nota interna"><i class="fas fa-file-invoice"></i></a>
+                                <a href="{{ route('facturacion.preview', $factura->id) }}" class="rounded-lg p-2 text-slate-700 hover:bg-slate-100 hover:text-[#15537c]" title="Previsualizar" target="_blank"><i class="fas fa-eye"></i></a>
+                                <a href="{{ route('facturacion.pdf', $factura->id) }}" class="rounded-lg p-2 text-slate-700 hover:bg-slate-100 hover:text-[#15537c]" title="Descargar PDF" target="_blank"><i class="fas fa-file-pdf"></i></a>
+                                @if($factura->cliente && $factura->cliente->correo)
+                                <button type="button" class="btn-enviar-correo rounded-lg p-2 text-slate-700 hover:bg-slate-100 hover:text-[#15537c]" title="Enviar por correo" data-factura-id="{{ $factura->id }}" data-correo="{{ $factura->cliente->correo }}"><i class="fas fa-envelope"></i></button>
+                                @else
+                                <span class="rounded-lg p-2 text-slate-300 cursor-not-allowed" title="Sin correo"><i class="fas fa-envelope"></i></span>
+                                @endif
+                                @if(auth()->user() && auth()->user()->rol === 'admin')
+                                <form action="{{ route('facturacion.destroy', $factura->id) }}" method="POST" class="inline">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn-fact btn-fact-delete" title="Eliminar"><i class="fas fa-trash"></i></button>
+                                    <button type="submit" class="rounded-lg p-2 text-slate-700 hover:bg-red-50 hover:text-red-700" onclick="return confirm('¿Eliminar esta factura?')" title="Eliminar"><i class="fas fa-trash"></i></button>
                                 </form>
                                 @endif
-                            </td>
-                        </tr>
+                            </div>
+                        </td>
+                    </tr>
                     @empty
-                        <tr><td colspan="8" class="text-center text-muted">No hay facturas registradas.</td></tr>
+                    <tr><td colspan="10" class="px-4 py-12 text-center text-base text-slate-700">No hay facturas registradas. <a href="{{ route('facturacion.create') }}" class="font-medium text-[#15537c] hover:underline">Crear una</a>.</td></tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
-        @if($facturas->hasPages())
-            <div class="d-flex justify-content-center">
-                {{ $facturas->links('vendor.pagination.custom') }}
+    </div>
+
+    @if($facturas->hasPages())
+    <div class="flex justify-center pt-4">
+        {{ $facturas->links('vendor.pagination.custom') }}
+    </div>
+    @endif
+</div>
+
+{{-- Modal Enviar correo --}}
+<div id="modalEnviarCorreo" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-hidden="true">
+    <div class="flex min-h-full items-center justify-center p-6">
+        <div class="fixed inset-0 bg-slate-900/50 transition-opacity" onclick="closeModalEnviarCorreo()"></div>
+        <div class="relative w-full max-w-md rounded-xl bg-white p-8 shadow-xl">
+            <div class="flex items-center gap-4 text-[#15537c]"><i class="fas fa-envelope text-2xl"></i><h3 class="text-xl font-semibold text-slate-800">Enviar factura por correo</h3></div>
+            <p class="mt-4 text-base text-slate-600">¿Enviar la factura a <span id="correoClienteModal" class="font-semibold text-[#15537c]"></span>?</p>
+            <div class="mt-8 flex justify-end gap-3">
+                <button type="button" onclick="closeModalEnviarCorreo()" class="rounded-lg border border-slate-300 px-5 py-2.5 text-base font-medium text-slate-600 hover:bg-slate-50">Cancelar</button>
+                <form id="formEnviarCorreo" method="POST" class="inline">
+                    @csrf
+                    <button type="submit" class="rounded-lg bg-[#15537c] px-5 py-2.5 text-base font-medium text-white hover:bg-[#0f3d5c]">Enviar</button>
+                </form>
             </div>
-        @endif
+        </div>
     </div>
 </div>
 
-<!-- Estilos de animación y paginación igual a inventario -->
-<style>
-.card {
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-}
-.card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
-}
-.pagination {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-    margin: 32px 0 16px 0;
-    padding: 0;
-    list-style: none;
-}
-.pagination li {
-    display: inline-block;
-}
-.pagination a, .pagination span {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 38px;
-    min-height: 38px;
-    padding: 0 14px;
-    border-radius: 8px;
-    border: 1.5px solid #1A2E75;
-    background: #fff;
-    color: #1A2E75;
-    font-weight: 600;
-    font-size: 1.08rem;
-    text-decoration: none !important;
-    transition: background 0.15s, color 0.15s;
-    margin: 0 2px;
-}
-.pagination .active span, .pagination a.active {
-    background: #1A2E75;
-    color: #fff;
-    border-color: #1A2E75;
-    cursor: default;
-}
-.pagination a:hover, .pagination a:focus {
-    background: #5C6AC4;
-    color: #fff;
-    border-color: #5C6AC4;
-}
-.pagination .disabled span, .pagination .disabled a {
-    color: #b0b0b0;
-    background: #f5f7fa;
-    border-color: #e3e6f0;
-    cursor: not-allowed;
-}
-.pagination .page-arrow {
-    font-size: 1.3rem;
-    padding: 0 10px;
-    min-width: 38px;
-    min-height: 38px;
-    border-radius: 8px;
-    border: 1.5px solid #1A2E75;
-    background: #fff;
-    color: #1A2E75;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.15s, color 0.15s;
-}
-.pagination .page-arrow:hover, .pagination .page-arrow:focus {
-    background: #5C6AC4;
-    color: #fff;
-    border-color: #5C6AC4;
-}
-</style>
-
-<!-- Modal para confirmar envío de correo -->
-<div class="modal fade" id="modalEnviarCorreo" tabindex="-1" aria-labelledby="modalEnviarCorreoLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="modalEnviarCorreoLabel"><i class="fas fa-envelope me-2 text-primary"></i>Enviar factura por correo</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-      </div>
-      <div class="modal-body">
-        <p>¿Deseas enviar la factura a <span id="correoClienteModal" class="fw-bold text-primary"></span>?</p>
-      </div>
-      <div class="modal-footer">
-        <form id="formEnviarCorreo" method="POST" action="">
-          @csrf
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-primary">Enviar</button>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
+@push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  var modal = document.getElementById('modalEnviarCorreo');
-  modal.addEventListener('show.bs.modal', function (event) {
-    var button = event.relatedTarget;
-    var facturaId = button.getAttribute('data-factura-id');
-    var correo = button.getAttribute('data-cliente-correo');
-    document.getElementById('correoClienteModal').textContent = correo;
-    var form = document.getElementById('formEnviarCorreo');
-    form.action = '/facturacion/' + facturaId + '/enviar-correo';
-  });
+document.querySelectorAll('.btn-enviar-correo').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var id = this.getAttribute('data-factura-id');
+        var correo = this.getAttribute('data-correo') || '';
+        document.getElementById('correoClienteModal').textContent = correo;
+        document.getElementById('formEnviarCorreo').action = '/facturacion/' + id + '/enviar-correo';
+        document.getElementById('modalEnviarCorreo').classList.remove('hidden');
+    });
 });
+function closeModalEnviarCorreo() {
+    document.getElementById('modalEnviarCorreo').classList.add('hidden');
+}
 </script>
+@endpush
 @endsection

@@ -22,7 +22,7 @@ class FacturaMailable extends Mailable
     public function build()
     {
         return $this
-            ->subject('Factura de SkylinkOne')
+            ->subject('Factura de CH Logistics')
             ->view('emails.factura')
             ->with(['factura' => $this->factura])
             ->attachData($this->pdfContent, 'factura_'.$this->factura->id.'.pdf', [

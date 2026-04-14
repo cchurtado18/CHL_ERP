@@ -10,7 +10,7 @@
         gap: 0.4rem;
     }
     .logout-link:hover {
-        color: #D7263D !important;
+        color: #2d6a9a !important;
     }
     .navbar-user {
         font-weight: 500;
@@ -45,7 +45,7 @@
         position: absolute;
         top: -8px;
         right: -8px;
-        background: #dc3545;
+        background: #2d6a9a;
         color: white;
         border-radius: 50%;
         width: 20px;
