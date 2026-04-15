@@ -8,6 +8,7 @@ use App\Models\ContaCxc;
 use App\Models\Facturacion;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class ContabilidadCxcController extends Controller
 {
@@ -34,23 +35,42 @@ class ContabilidadCxcController extends Controller
 
     private function syncFacturasToCxc(): void
     {
-        $cuentaBanco = ContaCuenta::query()->where('subtipo', 'banco')->where('activa', true)->first()
-            ?? ContaCuenta::query()->where('subtipo', 'caja')->where('activa', true)->first();
+        if (! Schema::hasTable('facturacion') || ! Schema::hasTable('conta_cxc')) {
+            return;
+        }
 
-        Facturacion::query()
-            ->with('pagos')
+        $hasPagosTable = Schema::hasTable('pagos');
+        $hasContaCobrosTable = Schema::hasTable('conta_cobros');
+        $hasContaCuentasTable = Schema::hasTable('conta_cuentas');
+        $cuentaBanco = null;
+        if ($hasContaCuentasTable) {
+            $cuentaBanco = ContaCuenta::query()->where('subtipo', 'banco')->where('activa', true)->first()
+                ?? ContaCuenta::query()->where('subtipo', 'caja')->where('activa', true)->first();
+        }
+
+        $query = Facturacion::query()
             ->where('monto_total', '>', 0)
             ->whereNotExists(function ($q) {
                 $q->selectRaw(1)
                     ->from('conta_cxc')
                     ->whereColumn('conta_cxc.factura_id', 'facturacion.id');
-            })
-            ->chunkById(200, function ($facturas) {
+            });
+
+        if ($hasPagosTable) {
+            $query->with('pagos');
+        }
+
+        $query->chunkById(200, function ($facturas) use ($hasPagosTable, $hasContaCobrosTable, $cuentaBanco) {
                 foreach ($facturas as $factura) {
                     $montoOriginal = (float) $factura->monto_total;
-                    $pagadoHistorico = (float) $factura->pagos->sum('monto_pagado');
+                    $pagadoHistorico = $hasPagosTable ? (float) $factura->pagos->sum('monto_pagado') : 0.0;
                     $saldo = max(0, round($montoOriginal - $pagadoHistorico, 2));
-                    $fechaEmision = Carbon::parse($factura->fecha_factura);
+                    $fechaBase = $factura->fecha_factura ?: $factura->created_at ?: now();
+                    try {
+                        $fechaEmision = Carbon::parse($fechaBase);
+                    } catch (\Throwable) {
+                        $fechaEmision = now();
+                    }
                     $fechaVencimiento = $fechaEmision->copy()->addDays(30);
                     $diasMora = now()->greaterThan($fechaVencimiento) ? $fechaVencimiento->diffInDays(now()) : 0;
                     $estado = $saldo <= 0 ? 'pagada' : ($diasMora > 0 ? 'vencida' : 'al_dia');
@@ -71,7 +91,7 @@ class ContabilidadCxcController extends Controller
 
                     // Si existen pagos históricos, también los reflejamos como conta_cobros
                     // para que el detalle CxC tenga lista de cobros aplicada.
-                    if ($cuentaBanco) {
+                    if ($hasPagosTable && $hasContaCobrosTable && $cuentaBanco) {
                         foreach ($factura->pagos as $pago) {
                             $montoPago = (float) $pago->monto_pagado;
 
