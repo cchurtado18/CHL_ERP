@@ -137,6 +137,7 @@ Route::middleware(['auth', 'role:admin,agente'])->prefix('facturacion')->group(f
     Route::get('/paquetes-por-cliente/{cliente}', [FacturacionController::class, 'paquetesPorCliente'])->name('facturacion.paquetes-por-cliente');
     Route::post('/{id}/cambiar-estado', [FacturacionController::class, 'cambiarEstado'])->name('facturacion.cambiar-estado');
     Route::post('/{id}/contabilidad-marcar-verificada', [FacturacionController::class, 'marcarContabilidadVerificada'])->name('facturacion.contabilidad-marcar-verificada');
+    Route::post('/{id}/anular', [FacturacionController::class, 'anular'])->name('facturacion.anular');
     Route::post('/{id}/enviar-correo', [FacturacionController::class, 'enviarCorreo'])->name('facturacion.enviar-correo');
     Route::post('/validar-numero-acta', [FacturacionController::class, 'validarNumeroActa'])->name('facturacion.validar-numero-acta');
 });

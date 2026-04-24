@@ -4,15 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Mail\FacturaMailable;
 use App\Models\Cliente;
-use App\Models\Encomienda;
+use App\Models\ContaAsiento;
+use App\Models\ContaCobro;
 use App\Models\ContaCxc;
+use App\Models\Encomienda;
 use App\Models\Facturacion;
+use App\Models\Inventario;
 use App\Models\Notificacion;
 use App\Models\User;
 use App\Services\Contabilidad\ContabilidadFacturacionBridgeService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
@@ -81,6 +85,9 @@ class FacturacionController extends Controller
             return $rules;
         }
         $unique = Rule::unique('facturacion', 'numero_acta');
+        if (Schema::hasColumn('facturacion', 'anulada')) {
+            $unique = $unique->where(fn ($q) => $q->where('anulada', false));
+        }
         if ($ignoreFacturaId !== null) {
             $unique = $unique->ignore($ignoreFacturaId);
         }
@@ -98,6 +105,11 @@ class FacturacionController extends Controller
     public function index(Request $request)
     {
         $facturas = Facturacion::with(['cliente', 'encomienda.remitente', 'encomienda.destinatario'])
+            ->when(! Schema::hasColumn('facturacion', 'anulada') || ! $request->boolean('incluir_anuladas'), function ($q) {
+                if (Schema::hasColumn('facturacion', 'anulada')) {
+                    $q->noAnulada();
+                }
+            })
             ->when($request->filled('cliente'), function ($q) use ($request) {
                 $needle = '%'.addcslashes(trim((string) $request->cliente), '%_\\').'%';
                 $q->where(function ($sub) use ($needle) {
@@ -187,8 +199,12 @@ class FacturacionController extends Controller
             ];
 
             if ($request->tipo_factura === 'encomienda_familiar') {
+                $encomiendaIdRules = ['required', 'exists:encomiendas,id'];
+                $encomiendaIdRules[] = Schema::hasColumn('facturacion', 'anulada')
+                    ? Rule::unique('facturacion', 'encomienda_id')->where(fn ($q) => $q->where('anulada', false))
+                    : Rule::unique('facturacion', 'encomienda_id');
                 $request->validate(array_merge($baseRules, [
-                    'encomienda_id' => ['required', 'exists:encomiendas,id', Rule::unique('facturacion', 'encomienda_id')],
+                    'encomienda_id' => $encomiendaIdRules,
                     'paquetes' => 'nullable|array',
                 ]), $messages);
             } else {
@@ -349,7 +365,10 @@ class FacturacionController extends Controller
      */
     public function encomiendasDisponibles()
     {
-        $ids = Facturacion::query()->whereNotNull('encomienda_id')->pluck('encomienda_id');
+        $ids = Facturacion::query()
+            ->whereNotNull('encomienda_id')
+            ->when(Schema::hasColumn('facturacion', 'anulada'), fn ($q) => $q->noAnulada())
+            ->pluck('encomienda_id');
 
         $rows = Encomienda::query()
             ->when($ids->isNotEmpty(), fn ($q) => $q->whereNotIn('id', $ids))
@@ -392,15 +411,35 @@ class FacturacionController extends Controller
             'paquetes.servicio',
             'creador',
             'editor',
+            'anuladaPor',
         ]);
 
-        return view('facturacion.show', compact('factura'));
+        // Solo bloquea si hubo "Registrar cobro" en Contabilidad (created_by). Los cobros importados
+        // desde pagos históricos (created_by null) se pueden quitar al anular.
+        $tieneCobroRegistradoUsuario = ContaCobro::query()
+            ->where('factura_id', $factura->id)
+            ->whereNotNull('created_by')
+            ->exists();
+        $puedeAnular = Schema::hasColumn('facturacion', 'anulada')
+            && ! $factura->anulada
+            && ! $tieneCobroRegistradoUsuario;
+        $muestraSeccionAnular = Schema::hasColumn('facturacion', 'anulada') && ! $factura->anulada;
+        $cobrosSoloImportados = (int) ContaCobro::query()
+            ->where('factura_id', $factura->id)
+            ->whereNull('created_by')
+            ->count();
+
+        return view('facturacion.show', compact('factura', 'puedeAnular', 'muestraSeccionAnular', 'cobrosSoloImportados'));
     }
 
     // Editar factura
     public function edit($id)
     {
         $factura = Facturacion::with(['encomienda.remitente', 'encomienda.destinatario'])->findOrFail($id);
+        if (Schema::hasColumn('facturacion', 'anulada') && $factura->anulada) {
+            return redirect()->route('facturacion.show', $factura->id)
+                ->withErrors(['error' => 'No se puede editar una factura anulada.']);
+        }
         $clientes = Cliente::all();
 
         return view('facturacion.edit', compact('factura', 'clientes'));
@@ -410,6 +449,10 @@ class FacturacionController extends Controller
     public function update(Request $request, $id)
     {
         $factura = Facturacion::findOrFail($id);
+        if (Schema::hasColumn('facturacion', 'anulada') && $factura->anulada) {
+            return redirect()->route('facturacion.show', $factura->id)
+                ->withErrors(['error' => 'No se puede editar una factura anulada.']);
+        }
 
         $this->normalizeNumeroActaInput($request);
         $this->normalizeOptionalNumericFormFields($request);
@@ -458,9 +501,81 @@ class FacturacionController extends Controller
     public function destroy($id)
     {
         $factura = Facturacion::findOrFail($id);
+        if (Schema::hasColumn('facturacion', 'anulada') && $factura->anulada) {
+            return redirect()->route('facturacion.index')->withErrors(['error' => 'No se puede eliminar una factura anulada desde aquí.']);
+        }
+        if (ContaCobro::query()->where('factura_id', $factura->id)->exists()) {
+            return redirect()->route('facturacion.index')->withErrors(['error' => 'No se puede eliminar: existen cobros en contabilidad para esta factura.']);
+        }
         $factura->delete();
 
         return redirect()->route('facturacion.index')->with('success', 'Factura eliminada.');
+    }
+
+    /**
+     * Anula la factura (sin cobros contables): revierte CxC/asiento de emisión, libera inventario y permite refacturar.
+     */
+    public function anular(Request $request, int $id)
+    {
+        if (! Schema::hasColumn('facturacion', 'anulada')) {
+            abort(404);
+        }
+
+        $request->validate([
+            'motivo' => 'nullable|string|max:2000',
+        ]);
+
+        $factura = Facturacion::findOrFail($id);
+
+        if ($factura->anulada) {
+            return redirect()->route('facturacion.show', $factura)->withErrors(['error' => 'La factura ya está anulada.']);
+        }
+
+        if (ContaCobro::query()->where('factura_id', $factura->id)->whereNotNull('created_by')->exists()) {
+            return redirect()->route('facturacion.show', $factura)->withErrors([
+                'error' => 'No se puede anular: ya hay cobros registrados manualmente en Contabilidad (Registrar cobro) para esta factura.',
+            ]);
+        }
+
+        DB::transaction(function () use ($factura, $request) {
+            $cobroIds = ContaCobro::query()->where('factura_id', $factura->id)->pluck('id');
+            if ($cobroIds->isNotEmpty()) {
+                ContaAsiento::query()
+                    ->where('referencia_tipo', 'cobro')
+                    ->whereIn('referencia_id', $cobroIds)
+                    ->delete();
+                ContaCobro::query()->whereIn('id', $cobroIds)->delete();
+            }
+
+            ContaAsiento::query()
+                ->where('referencia_tipo', 'factura')
+                ->where('referencia_id', $factura->id)
+                ->delete();
+
+            ContaCxc::query()->where('factura_id', $factura->id)->delete();
+
+            Inventario::query()
+                ->where('factura_id', $factura->id)
+                ->where('estado', 'entregado')
+                ->update(['estado' => 'recibido']);
+
+            Inventario::query()->where('factura_id', $factura->id)->update(['factura_id' => null]);
+
+            $updates = [
+                'anulada' => true,
+                'anulada_at' => now(),
+                'anulada_por' => Auth::id(),
+                'anulacion_motivo' => $request->filled('motivo') ? trim((string) $request->input('motivo')) : null,
+                'numero_acta' => null,
+            ];
+            if (Schema::hasColumn('facturacion', 'contabilidad_pendiente')) {
+                $updates['contabilidad_pendiente'] = false;
+            }
+            $factura->update($updates);
+        });
+
+        return redirect()->route('facturacion.show', $factura->fresh())
+            ->with('success', 'Factura anulada. Los paquetes quedaron disponibles para una nueva factura; la encomienda puede volver a facturarse si aplica.');
     }
 
     public function descargarPDF($id)
@@ -654,7 +769,9 @@ class FacturacionController extends Controller
                     'estado' => $inv->estado, // Agregar el estado del paquete
                 ];
             });
-        $historial = \App\Models\Facturacion::where('cliente_id', $clienteId)
+        $historial = \App\Models\Facturacion::query()
+            ->where('cliente_id', $clienteId)
+            ->when(Schema::hasColumn('facturacion', 'anulada'), fn ($q) => $q->noAnulada())
             ->orderByDesc('fecha_factura')
             ->take(5)
             ->get(['id', 'fecha_factura', 'monto_total', 'estado_pago']);
@@ -670,6 +787,9 @@ class FacturacionController extends Controller
     public function cambiarEstado(Request $request, $id)
     {
         $factura = Facturacion::findOrFail($id);
+        if (Schema::hasColumn('facturacion', 'anulada') && $factura->anulada) {
+            return redirect()->route('facturacion.index')->withErrors(['error' => 'No se puede cambiar el estado de una factura anulada.']);
+        }
         $request->validate([
             'estado_pago' => 'required|in:pendiente,parcial,pagado,entregado_pagado,entregado_sin_pagar,pagado_sin_entregar,facturado_npne',
         ]);
@@ -715,6 +835,9 @@ class FacturacionController extends Controller
             abort(403);
         }
         $factura = Facturacion::findOrFail($id);
+        if (Schema::hasColumn('facturacion', 'anulada') && $factura->anulada) {
+            return redirect()->route('facturacion.show', $factura->id)->withErrors(['error' => 'No aplica: la factura está anulada.']);
+        }
         if (Schema::hasColumn('facturacion', 'contabilidad_pendiente')) {
             $factura->contabilidad_pendiente = false;
             $factura->save();
@@ -758,7 +881,10 @@ class FacturacionController extends Controller
 
         $facturaId = $request->input('factura_id'); // Para edición
 
-        $query = Facturacion::where('numero_acta', $numeroActa);
+        $query = Facturacion::query()->where('numero_acta', $numeroActa);
+        if (Schema::hasColumn('facturacion', 'anulada')) {
+            $query->noAnulada();
+        }
 
         if ($facturaId) {
             $query->where('id', '!=', $facturaId);

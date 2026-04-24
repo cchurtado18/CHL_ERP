@@ -17,6 +17,7 @@ class ContabilidadDashboardController extends Controller
         $finMes = now()->endOfMonth();
 
         $facturadoMes = (float) Facturacion::query()
+            ->when(Schema::hasColumn('facturacion', 'anulada'), fn ($q) => $q->noAnulada())
             ->whereBetween('fecha_factura', [$inicioMes->toDateString(), $finMes->toDateString()])
             ->sum('monto_total');
 
@@ -59,6 +60,7 @@ class ContabilidadDashboardController extends Controller
 
             if (Schema::hasColumn('facturacion', 'contabilidad_pendiente')) {
                 $facturasContabilidadPendiente = (int) Facturacion::query()
+                    ->when(Schema::hasColumn('facturacion', 'anulada'), fn ($q) => $q->noAnulada())
                     ->where('contabilidad_pendiente', true)
                     ->count();
             }

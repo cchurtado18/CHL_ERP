@@ -49,6 +49,7 @@ class ContabilidadCxcController extends Controller
         }
 
         $query = Facturacion::query()
+            ->when(Schema::hasColumn('facturacion', 'anulada'), fn ($q) => $q->noAnulada())
             ->where('monto_total', '>', 0)
             ->whereNotExists(function ($q) {
                 $q->selectRaw(1)

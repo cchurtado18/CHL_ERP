@@ -7,6 +7,7 @@ use App\Models\Notificacion;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Schema;
 
 class AlertarFacturasImpagas extends Command
 {
@@ -32,6 +33,7 @@ class AlertarFacturasImpagas extends Command
         $topeFechaFactura = $hoy->copy()->subDays(3);
 
         $facturas = Facturacion::query()
+            ->when(Schema::hasColumn('facturacion', 'anulada'), fn ($q) => $q->noAnulada())
             ->whereIn('estado_pago', self::ESTADOS_IMPAGOS)
             ->whereDate('fecha_factura', '<=', $topeFechaFactura->toDateString())
             ->with('cliente')

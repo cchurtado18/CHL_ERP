@@ -13,6 +13,8 @@ class Facturacion extends Model
 
     protected $casts = [
         'contabilidad_pendiente' => 'boolean',
+        'anulada' => 'boolean',
+        'anulada_at' => 'datetime',
     ];
 
     protected $fillable = [
@@ -35,6 +37,10 @@ class Facturacion extends Model
         'entrega_nombre',
         'entrega_cedula',
         'entrega_telefono',
+        'anulada',
+        'anulada_at',
+        'anulada_por',
+        'anulacion_motivo',
     ];
 
     // Cliente relacionado
@@ -76,5 +82,17 @@ class Facturacion extends Model
     public function contaCxc()
     {
         return $this->hasOne(ContaCxc::class, 'factura_id');
+    }
+
+    public function anuladaPor()
+    {
+        return $this->belongsTo(User::class, 'anulada_por');
+    }
+
+    public function scopeNoAnulada($query)
+    {
+        return $query->where(function ($q) {
+            $q->where('anulada', false)->orWhereNull('anulada');
+        });
     }
 }

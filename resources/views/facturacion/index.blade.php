@@ -15,6 +15,11 @@
         <span class="font-medium"><i class="fas fa-calculator mr-2"></i>{{ session('info_contabilidad') }}</span>
     </div>
     @endif
+    @if ($errors->any())
+    <div class="rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-base text-red-800" role="alert">
+        <ul class="list-disc space-y-1 pl-5">@foreach ($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
+    </div>
+    @endif
 
     {{-- Filtros --}}
     <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -49,6 +54,10 @@
                     <option value="facturado_npne" {{ request('estado')=='facturado_npne'?'selected':'' }}>Facturado NPNE</option>
                 </select>
             </div>
+            <label class="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-600">
+                <input type="checkbox" name="incluir_anuladas" value="1" class="h-4 w-4 rounded border-slate-300 text-[#15537c]" {{ request('incluir_anuladas') ? 'checked' : '' }}>
+                Incluir anuladas
+            </label>
             <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-[#15537c] px-5 py-2.5 text-base font-medium text-white hover:bg-[#0f3d5c]"><i class="fas fa-search"></i> Filtrar</button>
             <a href="{{ route('facturacion.index') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-5 py-2.5 text-base font-medium text-slate-600 hover:bg-slate-50">Limpiar</a>
         </form>
@@ -143,6 +152,9 @@
                         <td class="px-4 py-1.5 text-center font-semibold text-emerald-800">${{ number_format($factura->monto_total, 2) }}</td>
                         <td class="px-4 py-1.5 text-center font-medium text-slate-900">{{ $factura->moneda }}</td>
                         <td class="px-4 py-1.5 text-center">
+                            @if($factura->anulada ?? false)
+                                <span class="inline-flex items-center rounded-full bg-slate-200 px-2 py-1 text-xs font-semibold text-slate-700">Anulada</span>
+                            @else
                             <form method="POST" action="{{ route('facturacion.cambiar-estado', $factura->id) }}" class="inline">
                                 @csrf
                                 <select name="estado_pago" class="rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm focus:border-[#15537c] focus:ring-1 focus:ring-[#15537c]" onchange="this.form.submit()" {{ $factura->estado_pago === 'entregado_pagado' ? 'disabled' : '' }}>
@@ -159,6 +171,7 @@
                                     </div>
                                 @endif
                             </form>
+                            @endif
                         </td>
                         <td class="px-4 py-1.5 text-right">
                             <div class="inline-flex items-center justify-end gap-2">
@@ -170,7 +183,7 @@
                                 @else
                                 <span class="rounded-lg p-2 text-slate-300 cursor-not-allowed" title="Sin correo"><i class="fas fa-envelope"></i></span>
                                 @endif
-                                @if(auth()->user() && auth()->user()->rol === 'admin')
+                                @if(auth()->user() && auth()->user()->rol === 'admin' && !($factura->anulada ?? false))
                                 <form action="{{ route('facturacion.destroy', $factura->id) }}" method="POST" class="inline">
                                     @csrf
                                     @method('DELETE')

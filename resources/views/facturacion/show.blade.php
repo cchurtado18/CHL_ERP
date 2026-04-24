@@ -32,8 +32,26 @@
             <span class="font-medium"><i class="fas fa-calculator mr-2"></i>{{ session('info_contabilidad') }}</span>
         </div>
     @endif
+    @if($errors->any())
+        <div class="rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-base text-red-800" role="alert">
+            <ul class="list-disc space-y-1 pl-5">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
+        </div>
+    @endif
 
-    @if($factura->estado_pago === 'entregado_pagado' && ($factura->contabilidad_pendiente ?? false))
+    @if($factura->anulada ?? false)
+        <div class="rounded-xl border border-slate-300 bg-slate-100 p-5 shadow-sm sm:p-6">
+            <h2 class="text-lg font-bold text-slate-900"><i class="fas fa-ban mr-2 text-slate-600"></i>Factura anulada</h2>
+            <p class="mt-2 text-base text-slate-700">Esta factura no cuenta para cobros ni CxC. Los paquetes de paquetería quedaron liberados para emitir una nueva factura.</p>
+            @if($factura->anulada_at)
+                <p class="mt-2 text-sm text-slate-600">Fecha anulación: {{ $factura->anulada_at->format('d/m/Y H:i') }}@if($factura->anuladaPor) · {{ $factura->anuladaPor->nombre ?? $factura->anuladaPor->email }}@endif</p>
+            @endif
+            @if($factura->anulacion_motivo)
+                <p class="mt-3 text-sm text-slate-800"><span class="font-semibold">Motivo:</span> {{ $factura->anulacion_motivo }}</p>
+            @endif
+        </div>
+    @endif
+
+    @if(!$factura->anulada && $factura->estado_pago === 'entregado_pagado' && ($factura->contabilidad_pendiente ?? false))
         <div class="rounded-xl border border-amber-300 bg-amber-50/90 p-5 shadow-sm">
             <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
@@ -62,7 +80,7 @@
         <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
                 <p class="text-sm font-medium text-white/80">Facturación</p>
-                <h1 class="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">Factura #{{ $factura->id }}</h1>
+                <h1 class="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">Factura #{{ $factura->id }}@if($factura->anulada ?? false)<span class="ml-2 align-middle text-base font-semibold text-amber-200">(Anulada)</span>@endif</h1>
                 <p class="mt-3 max-w-2xl text-sm leading-relaxed text-white/85">Registro interno en el sistema. Montos y diseño final del documento se confirman en el PDF.</p>
                 <div class="mt-4 flex flex-wrap items-center gap-2">
                     @if(($factura->tipo_factura ?? '') === 'encomienda_familiar')
@@ -92,15 +110,41 @@
                 <a href="{{ route('facturacion.index') }}" class="inline-flex items-center justify-center rounded-xl border border-white/30 bg-white/10 px-4 py-2.5 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/20">
                     <i class="fas fa-arrow-left mr-2 text-xs"></i> Volver al listado
                 </a>
+                @if(!($factura->anulada ?? false))
                 <a href="{{ route('facturacion.edit', $factura->id) }}" class="inline-flex items-center justify-center rounded-xl border border-white/30 bg-white/10 px-4 py-2.5 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/20">
                     <i class="fas fa-edit mr-2 text-xs"></i> Editar
                 </a>
+                @endif
                 <a href="{{ route('facturacion.preview', $factura->id) }}" target="_blank" rel="noopener" class="inline-flex items-center justify-center rounded-xl border border-white/30 bg-white px-4 py-2.5 text-sm font-semibold text-[#15537c] transition hover:bg-slate-50">
                     <i class="fas fa-eye mr-2 text-xs"></i> Ver PDF
                 </a>
             </div>
         </div>
     </div>
+
+    @if(!empty($muestraSeccionAnular))
+    <div class="rounded-xl border border-rose-200 bg-rose-50/80 p-5 shadow-sm sm:p-6">
+        <h2 class="text-lg font-bold text-rose-950"><i class="fas fa-undo-alt mr-2"></i>Anular factura</h2>
+        @if(!empty($puedeAnular))
+            <p class="mt-2 text-base text-rose-900/90">Se revierte el asiento y CxC de emisión, se quitan cobros <strong>solo importados</strong> desde pagos antiguos (si los hubiera) y se liberan los paquetes para volver a facturar. No aplica si ya registró cobros desde <strong>Contabilidad → Registrar cobro</strong>.</p>
+            @if(($cobrosSoloImportados ?? 0) > 0)
+                <p class="mt-2 rounded-lg border border-rose-300/60 bg-white/80 px-3 py-2 text-sm text-rose-900">Hay <strong>{{ $cobrosSoloImportados }}</strong> movimiento(s) en contabilidad importados automáticamente; al anular se eliminarán junto con sus asientos.</p>
+            @endif
+            <form method="POST" action="{{ route('facturacion.anular', $factura->id) }}" class="mt-4 space-y-4" onsubmit="return confirm('¿Anular esta factura? Esta acción no se puede deshacer desde la pantalla.');">
+                @csrf
+                <div>
+                    <label class="mb-1.5 block text-sm font-medium text-rose-900">Motivo (opcional)</label>
+                    <textarea name="motivo" rows="2" class="w-full rounded-lg border border-rose-200 bg-white px-4 py-2.5 text-base text-slate-900 focus:border-rose-500 focus:ring-1 focus:ring-rose-500" placeholder="Ej.: monto incorrecto, cliente equivocado...">{{ old('motivo') }}</textarea>
+                </div>
+                <button type="submit" class="inline-flex items-center gap-2 rounded-xl border border-rose-700 bg-rose-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-rose-800">
+                    <i class="fas fa-ban"></i> Anular factura
+                </button>
+            </form>
+        @else
+            <p class="mt-2 text-base text-rose-900/90">No se puede anular desde aquí porque ya existe al menos un cobro registrado en <strong>Contabilidad → Registrar cobro</strong> (usuario asignado). En ese caso hay que corregir con contador o proceso manual de reverso.</p>
+        @endif
+    </div>
+    @endif
 
     {{-- Resumen --}}
     <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
