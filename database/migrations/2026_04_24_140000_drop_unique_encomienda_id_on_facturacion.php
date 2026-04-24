@@ -13,15 +13,38 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // MySQL: no se puede borrar el UNIQUE si la FK sigue usando ese índice.
+        Schema::table('facturacion', function (Blueprint $table) {
+            $table->dropForeign(['encomienda_id']);
+        });
+
         Schema::table('facturacion', function (Blueprint $table) {
             $table->dropUnique(['encomienda_id']);
+        });
+
+        Schema::table('facturacion', function (Blueprint $table) {
+            $table->foreign('encomienda_id')
+                ->references('id')
+                ->on('encomiendas')
+                ->nullOnDelete();
         });
     }
 
     public function down(): void
     {
         Schema::table('facturacion', function (Blueprint $table) {
+            $table->dropForeign(['encomienda_id']);
+        });
+
+        Schema::table('facturacion', function (Blueprint $table) {
             $table->unique('encomienda_id');
+        });
+
+        Schema::table('facturacion', function (Blueprint $table) {
+            $table->foreign('encomienda_id')
+                ->references('id')
+                ->on('encomiendas')
+                ->nullOnDelete();
         });
     }
 };
