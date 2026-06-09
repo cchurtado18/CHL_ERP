@@ -118,7 +118,6 @@ class ContabilidadRentabilidadController extends Controller
                 'i.tracking_codigo',
                 'f.id as factura_id',
                 'f.fecha_factura',
-                'f.folio',
                 's.tipo_servicio as servicio'
             )
             ->get()
