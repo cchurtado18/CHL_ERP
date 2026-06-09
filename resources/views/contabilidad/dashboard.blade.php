@@ -171,7 +171,7 @@
                         $cobrado = max(0, $original - $faltante);
                     @endphp
                     <tr class="border-b border-slate-100 {{ $loop->iteration % 2 === 0 ? 'bg-slate-50' : 'bg-white' }} hover:bg-slate-100">
-                        <td class="px-4 py-2 font-semibold text-[#15537c]" title="Id interno: {{ $cxc->factura_id }}">Folio {{ $cxc->factura?->etiquetaFolio() ?? $cxc->factura_id }}</td>
+                        <td class="px-4 py-2 font-semibold text-[#15537c]" title="Id interno: {{ $cxc->factura_id }}">Folio {{ $cxc->factura_id }}</td>
                         <td class="px-4 py-2">
                             @php
                                 $clienteNombre = $cxc->factura->cliente?->nombre_completo ?? null;
