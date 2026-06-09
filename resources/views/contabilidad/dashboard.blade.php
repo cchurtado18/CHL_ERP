@@ -29,17 +29,58 @@
 
     {{-- Cabecera y acciones --}}
     <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-                <h1 class="text-2xl font-bold text-slate-800">Contabilidad</h1>
-                <p class="mt-1 text-base text-slate-600">Tablero financiero y control de cartera.</p>
+        {{-- Fila superior: título + CTA principal --}}
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex items-center gap-4">
+                <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#15537c] to-[#0f3d5c] text-white shadow"><i class="fas fa-book text-xl"></i></span>
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-800">Contabilidad</h1>
+                    <p class="mt-0.5 text-sm text-slate-600">Tablero financiero y control de cartera.</p>
+                </div>
             </div>
-            <div class="flex flex-wrap gap-2 lg:justify-end">
-                <a href="{{ route('contabilidad.asientos.index') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-base font-medium text-slate-700 shadow-sm hover:bg-slate-50"><i class="fas fa-list-alt text-[#15537c]"></i> Lista de asientos</a>
-                <a href="{{ route('contabilidad.cobros.index') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-base font-medium text-slate-700 shadow-sm hover:bg-slate-50"><i class="fas fa-money-check-alt text-[#15537c]"></i> Lista de cobros</a>
-                <a href="{{ route('contabilidad.cxc.index') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-base font-medium text-slate-700 shadow-sm hover:bg-slate-50"><i class="fas fa-file-invoice-dollar text-[#15537c]"></i> Lista CxC</a>
-                <a href="{{ route('contabilidad.asientos.create') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-base font-medium text-slate-700 shadow-sm hover:bg-slate-50"><i class="fas fa-plus-circle text-[#15537c]"></i> Nuevo asiento</a>
-                <a href="{{ route('contabilidad.cobros.create') }}" class="inline-flex items-center gap-2 rounded-xl bg-[#15537c] px-5 py-2.5 text-base font-semibold text-white shadow-sm hover:bg-[#0f3d5c]"><i class="fas fa-hand-holding-usd"></i> Registrar cobro</a>
+            <a href="{{ route('contabilidad.cobros.create') }}" class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#15537c] px-5 py-2.5 text-base font-semibold text-white shadow-sm hover:bg-[#0f3d5c]">
+                <i class="fas fa-hand-holding-usd"></i> Registrar cobro
+            </a>
+        </div>
+
+        {{-- Acciones agrupadas --}}
+        @php $esAdmin = auth()->user()->rol === 'admin'; @endphp
+        <div class="mt-5 grid grid-cols-1 gap-4 border-t border-slate-100 pt-4 {{ $esAdmin ? 'xl:grid-cols-2' : '' }}">
+            {{-- Reportes y análisis — SOLO ADMIN --}}
+            @if($esAdmin)
+                <div>
+                    <p class="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-500"><i class="fas fa-chart-pie mr-1 text-[#15537c]"></i> Reportes y análisis <span class="ml-1 inline-flex items-center gap-1 rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold text-amber-800"><i class="fas fa-lock text-[8px]"></i> Solo admin</span></p>
+                    <div class="flex flex-wrap gap-2">
+                        <a href="{{ route('contabilidad.reporte') }}" class="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm hover:from-violet-700 hover:to-fuchsia-700">
+                            <i class="fas fa-chart-line"></i> Reporte ejecutivo
+                        </a>
+                        <a href="{{ route('contabilidad.rentabilidad.index') }}" class="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm hover:from-emerald-600 hover:to-teal-700">
+                            <i class="fas fa-coins"></i> Rentabilidad
+                        </a>
+                        <a href="{{ route('contabilidad.gastos.index') }}" class="inline-flex items-center gap-2 rounded-lg border border-rose-300 bg-rose-50 px-3.5 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100">
+                            <i class="fas fa-receipt"></i> Gastos
+                        </a>
+                        <a href="{{ route('contabilidad.parametros.index') }}" class="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3.5 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100">
+                            <i class="fas fa-sliders"></i> Parámetros
+                        </a>
+                    </div>
+                </div>
+            @endif
+
+            {{-- Listas y consultas --}}
+            <div class="{{ $esAdmin ? 'xl:border-l xl:border-slate-100 xl:pl-4' : '' }}">
+                <p class="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-500"><i class="fas fa-list-ul mr-1 text-[#15537c]"></i> Consultar registros</p>
+                <div class="flex flex-wrap gap-2">
+                    <a href="{{ route('contabilidad.asientos.index') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                        <i class="fas fa-list-alt text-[#15537c]"></i> Asientos
+                    </a>
+                    <a href="{{ route('contabilidad.cobros.index') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                        <i class="fas fa-money-check-alt text-[#15537c]"></i> Cobros
+                    </a>
+                    <a href="{{ route('contabilidad.cxc.index') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                        <i class="fas fa-file-invoice-dollar text-[#15537c]"></i> CxC
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -130,7 +171,7 @@
                         $cobrado = max(0, $original - $faltante);
                     @endphp
                     <tr class="border-b border-slate-100 {{ $loop->iteration % 2 === 0 ? 'bg-slate-50' : 'bg-white' }} hover:bg-slate-100">
-                        <td class="px-4 py-2 font-semibold text-[#15537c]">#{{ $cxc->factura_id }}</td>
+                        <td class="px-4 py-2 font-semibold text-[#15537c]" title="Id interno: {{ $cxc->factura_id }}">Folio {{ $cxc->factura?->etiquetaFolio() ?? $cxc->factura_id }}</td>
                         <td class="px-4 py-2">
                             @php
                                 $clienteNombre = $cxc->factura->cliente?->nombre_completo ?? null;

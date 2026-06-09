@@ -8,13 +8,18 @@ use App\Http\Controllers\ContabilidadCobroController;
 use App\Http\Controllers\ContabilidadCuentaController;
 use App\Http\Controllers\ContabilidadCxcController;
 use App\Http\Controllers\ContabilidadDashboardController;
+use App\Http\Controllers\ContabilidadGastoController;
+use App\Http\Controllers\ContabilidadParametroController;
 use App\Http\Controllers\ContabilidadPeriodoController;
+use App\Http\Controllers\ContabilidadRentabilidadController;
+use App\Http\Controllers\ContabilidadReporteController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DestinatarioController;
 use App\Http\Controllers\EncomiendaController;
 use App\Http\Controllers\EncomiendaEstadoController;
 use App\Http\Controllers\FacturacionController;
 use App\Http\Controllers\InventarioController;
+use App\Http\Controllers\InventarioSalidaController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\LogInventarioController;
 use App\Http\Controllers\NotificacionController;
@@ -187,6 +192,10 @@ Route::middleware(['auth', 'role:admin,agente,basico'])->prefix('inventario')->g
     Route::get('/crear', [InventarioController::class, 'create'])->name('inventario.create');
     Route::post('/', [InventarioController::class, 'store'])->name('inventario.store');
     Route::get('/export-excel', [InventarioController::class, 'exportExcel'])->name('inventario.export-excel');
+    Route::get('/salidas', [InventarioSalidaController::class, 'index'])->name('inventario.salidas.index');
+    Route::post('/salidas', [InventarioSalidaController::class, 'store'])->name('inventario.salidas.store');
+    Route::get('/salidas/{salida}', [InventarioSalidaController::class, 'show'])->name('inventario.salidas.show');
+    Route::get('/salidas/{salida}/export', [InventarioSalidaController::class, 'export'])->name('inventario.salidas.export');
     Route::get('/{id}/editar', [InventarioController::class, 'edit'])->name('inventario.edit');
     Route::put('/{id}', [InventarioController::class, 'update'])->name('inventario.update');
     Route::get('/{id}', [InventarioController::class, 'show'])->name('inventario.show');
@@ -249,6 +258,29 @@ Route::middleware(['auth', 'role:admin'])->prefix('contabilidad')->group(functio
 
     Route::get('/periodos', [ContabilidadPeriodoController::class, 'index'])->name('contabilidad.periodos.index');
     Route::patch('/periodos/{id}/toggle', [ContabilidadPeriodoController::class, 'toggleEstado'])->name('contabilidad.periodos.toggle');
+
+    // ─── Solo ADMIN puede acceder a las siguientes secciones (afectan rentabilidad/gastos globales) ───
+    Route::middleware('admin.only')->group(function () {
+        // Reporte ejecutivo
+        Route::get('/reporte-ejecutivo', [ContabilidadReporteController::class, 'index'])->name('contabilidad.reporte');
+
+        // Parámetros de rentabilidad (costo fijo por libra/pie³)
+        Route::get('/parametros', [ContabilidadParametroController::class, 'index'])->name('contabilidad.parametros.index');
+        Route::post('/parametros', [ContabilidadParametroController::class, 'store'])->name('contabilidad.parametros.store');
+        Route::delete('/parametros/{id}', [ContabilidadParametroController::class, 'destroy'])->whereNumber('id')->name('contabilidad.parametros.destroy');
+        Route::post('/parametros/{id}/restaurar', [ContabilidadParametroController::class, 'restore'])->whereNumber('id')->name('contabilidad.parametros.restore');
+
+        // Gastos operativos
+        Route::get('/gastos', [ContabilidadGastoController::class, 'index'])->name('contabilidad.gastos.index');
+        Route::get('/gastos/crear', [ContabilidadGastoController::class, 'create'])->name('contabilidad.gastos.create');
+        Route::post('/gastos', [ContabilidadGastoController::class, 'store'])->name('contabilidad.gastos.store');
+        Route::get('/gastos/{id}', [ContabilidadGastoController::class, 'show'])->whereNumber('id')->name('contabilidad.gastos.show');
+        Route::delete('/gastos/{id}', [ContabilidadGastoController::class, 'destroy'])->whereNumber('id')->name('contabilidad.gastos.destroy');
+
+        // Reporte de rentabilidad
+        Route::get('/rentabilidad', [ContabilidadRentabilidadController::class, 'index'])->name('contabilidad.rentabilidad.index');
+        Route::get('/rentabilidad/cliente/{cliente}', [ContabilidadRentabilidadController::class, 'cliente'])->whereNumber('cliente')->name('contabilidad.rentabilidad.cliente');
+    });
 });
 
 // Rutas para tracking
