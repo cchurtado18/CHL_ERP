@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
 class UserController extends Controller
@@ -41,10 +40,21 @@ class UserController extends Controller
             ? null
             : array_values(array_unique($data['permisos'] ?? []));
 
+        // Si no marcaron módulos, aplicar defaults del rol para evitar usuarios sin acceso.
+        if ($data['rol'] !== 'admin' && $permisos === []) {
+            $permisos = array_values(config('permisos.defaults_por_rol.'.$data['rol'], []));
+        }
+
+        if ($data['rol'] !== 'admin' && $permisos === []) {
+            return back()
+                ->withErrors(['permisos' => 'Selecciona al menos un módulo de acceso para este usuario.'])
+                ->withInput();
+        }
+
         User::create([
             'nombre' => $data['nombre'],
             'email' => $data['email'],
-            'password' => Hash::make($data['password']),
+            'password' => $data['password'],
             'rol' => $data['rol'],
             'permisos' => $permisos,
             'estado' => $request->boolean('estado'),
@@ -80,6 +90,16 @@ class UserController extends Controller
             ? null
             : array_values(array_unique($data['permisos'] ?? []));
 
+        if ($data['rol'] !== 'admin' && $permisos === []) {
+            $permisos = array_values(config('permisos.defaults_por_rol.'.$data['rol'], []));
+        }
+
+        if ($data['rol'] !== 'admin' && $permisos === []) {
+            return back()
+                ->withErrors(['permisos' => 'Selecciona al menos un módulo de acceso para este usuario.'])
+                ->withInput();
+        }
+
         $payload = [
             'nombre' => $data['nombre'],
             'email' => $data['email'],
@@ -89,7 +109,7 @@ class UserController extends Controller
         ];
 
         if (! empty($data['password'])) {
-            $payload['password'] = Hash::make($data['password']);
+            $payload['password'] = $data['password'];
         }
 
         $usuario->update($payload);

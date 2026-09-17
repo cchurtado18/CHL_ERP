@@ -27,23 +27,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectGuestsTo(fn () => route('login'));
         $middleware->redirectUsersTo(function () {
             $user = auth()->user();
-            if (! $user) {
-                return '/';
-            }
-            if ($user->esCliente()) {
-                return '/portal';
-            }
-            if ($user->tienePermiso('dashboard')) {
-                return '/';
-            }
-            if ($user->tienePermiso('inventario')) {
-                return '/inventario';
-            }
-            if ($user->tienePermiso('contabilidad.cobros')) {
-                return '/contabilidad/cobros/crear';
-            }
 
-            return '/';
+            return $user ? $user->homePath() : '/login';
         });
     })
     ->withSchedule(function (Schedule $schedule): void {

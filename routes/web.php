@@ -44,6 +44,9 @@ Route::middleware('guest')->group(function () {
 });
 Route::post('logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
+// Página amigable cuando el usuario no tiene módulos asignados
+Route::middleware('auth')->get('/sin-acceso', [AuthController::class, 'sinAcceso'])->name('sin-acceso');
+
 // Rastreo público (sin login)
 Route::get('/rastreo', [PublicTrackingController::class, 'index'])->name('public.tracking');
 

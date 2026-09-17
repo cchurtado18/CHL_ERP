@@ -121,4 +121,40 @@ class User extends Authenticatable
 
         return false;
     }
+
+    /**
+     * Primera ruta a la que el usuario puede entrar según sus permisos.
+     */
+    public function homePath(): string
+    {
+        if ($this->esCliente()) {
+            return '/portal';
+        }
+
+        $rutas = [
+            'dashboard' => '/',
+            'inventario' => '/inventario',
+            'clientes' => '/clientes',
+            'facturacion' => '/facturacion',
+            'encomiendas' => '/encomiendas',
+            'contabilidad' => '/contabilidad',
+            'contabilidad.cobros' => '/contabilidad/cobros/crear',
+            'contabilidad.reportes' => '/contabilidad/reporte-ejecutivo',
+            'leads' => '/leads',
+            'tracking' => '/tracking',
+            'notificaciones' => '/notificaciones',
+            'usuarios' => '/usuarios',
+            'remitentes' => '/remitentes',
+            'destinatarios' => '/destinatarios',
+            'logs_inventario' => '/logs-inventario',
+        ];
+
+        foreach ($rutas as $modulo => $path) {
+            if ($this->tienePermiso($modulo)) {
+                return $path;
+            }
+        }
+
+        return '/sin-acceso';
+    }
 }

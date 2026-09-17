@@ -10,7 +10,7 @@ class AuthController extends Controller
     public function showLoginForm()
     {
         if (Auth::check()) {
-            return redirect()->to($this->homeFor(Auth::user()));
+            return redirect()->to(Auth::user()->homePath());
         }
 
         return view('auth.login');
@@ -19,7 +19,7 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         if (Auth::check()) {
-            return redirect()->to($this->homeFor(Auth::user()));
+            return redirect()->to(Auth::user()->homePath());
         }
 
         $credentials = $request->validate([
@@ -34,7 +34,9 @@ class AuthController extends Controller
             $request->session()->regenerate();
             $user = Auth::user();
 
-            return redirect()->intended($this->homeFor($user));
+            // No usar intended('/') porque manda al dashboard y provoca 403
+            // si el usuario no tiene permiso de dashboard.
+            return redirect()->to($user->homePath());
         }
 
         // Si el usuario existe pero está inactivo, mensaje explícito (sin revelar de más).
@@ -63,38 +65,13 @@ class AuthController extends Controller
         return redirect()->route('login');
     }
 
-    private function homeFor($user): string
+    public function sinAcceso()
     {
-        if (! $user) {
-            return route('login');
+        $user = Auth::user();
+        if ($user && $user->homePath() !== '/sin-acceso') {
+            return redirect()->to($user->homePath());
         }
 
-        if ($user->esCliente()) {
-            return route('portal.home');
-        }
-
-        if ($user->tienePermiso('dashboard')) {
-            return '/';
-        }
-        if ($user->tienePermiso('contabilidad')) {
-            return '/contabilidad';
-        }
-        if ($user->tienePermiso('contabilidad.cobros')) {
-            return route('contabilidad.cobros.create');
-        }
-        if ($user->tienePermiso('inventario')) {
-            return '/inventario';
-        }
-        if ($user->tienePermiso('facturacion')) {
-            return '/facturacion';
-        }
-        if ($user->tienePermiso('leads')) {
-            return '/leads';
-        }
-        if ($user->tienePermiso('notificaciones')) {
-            return '/notificaciones';
-        }
-
-        return route('login');
+        return view('auth.sin-acceso');
     }
 }
