@@ -141,7 +141,7 @@
                     <p class="text-xs font-semibold uppercase tracking-wide text-[#15537c]">Factura asociada</p>
                     <p class="mt-2 text-slate-700">
                         @if($puedeVerFactura)
-                            <a href="{{ route('facturacion.show', $encomienda->factura->id) }}" class="font-semibold text-[#15537c] underline decoration-[#15537c]/30 underline-offset-2 hover:decoration-[#15537c]">Ver factura #{{ $encomienda->factura->id }}</a>
+                            <a href="{{ route('facturacion.show', $encomienda->factura->id) }}" class="font-semibold text-[#15537c] underline decoration-[#15537c]/30 underline-offset-2 hover:decoration-[#15537c]">Ver factura folio {{ $encomienda->factura->etiquetaFolio() }}</a>
                             @if($encomienda->factura->numero_acta)
                                 <span class="mt-1 block text-xs text-slate-600">Acta: {{ $encomienda->factura->numero_acta }}</span>
                             @endif

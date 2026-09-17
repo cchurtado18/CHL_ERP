@@ -2,14 +2,40 @@
 
 namespace App\Models;
 
+use App\Support\DocumentSequence;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 
 class Facturacion extends Model
 {
     use HasFactory;
 
     protected $table = 'facturacion';
+
+    protected static function booted(): void
+    {
+        static::creating(function (Facturacion $model) {
+            if (! Schema::hasColumn('facturacion', 'folio')) {
+                return;
+            }
+            if ($model->folio !== null) {
+                return;
+            }
+            $model->folio = app(DocumentSequence::class)->next('facturacion');
+        });
+    }
+
+    /** Número de documento para auditoría (correlativo); distinto del id técnico de fila. */
+    public function etiquetaFolio(): string
+    {
+        if ($this->folio !== null) {
+            return (string) $this->folio;
+        }
+        $key = $this->getKey();
+
+        return $key !== null ? (string) $key : '0';
+    }
 
     protected $casts = [
         'contabilidad_pendiente' => 'boolean',

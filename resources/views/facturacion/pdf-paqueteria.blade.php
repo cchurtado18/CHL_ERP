@@ -10,11 +10,12 @@
         return 'NO-' . ltrim(preg_replace('/^NO[\s\-]*/i', '', $raw), '-');
     };
     $numeroNota = $fmtActa($factura->numero_acta ?? null);
-    if ($numeroNota === 'NO-00000' && isset($factura->id)) {
-        $numeroNota = 'NO-' . str_pad((string) $factura->id, 5, '0', STR_PAD_LEFT);
+    if ($numeroNota === 'NO-00000') {
+        $folioPdf = method_exists($factura, 'etiquetaFolio') ? $factura->etiquetaFolio() : (string) ($factura->id ?? '0');
+        $numeroNota = 'NO-' . str_pad($folioPdf, 5, '0', STR_PAD_LEFT);
     }
 
-    $logoCh = public_path('logo_skylinkone.png');
+    $logoCh = public_path('CH_Logistics_Logo.png');
     $cliente = $factura->cliente ?? null;
 
     $paquetes = collect($factura->paquetes ?? []);

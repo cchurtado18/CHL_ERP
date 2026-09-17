@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Editar Notificación - CH Logistics ERP')
+@section('title', 'Editar Notificación - CH Logistics')
 
 @section('content')
 <div class="container-fluid px-4">

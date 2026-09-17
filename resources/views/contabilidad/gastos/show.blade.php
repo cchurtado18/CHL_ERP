@@ -1,6 +1,6 @@
 @extends('layouts.app-new')
 
-@section('title', 'Gasto #'.$gasto->id.' - CH LOGISTICS ERP')
+@section('title', 'Gasto #'.$gasto->id.' - CH Logistics')
 @section('navbar-title', 'Gasto #'.$gasto->id)
 
 @section('content')

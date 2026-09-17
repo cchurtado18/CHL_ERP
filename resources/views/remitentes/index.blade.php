@@ -1,6 +1,6 @@
 @extends('layouts.app-new')
 
-@section('title', 'Remitentes - CH LOGISTICS ERP')
+@section('title', 'Remitentes - CH Logistics')
 @section('navbar-title', 'Remitentes')
 
 @section('content')

@@ -25,7 +25,7 @@ function cambiosDiferenciaLogs($antes, $despues) {
 @endphp
 @extends('layouts.app-new')
 
-@section('title', 'Historial de Inventario - CH LOGISTICS ERP')
+@section('title', 'Historial de Inventario - CH Logistics')
 @section('navbar-title', 'Historial Inventario')
 
 @section('content')

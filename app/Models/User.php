@@ -20,6 +20,8 @@ class User extends Authenticatable
         'email',
         'password',
         'rol',
+        'permisos',
+        'cliente_id',
         'estado',
     ];
 
@@ -42,10 +44,81 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'estado' => 'boolean',
         'password' => 'hashed',
+        'permisos' => 'array',
     ];
 
     public function username()
     {
         return 'nombre';
+    }
+
+    public function cliente()
+    {
+        return $this->belongsTo(Cliente::class);
+    }
+
+    public function esAdmin(): bool
+    {
+        return $this->rol === 'admin';
+    }
+
+    public function esCliente(): bool
+    {
+        return $this->rol === 'cliente';
+    }
+
+    /**
+     * Lista de módulos permitidos (vacía si es admin: acceso total).
+     *
+     * @return list<string>
+     */
+    public function listaPermisos(): array
+    {
+        if ($this->esCliente()) {
+            return [];
+        }
+
+        if ($this->esAdmin()) {
+            return array_keys(config('permisos.modulos', []));
+        }
+
+        $permisos = $this->permisos;
+
+        return is_array($permisos) ? array_values(array_unique($permisos)) : [];
+    }
+
+    public function tienePermiso(string $modulo): bool
+    {
+        if ($this->esCliente()) {
+            return false;
+        }
+
+        if ($this->esAdmin()) {
+            return true;
+        }
+
+        $permisos = $this->listaPermisos();
+
+        if (in_array($modulo, $permisos, true)) {
+            return true;
+        }
+
+        // Contabilidad completa incluye registrar cobros.
+        if ($modulo === 'contabilidad.cobros' && in_array('contabilidad', $permisos, true)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function tieneAlgunPermiso(string ...$modulos): bool
+    {
+        foreach ($modulos as $modulo) {
+            if ($this->tienePermiso($modulo)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

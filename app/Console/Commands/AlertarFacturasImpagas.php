@@ -60,8 +60,8 @@ class AlertarFacturasImpagas extends Command
             $dias = Carbon::parse($factura->fecha_factura)->startOfDay()->diffInDays($hoy);
             $clienteNombre = optional($factura->cliente)->nombre_completo ?? '—';
             $mensaje = sprintf(
-                'La factura #%d (%s) lleva más de 3 días sin pago. Fecha de factura: %s (%d días). Monto: $%s. Estado: %s.',
-                $factura->id,
+                'La factura folio %s (%s) lleva más de 3 días sin pago. Fecha de factura: %s (%d días). Monto: $%s. Estado: %s.',
+                $factura->etiquetaFolio(),
                 $clienteNombre,
                 Carbon::parse($factura->fecha_factura)->format('d/m/Y'),
                 $dias,
@@ -75,7 +75,7 @@ class AlertarFacturasImpagas extends Command
                 }
 
                 if ($dryRun) {
-                    $this->line("[dry-run] Usuario {$usuario->id}: Factura #{$factura->id}");
+                    $this->line("[dry-run] Usuario {$usuario->id}: Factura folio {$factura->etiquetaFolio()}");
 
                     continue;
                 }

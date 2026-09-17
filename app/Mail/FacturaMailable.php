@@ -11,6 +11,7 @@ class FacturaMailable extends Mailable
     use Queueable, SerializesModels;
 
     public $factura;
+
     public $pdfContent;
 
     public function __construct($factura, $pdfContent)
@@ -25,8 +26,8 @@ class FacturaMailable extends Mailable
             ->subject('Factura de CH Logistics')
             ->view('emails.factura')
             ->with(['factura' => $this->factura])
-            ->attachData($this->pdfContent, 'factura_'.$this->factura->id.'.pdf', [
+            ->attachData($this->pdfContent, 'factura_folio_'.$this->factura->etiquetaFolio().'.pdf', [
                 'mime' => 'application/pdf',
             ]);
     }
-} 
+}

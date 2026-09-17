@@ -1,6 +1,6 @@
 @extends('layouts.app-new')
 
-@section('title', 'Dashboard - CH LOGISTICS ERP')
+@section('title', 'Dashboard - CH Logistics')
 @section('navbar-title', 'Dashboard')
 
 @section('head')
@@ -13,7 +13,7 @@
     {{-- Header --}}
     <div class="flex flex-wrap items-center justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-bold text-slate-800">CH LOGISTICS ERP</h1>
+            <h1 class="text-2xl font-bold text-slate-800">CH Logistics</h1>
             <p class="mt-1 text-slate-600">Panel ejecutivo</p>
         </div>
         <p class="text-slate-500 font-medium"><i class="fas fa-calendar-alt mr-2"></i>{{ \Carbon\Carbon::now()->format('d M Y') }}</p>
@@ -170,7 +170,7 @@
 var clientesData = @json($clientesData ?? []);
 var clientesList = @json($clientes ?? []);
 var serviciosPieData = @json($serviciosPieData ?? []);
-var skylinkPalette = ['#15537c','#2d6a9a','#1e5a82','#3B5998','#6A82FB','#A1C4FD','#27408B','#4F8EF7'];
+var chLogisticsPalette = ['#15537c','#2d6a9a','#1e5a82','#3B5998','#6A82FB','#A1C4FD','#27408B','#4F8EF7'];
 var input = document.getElementById('clienteAutocomplete');
 var list = document.getElementById('autocompleteList');
 var servicioSelect = document.getElementById('servicioSelect');
@@ -408,7 +408,7 @@ var ctxPie = document.getElementById('graficoServiciosPie');
 if (ctxPie && typeof Chart !== 'undefined') {
     var pieLabels = Object.keys(serviciosPieData);
     var pieData = Object.values(serviciosPieData);
-    var pieColors = skylinkPalette.slice(0, Math.max(pieLabels.length, 1));
+    var pieColors = chLogisticsPalette.slice(0, Math.max(pieLabels.length, 1));
     new Chart(ctxPie.getContext('2d'), {
         type: 'doughnut',
         data: {

@@ -1,6 +1,6 @@
 @extends('layouts.app-new')
 
-@section('title', 'Detalle CxC - Factura #' . $cxc->factura_id)
+@section('title', 'Detalle CxC - Factura folio ' . ($cxc->factura?->etiquetaFolio() ?? $cxc->factura_id))
 @section('navbar-title', 'Contabilidad')
 
 @section('content')
@@ -15,7 +15,8 @@
         <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
                 <p class="text-sm font-medium text-white/80">Cuentas por cobrar</p>
-                <h1 class="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">Detalle CxC — Factura #{{ $cxc->factura_id }}</h1>
+                <h1 class="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">Detalle CxC — Factura folio {{ $cxc->factura?->etiquetaFolio() ?? $cxc->factura_id }}</h1>
+                <p class="mt-1 text-xs text-white/60">Id interno factura: {{ $cxc->factura_id }}</p>
                 <p class="mt-2 text-sm text-white/85">Saldos y cobros aplicados a esta factura.</p>
             </div>
             <div class="flex flex-wrap gap-2">

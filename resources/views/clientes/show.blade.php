@@ -1,6 +1,6 @@
 @extends('layouts.app-new')
 
-@section('title', 'Previsualizar Cliente - CH LOGISTICS ERP')
+@section('title', 'Previsualizar Cliente - CH Logistics')
 @section('navbar-title', 'Previsualizar Cliente')
 
 @section('content')
@@ -85,6 +85,87 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    {{-- Acceso al portal --}}
+    @php $portalUser = $cliente->usuarioPortal; @endphp
+    <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <h2 class="text-lg font-semibold text-slate-800">
+                    <i class="fas fa-key text-[#15537c] mr-2"></i>Acceso al portal del cliente
+                </h2>
+                <p class="mt-1 text-sm text-slate-500">Crea credenciales para que el cliente vea sus paquetes y facturas.</p>
+            </div>
+            @if($portalUser)
+                <span class="rounded-full px-3 py-1 text-xs font-bold {{ $portalUser->estado ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700' }}">
+                    {{ $portalUser->estado ? 'Activo' : 'Desactivado' }}
+                </span>
+            @endif
+        </div>
+
+        @if($errors->has('portal'))
+            <div class="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{{ $errors->first('portal') }}</div>
+        @endif
+
+        @if(session('portal_credenciales'))
+            <div class="mb-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-4 text-sm text-amber-900">
+                <p class="font-bold mb-2"><i class="fas fa-exclamation-triangle mr-1"></i> Anota estas credenciales (solo se muestran una vez):</p>
+                <p><strong>Correo:</strong> {{ session('portal_credenciales')['email'] }}</p>
+                <p><strong>Contraseña:</strong> <code class="rounded bg-white px-2 py-0.5 font-mono text-base">{{ session('portal_credenciales')['password'] }}</code></p>
+                <p class="mt-2 text-amber-800">Entrada: <a href="{{ route('login') }}" class="underline font-semibold" target="_blank">{{ route('login') }}</a> → se redirige al portal.</p>
+            </div>
+        @endif
+
+        @if(!$portalUser)
+            <form method="POST" action="{{ route('clientes.portal.store', $cliente->id) }}" class="space-y-4 max-w-xl">
+                @csrf
+                <div>
+                    <label class="mb-1 block text-sm font-medium text-slate-600">Correo de acceso</label>
+                    <input type="email" name="email" value="{{ old('email', $cliente->correo) }}"
+                        class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"
+                        placeholder="Se usará el correo del cliente si lo dejas vacío">
+                </div>
+                <div>
+                    <label class="mb-1 block text-sm font-medium text-slate-600">Contraseña (opcional)</label>
+                    <input type="text" name="password" minlength="8"
+                        class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"
+                        placeholder="Si la dejas vacía se genera una automática">
+                </div>
+                <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-[#15537c] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0f3d5c]"
+                    @disabled(! $cliente->correo)>
+                    <i class="fas fa-user-plus"></i> Crear acceso al portal
+                </button>
+                @unless($cliente->correo)
+                    <p class="text-sm text-rose-600">Agrega un correo al cliente antes de crear el acceso.</p>
+                @endunless
+            </form>
+        @else
+            <div class="mb-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm">
+                <p><strong>Usuario portal:</strong> {{ $portalUser->email }}</p>
+                <p class="text-slate-500">Rol: cliente · ID usuario: {{ $portalUser->id }}</p>
+            </div>
+            <div class="flex flex-wrap gap-3">
+                <form method="POST" action="{{ route('clientes.portal.reset', $cliente->id) }}" class="flex flex-wrap items-end gap-2">
+                    @csrf
+                    <div>
+                        <label class="mb-1 block text-xs font-medium text-slate-500">Nueva contraseña (opcional)</label>
+                        <input type="text" name="password" minlength="8"
+                            class="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                            placeholder="Auto si vacío">
+                    </div>
+                    <button type="submit" class="rounded-lg border border-[#15537c] px-4 py-2 text-sm font-semibold text-[#15537c] hover:bg-[#15537c]/5">
+                        Resetear contraseña
+                    </button>
+                </form>
+                <form method="POST" action="{{ route('clientes.portal.toggle', $cliente->id) }}">
+                    @csrf
+                    <button type="submit" class="rounded-lg px-4 py-2 text-sm font-semibold {{ $portalUser->estado ? 'border border-rose-300 text-rose-700 hover:bg-rose-50' : 'bg-emerald-600 text-white hover:bg-emerald-700' }}">
+                        {{ $portalUser->estado ? 'Desactivar acceso' : 'Reactivar acceso' }}
+                    </button>
+                </form>
+            </div>
+        @endif
     </div>
 </div>
 @endsection

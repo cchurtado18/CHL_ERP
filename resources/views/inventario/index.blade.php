@@ -1,6 +1,6 @@
 @extends('layouts.app-new')
 
-@section('title', 'Inventario - CH LOGISTICS ERP')
+@section('title', 'Inventario - CH Logistics')
 @section('navbar-title', 'Inventario de Paquetes')
 
 @section('content')
@@ -10,6 +10,15 @@
     @if (session('success'))
     <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-base text-emerald-800" role="alert">
         <span class="font-medium">{{ session('success') }}</span>
+    </div>
+    @endif
+    @if ($errors->any())
+    <div class="rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-base text-red-800" role="alert">
+        <ul class="list-disc space-y-1 pl-5">
+            @foreach ($errors->all() as $err)
+                <li>{{ $err }}</li>
+            @endforeach
+        </ul>
     </div>
     @endif
 
@@ -99,32 +108,59 @@
             <button type="button" id="viewTable" class="view-toggle rounded-lg px-4 py-2.5 text-base font-medium text-white bg-[#15537c]" title="Ver como tabla"><i class="fas fa-list mr-2"></i>Tabla</button>
             <button type="button" id="viewGrid" class="view-toggle rounded-lg px-4 py-2.5 text-base font-medium text-slate-600 hover:bg-slate-100" title="Ver como tarjetas"><i class="fas fa-th-large mr-2"></i>Tarjetas</button>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
             <a href="{{ route('inventario.create') }}" class="inline-flex items-center gap-2 rounded-xl bg-[#15537c] px-5 py-2.5 text-base font-semibold text-white shadow-sm hover:bg-[#0f3d5c]"><i class="fas fa-plus"></i> Nuevo Paquete</a>
             <a href="{{ route('inventario.export-excel') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2.5 text-base font-medium text-slate-600 hover:bg-slate-50"><i class="fas fa-file-excel text-emerald-600"></i> Exportar Excel</a>
+            <a href="{{ route('inventario.salidas.index') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2.5 text-base font-medium text-slate-600 hover:bg-slate-50"><i class="fas fa-truck-loading text-slate-600"></i> Historial salidas</a>
+            <button type="button" id="btnToggleModoSalida" class="inline-flex items-center gap-2 rounded-lg border border-[#15537c]/30 bg-[#15537c]/10 px-4 py-2.5 text-base font-medium text-[#15537c] hover:bg-[#15537c]/15" aria-pressed="false">
+                <i class="fas fa-warehouse"></i> <span id="btnToggleModoSalidaLabel">Registrar salida entre sucursales</span>
+            </button>
         </div>
+    </div>
+
+    {{-- Modo salida: descripción y sucursales (los checks de paquetes aparecen solo con este modo activo) --}}
+    <div id="panelModoSalida" class="hidden rounded-xl border border-[#15537c]/25 bg-[#15537c]/5 p-5 shadow-sm">
+        <form id="formSalidaSucursal" method="POST" action="{{ route('inventario.salidas.store') }}" class="space-y-4">
+            @csrf
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold text-[#15537c]"><i class="fas fa-dolly mr-2"></i>Salida entre sucursales</h2>
+                    <p class="mt-1 text-sm text-slate-700">Active este modo, marque los paquetes que salen y describa el envío. Al guardar queda registrado en el sistema para auditoría.</p>
+                </div>
+            </div>
+            <div>
+                <label for="salida_descripcion" class="mb-1.5 block text-sm font-medium text-slate-700">Descripción <span class="text-red-600">*</span></label>
+                <textarea id="salida_descripcion" name="descripcion" rows="3" maxlength="5000" required class="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-base focus:border-[#15537c] focus:ring-1 focus:ring-[#15537c]" placeholder="Ej. Transferencia Miami → Managua, carga consolidada del 28/04…">{{ old('descripcion') }}</textarea>
+            </div>
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div>
+                    <label for="salida_origen" class="mb-1.5 block text-sm font-medium text-slate-700">Sucursal origen</label>
+                    <input id="salida_origen" type="text" name="sucursal_origen" value="{{ old('sucursal_origen') }}" maxlength="120" class="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-base focus:border-[#15537c] focus:ring-1 focus:ring-[#15537c]" placeholder="Opcional">
+                </div>
+                <div>
+                    <label for="salida_destino" class="mb-1.5 block text-sm font-medium text-slate-700">Sucursal destino</label>
+                    <input id="salida_destino" type="text" name="sucursal_destino" value="{{ old('sucursal_destino') }}" maxlength="120" class="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-base focus:border-[#15537c] focus:ring-1 focus:ring-[#15537c]" placeholder="Opcional">
+                </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-3">
+                <button type="submit" id="btnGuardarSalida" class="inline-flex items-center gap-2 rounded-lg bg-[#15537c] px-5 py-2.5 text-base font-semibold text-white hover:bg-[#0f3d5c]">
+                    <i class="fas fa-save"></i> Guardar salida registrada
+                </button>
+                <span id="salidaContadorSel" class="text-sm font-medium text-slate-600">0 paquetes seleccionados</span>
+            </div>
+        </form>
     </div>
 
     {{-- Contenedor Tabla --}}
     <div id="containerTable" class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <div class="overflow-x-auto">
-            <table class="w-full table-fixed border-collapse text-left text-base text-black">
-                <colgroup>
-                    <col style="width:14%">
-                    <col style="width:10%">
-                    <col style="width:9%">
-                    <col style="width:10%">
-                    <col style="width:14%">
-                    <col style="width:10%">
-                    <col style="width:10%">
-                    @unless($esAgente)
-                    <col style="width:11%">
-                    @endunless
-                    <col style="width:12%">
-                </colgroup>
+            <table class="w-full min-w-[1040px] border-collapse text-left text-base text-black">
                 <thead class="border-b border-slate-200 bg-[#15537c] text-white">
                     <tr>
-                        <th class="px-4 py-2 font-semibold">Cliente</th>
+                        <th class="salida-sel-col hidden px-2 py-2 text-center">
+                            <input id="selectAllPaquetes" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-[#15537c] focus:ring-[#15537c]">
+                        </th>
+                        <th class="min-w-[180px] px-4 py-2 font-semibold">Cliente</th>
                         <th class="px-4 py-2 font-semibold text-center">Servicio</th>
                         <th class="px-4 py-2 font-semibold text-center">Peso</th>
                         <th class="px-4 py-2 font-semibold text-center">Guía</th>
@@ -140,8 +176,11 @@
                 <tbody>
                     @forelse ($inventarios as $item)
                     <tr class="border-b border-slate-100 {{ $loop->iteration % 2 === 0 ? 'bg-slate-50' : 'bg-white' }} hover:bg-slate-100">
-                        <td class="px-4 py-1.5">
-                            <div class="truncate font-medium text-black" title="{{ $item->cliente->nombre_completo ?? 'N/A' }}">{{ $item->cliente->nombre_completo ?? 'N/A' }}</div>
+                        <td class="salida-sel-col hidden px-2 py-1.5 text-center">
+                            <input type="checkbox" name="paquetes[]" value="{{ $item->id }}" form="formSalidaSucursal" class="paquete-select h-4 w-4 rounded border-slate-300 text-[#15537c] focus:ring-[#15537c]" @checked(collect(old('paquetes', []))->map(fn ($v) => (int) $v)->contains($item->id))>
+                        </td>
+                        <td class="max-w-[240px] px-4 py-1.5 align-top">
+                            <div class="break-words font-medium leading-snug text-black" title="{{ $item->cliente->nombre_completo ?? 'N/A' }}">{{ $item->cliente->nombre_completo ?? 'N/A' }}</div>
                         </td>
                         <td class="px-4 py-1.5 text-center"><span class="rounded-md bg-slate-100 px-2 py-0.5 text-sm font-medium text-black">{{ $item->servicio->tipo_servicio ?? 'N/A' }}</span></td>
                         <td class="px-4 py-1.5 text-center font-medium text-black whitespace-nowrap">{{ number_format($item->peso_lb, 2) }} lb</td>
@@ -178,7 +217,7 @@
                         </td>
                     </tr>
                     @empty
-                    <tr><td colspan="{{ $esAgente ? '8' : '9' }}" class="px-4 py-12 text-center text-base text-slate-700">No hay paquetes. <a href="{{ route('inventario.create') }}" class="font-medium text-[#15537c] hover:underline">Registrar uno</a>.</td></tr>
+                    <tr><td colspan="{{ $esAgente ? '9' : '10' }}" class="px-4 py-12 text-center text-base text-slate-700">No hay paquetes. <a href="{{ route('inventario.create') }}" class="font-medium text-[#15537c] hover:underline">Registrar uno</a>.</td></tr>{{-- colspan: incluye columna oculta de selección --}}
                     @endforelse
                 </tbody>
             </table>
@@ -190,6 +229,10 @@
         <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             @forelse ($inventarios as $item)
             <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md">
+                <div class="salida-sel-col hidden mb-3 flex items-center gap-2 border-b border-slate-100 pb-3">
+                    <input type="checkbox" name="paquetes[]" value="{{ $item->id }}" form="formSalidaSucursal" class="paquete-select h-4 w-4 rounded border-slate-300 text-[#15537c] focus:ring-[#15537c]" @checked(collect(old('paquetes', []))->map(fn ($v) => (int) $v)->contains($item->id))>
+                    <span class="text-sm font-medium text-slate-600">Incluir en salida</span>
+                </div>
                 <div class="flex items-start justify-between gap-3">
                     <div class="min-w-0 flex-1">
                         <p class="truncate text-lg font-semibold text-black">{{ $item->cliente->nombre_completo ?? 'N/A' }}</p>
@@ -299,6 +342,124 @@ function confirmDelete(id) {
 function closeDeleteModal() {
     document.getElementById('deleteModal').classList.add('hidden');
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    var panel = document.getElementById('panelModoSalida');
+    var toggleBtn = document.getElementById('btnToggleModoSalida');
+    var toggleLabel = document.getElementById('btnToggleModoSalidaLabel');
+    var formSalida = document.getElementById('formSalidaSucursal');
+    var selectAll = document.getElementById('selectAllPaquetes');
+    var salidaCols = Array.prototype.slice.call(document.querySelectorAll('.salida-sel-col'));
+    var contador = document.getElementById('salidaContadorSel');
+
+    function paqueteChecks() {
+        return Array.prototype.slice.call(document.querySelectorAll('.paquete-select'));
+    }
+
+    function countSeleccionUnicos() {
+        var vistos = {};
+        var n = 0;
+        paqueteChecks().forEach(function(c) {
+            if (c.checked && !vistos[c.value]) {
+                vistos[c.value] = true;
+                n++;
+            }
+        });
+        return n;
+    }
+
+    function syncMismoPaquete(changed) {
+        var val = changed.value;
+        var on = changed.checked;
+        paqueteChecks().forEach(function(c) {
+            if (c.value === val) {
+                c.checked = on;
+            }
+        });
+    }
+
+    function actualizarContador() {
+        if (contador) {
+            var n = countSeleccionUnicos();
+            contador.textContent = n + ' paquete' + (n === 1 ? '' : 's') + ' seleccionado' + (n === 1 ? '' : 's');
+        }
+    }
+
+    function setModoSalida(activo) {
+        if (!panel || !toggleBtn) return;
+        salidaCols.forEach(function(el) {
+            if (activo) {
+                el.classList.remove('hidden');
+            } else {
+                el.classList.add('hidden');
+            }
+        });
+        if (activo) {
+            panel.classList.remove('hidden');
+            toggleBtn.setAttribute('aria-pressed', 'true');
+            toggleBtn.classList.add('ring-2', 'ring-[#15537c]', 'ring-offset-2');
+            if (toggleLabel) toggleLabel.textContent = 'Cancelar modo salida';
+        } else {
+            panel.classList.add('hidden');
+            toggleBtn.setAttribute('aria-pressed', 'false');
+            toggleBtn.classList.remove('ring-2', 'ring-[#15537c]', 'ring-offset-2');
+            if (toggleLabel) toggleLabel.textContent = 'Registrar salida entre sucursales';
+            paqueteChecks().forEach(function(c) { c.checked = false; });
+            if (selectAll) selectAll.checked = false;
+            if (formSalida) {
+                var ta = document.getElementById('salida_descripcion');
+                var o = document.getElementById('salida_origen');
+                var d = document.getElementById('salida_destino');
+                if (ta) ta.value = '';
+                if (o) o.value = '';
+                if (d) d.value = '';
+            }
+        }
+        actualizarContador();
+    }
+
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', function() {
+            var activo = toggleBtn.getAttribute('aria-pressed') !== 'true';
+            setModoSalida(activo);
+        });
+    }
+
+    if (selectAll) {
+        selectAll.addEventListener('change', function() {
+            var on = selectAll.checked;
+            paqueteChecks().forEach(function(c) { c.checked = on; });
+            actualizarContador();
+        });
+    }
+
+    document.addEventListener('change', function(e) {
+        if (!e.target || !e.target.classList || !e.target.classList.contains('paquete-select')) return;
+        syncMismoPaquete(e.target);
+        if (selectAll) {
+            var checks = paqueteChecks();
+            var grupos = {};
+            checks.forEach(function(c) { grupos[c.value] = grupos[c.value] || []; grupos[c.value].push(c); });
+            selectAll.checked = checks.length > 0 && Object.keys(grupos).every(function(k) {
+                return grupos[k][0].checked;
+            });
+        }
+        actualizarContador();
+    });
+
+    if (formSalida) {
+        formSalida.addEventListener('submit', function(e) {
+            if (countSeleccionUnicos() === 0) {
+                e.preventDefault();
+                alert('Seleccione al menos un paquete para registrar la salida.');
+            }
+        });
+    }
+
+    @if($errors->any())
+    setModoSalida(true);
+    @endif
+});
 </script>
 @endpush
 @endsection

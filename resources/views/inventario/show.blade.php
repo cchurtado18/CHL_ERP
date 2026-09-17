@@ -1,6 +1,6 @@
 @extends('layouts.app-new')
 
-@section('title', 'Detalle del Paquete - CH LOGISTICS ERP')
+@section('title', 'Detalle del Paquete - CH Logistics')
 @section('navbar-title', 'Detalle del Paquete')
 
 @section('content')
@@ -98,7 +98,7 @@
                 <p class="mt-0.5">
                     @if($paquete->factura)
                         <a href="{{ route('facturacion.preview', $paquete->factura->id) }}" target="_blank" class="inline-flex items-center gap-1.5 rounded-lg border border-[#15537c]/40 bg-[#15537c]/5 px-3 py-1.5 text-sm font-medium text-[#15537c] hover:bg-[#15537c]/10">
-                            <i class="fas fa-file-invoice-dollar"></i> Ver factura #{{ $paquete->factura->id }}
+                            <i class="fas fa-file-invoice-dollar"></i> Ver factura folio {{ $paquete->factura->etiquetaFolio() }}
                         </a>
                     @else
                         <span class="text-slate-500">No asignada</span>

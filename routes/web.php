@@ -3,6 +3,7 @@
 use App\Http\Controllers\AgendaEventoController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClienteController;
+use App\Http\Controllers\ClientePortalAccesoController;
 use App\Http\Controllers\ContabilidadAsientoController;
 use App\Http\Controllers\ContabilidadCobroController;
 use App\Http\Controllers\ContabilidadCuentaController;
@@ -23,6 +24,11 @@ use App\Http\Controllers\InventarioSalidaController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\LogInventarioController;
 use App\Http\Controllers\NotificacionController;
+use App\Http\Controllers\Portal\PortalCuentaController;
+use App\Http\Controllers\Portal\PortalFacturaController;
+use App\Http\Controllers\Portal\PortalHomeController;
+use App\Http\Controllers\Portal\PortalPaqueteController;
+use App\Http\Controllers\PublicTrackingController;
 use App\Http\Controllers\RemitenteController;
 use App\Http\Controllers\TarifaClienteController;
 use App\Http\Controllers\TrackingController;
@@ -31,14 +37,31 @@ use App\Models\Cliente;
 use App\Models\Inventario;
 use Illuminate\Support\Facades\Route;
 
-// Login
-Route::get('login', [AuthController::class, 'showLoginForm'])->name('login');
-Route::post('login', [AuthController::class, 'login']);
-Route::post('logout', [AuthController::class, 'logout'])->name('logout');
+// Login (solo invitados; si ya hay sesión se redirige al home)
+Route::middleware('guest')->group(function () {
+    Route::get('login', [AuthController::class, 'showLoginForm'])->name('login');
+    Route::post('login', [AuthController::class, 'login']);
+});
+Route::post('logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
+
+// Rastreo público (sin login)
+Route::get('/rastreo', [PublicTrackingController::class, 'index'])->name('public.tracking');
+
+// Portal de clientes
+Route::middleware(['auth', 'portal.cliente'])->prefix('portal')->name('portal.')->group(function () {
+    Route::get('/', [PortalHomeController::class, 'index'])->name('home');
+    Route::get('/paquetes', [PortalPaqueteController::class, 'index'])->name('paquetes.index');
+    Route::get('/paquetes/{id}', [PortalPaqueteController::class, 'show'])->name('paquetes.show');
+    Route::get('/facturas', [PortalFacturaController::class, 'index'])->name('facturas.index');
+    Route::get('/facturas/{id}', [PortalFacturaController::class, 'show'])->name('facturas.show');
+    Route::get('/facturas/{id}/pdf', [PortalFacturaController::class, 'pdf'])->name('facturas.pdf');
+    Route::get('/cuenta', [PortalCuentaController::class, 'edit'])->name('cuenta');
+    Route::put('/cuenta/password', [PortalCuentaController::class, 'updatePassword'])->name('cuenta.password');
+});
 
 // Todas las rutas accesibles sin autenticación ni roles
 // RUTA PRINCIPAL ÚNICA PARA DASHBOARD
-Route::middleware(['auth', 'role:admin'])->get('/', function () {
+Route::middleware(['auth', 'permiso:dashboard'])->get('/', function () {
     $totalClientes = \App\Models\Cliente::count();
     $totalUsuarios = \App\Models\User::count();
     $totalFacturas = \App\Models\Facturacion::count();
@@ -105,7 +128,7 @@ Route::middleware(['auth', 'role:admin'])->get('/', function () {
 })->name('welcome');
 
 // Rutas para usuarios
-Route::prefix('usuarios')->group(function () {
+Route::middleware(['auth', 'permiso:usuarios'])->prefix('usuarios')->group(function () {
     Route::get('/', [UserController::class, 'index'])->name('usuarios.index');
     Route::get('/crear', [UserController::class, 'create'])->name('usuarios.create');
     Route::post('/', [UserController::class, 'store'])->name('usuarios.store');
@@ -115,7 +138,7 @@ Route::prefix('usuarios')->group(function () {
 });
 
 // Rutas para clientes
-Route::prefix('clientes')->group(function () {
+Route::middleware(['auth', 'permiso:clientes'])->prefix('clientes')->group(function () {
     Route::get('/', [ClienteController::class, 'index'])->name('clientes.index');
     Route::get('/crear', [ClienteController::class, 'create'])->name('clientes.create');
     Route::post('/', [ClienteController::class, 'store'])->name('clientes.store');
@@ -123,10 +146,13 @@ Route::prefix('clientes')->group(function () {
     Route::put('/{id}', [ClienteController::class, 'update'])->name('clientes.update');
     Route::delete('/{id}', [ClienteController::class, 'destroy'])->name('clientes.destroy');
     Route::get('/{id}', [ClienteController::class, 'show'])->name('clientes.show');
+    Route::post('/{id}/portal', [ClientePortalAccesoController::class, 'store'])->name('clientes.portal.store');
+    Route::post('/{id}/portal/reset', [ClientePortalAccesoController::class, 'resetPassword'])->name('clientes.portal.reset');
+    Route::post('/{id}/portal/toggle', [ClientePortalAccesoController::class, 'toggle'])->name('clientes.portal.toggle');
 });
 
 // Rutas para facturación
-Route::middleware(['auth', 'role:admin,agente'])->prefix('facturacion')->group(function () {
+Route::middleware(['auth', 'permiso:facturacion'])->prefix('facturacion')->group(function () {
     Route::get('/', [FacturacionController::class, 'index'])->name('facturacion.index');
     Route::get('/crear', [FacturacionController::class, 'create'])->name('facturacion.create');
     Route::post('/', [FacturacionController::class, 'store'])->name('facturacion.store');
@@ -148,7 +174,7 @@ Route::middleware(['auth', 'role:admin,agente'])->prefix('facturacion')->group(f
 });
 
 // Rutas para encomiendas familiares
-Route::middleware(['auth', 'role:admin,agente,basico'])->prefix('encomiendas')->group(function () {
+Route::middleware(['auth', 'permiso:encomiendas'])->prefix('encomiendas')->group(function () {
     Route::get('/', [EncomiendaController::class, 'index'])->name('encomiendas.index');
     Route::get('/crear', [EncomiendaController::class, 'create'])->name('encomiendas.create');
     Route::post('/', [EncomiendaController::class, 'store'])->name('encomiendas.store');
@@ -163,7 +189,7 @@ Route::middleware(['auth', 'role:admin,agente,basico'])->prefix('encomiendas')->
 });
 
 // Rutas para remitentes
-Route::middleware(['auth', 'role:admin,agente,basico'])->prefix('remitentes')->group(function () {
+Route::middleware(['auth', 'permiso:remitentes'])->prefix('remitentes')->group(function () {
     Route::get('/', [RemitenteController::class, 'index'])->name('remitentes.index');
     Route::get('/crear', [RemitenteController::class, 'create'])->name('remitentes.create');
     Route::post('/', [RemitenteController::class, 'store'])->name('remitentes.store');
@@ -175,7 +201,7 @@ Route::middleware(['auth', 'role:admin,agente,basico'])->prefix('remitentes')->g
 });
 
 // Rutas para destinatarios
-Route::middleware(['auth', 'role:admin,agente,basico'])->prefix('destinatarios')->group(function () {
+Route::middleware(['auth', 'permiso:destinatarios'])->prefix('destinatarios')->group(function () {
     Route::get('/', [DestinatarioController::class, 'index'])->name('destinatarios.index');
     Route::get('/crear', [DestinatarioController::class, 'create'])->name('destinatarios.create');
     Route::post('/', [DestinatarioController::class, 'store'])->name('destinatarios.store');
@@ -187,7 +213,7 @@ Route::middleware(['auth', 'role:admin,agente,basico'])->prefix('destinatarios')
 });
 
 // Rutas para inventario
-Route::middleware(['auth', 'role:admin,agente,basico'])->prefix('inventario')->group(function () {
+Route::middleware(['auth', 'permiso:inventario'])->prefix('inventario')->group(function () {
     Route::get('/', [InventarioController::class, 'index'])->name('inventario.index');
     Route::get('/crear', [InventarioController::class, 'create'])->name('inventario.create');
     Route::post('/', [InventarioController::class, 'store'])->name('inventario.store');
@@ -205,7 +231,7 @@ Route::middleware(['auth', 'role:admin,agente,basico'])->prefix('inventario')->g
 });
 
 // Rutas para notificaciones
-Route::middleware(['auth', 'role:admin,agente,basico'])->prefix('notificaciones')->group(function () {
+Route::middleware(['auth', 'permiso:notificaciones'])->prefix('notificaciones')->group(function () {
     Route::get('/', [NotificacionController::class, 'index'])->name('notificaciones.index');
     Route::get('/crear', [NotificacionController::class, 'create'])->name('notificaciones.create');
     Route::post('/', [NotificacionController::class, 'store'])->name('notificaciones.store');
@@ -219,7 +245,7 @@ Route::middleware(['auth', 'role:admin,agente,basico'])->prefix('notificaciones'
 });
 
 // Rutas para leads (CRM comercial)
-Route::middleware(['auth', 'role:admin,agente,basico'])->prefix('leads')->group(function () {
+Route::middleware(['auth', 'permiso:leads'])->prefix('leads')->group(function () {
     Route::get('/', [LeadController::class, 'calendar'])->name('leads.calendar');
     Route::get('/lista', [LeadController::class, 'index'])->name('leads.index');
     Route::get('/crear', [LeadController::class, 'create'])->name('leads.create');
@@ -236,7 +262,7 @@ Route::middleware(['auth', 'role:admin,agente,basico'])->prefix('leads')->group(
 });
 
 // Rutas para contabilidad
-Route::middleware(['auth', 'role:admin'])->prefix('contabilidad')->group(function () {
+Route::middleware(['auth', 'permiso:contabilidad'])->prefix('contabilidad')->group(function () {
     Route::get('/', [ContabilidadDashboardController::class, 'index'])->name('contabilidad.dashboard');
 
     Route::get('/cuentas', [ContabilidadCuentaController::class, 'index'])->name('contabilidad.cuentas.index');
@@ -251,40 +277,39 @@ Route::middleware(['auth', 'role:admin'])->prefix('contabilidad')->group(functio
     Route::get('/cxc', [ContabilidadCxcController::class, 'index'])->name('contabilidad.cxc.index');
     Route::get('/cxc/{facturaId}', [ContabilidadCxcController::class, 'show'])->name('contabilidad.cxc.show');
 
+    Route::get('/periodos', [ContabilidadPeriodoController::class, 'index'])->name('contabilidad.periodos.index');
+    Route::patch('/periodos/{id}/toggle', [ContabilidadPeriodoController::class, 'toggleEstado'])->name('contabilidad.periodos.toggle');
+});
+
+// Reportes financieros: contabilidad completa o permiso explícito de reportes
+Route::middleware(['auth', 'permiso:contabilidad.reportes'])->prefix('contabilidad')->group(function () {
+    Route::get('/reporte-ejecutivo', [ContabilidadReporteController::class, 'index'])->name('contabilidad.reporte');
+
+    Route::get('/parametros', [ContabilidadParametroController::class, 'index'])->name('contabilidad.parametros.index');
+    Route::post('/parametros', [ContabilidadParametroController::class, 'store'])->name('contabilidad.parametros.store');
+    Route::delete('/parametros/{id}', [ContabilidadParametroController::class, 'destroy'])->whereNumber('id')->name('contabilidad.parametros.destroy');
+    Route::post('/parametros/{id}/restaurar', [ContabilidadParametroController::class, 'restore'])->whereNumber('id')->name('contabilidad.parametros.restore');
+
+    Route::get('/gastos', [ContabilidadGastoController::class, 'index'])->name('contabilidad.gastos.index');
+    Route::get('/gastos/crear', [ContabilidadGastoController::class, 'create'])->name('contabilidad.gastos.create');
+    Route::post('/gastos', [ContabilidadGastoController::class, 'store'])->name('contabilidad.gastos.store');
+    Route::get('/gastos/{id}', [ContabilidadGastoController::class, 'show'])->whereNumber('id')->name('contabilidad.gastos.show');
+    Route::delete('/gastos/{id}', [ContabilidadGastoController::class, 'destroy'])->whereNumber('id')->name('contabilidad.gastos.destroy');
+
+    Route::get('/rentabilidad', [ContabilidadRentabilidadController::class, 'index'])->name('contabilidad.rentabilidad.index');
+    Route::get('/rentabilidad/cliente/{cliente}', [ContabilidadRentabilidadController::class, 'cliente'])->whereNumber('cliente')->name('contabilidad.rentabilidad.cliente');
+});
+
+// Cobros: accesible con permiso contabilidad.cobros (o contabilidad completa / admin)
+Route::middleware(['auth', 'permiso:contabilidad.cobros'])->prefix('contabilidad')->group(function () {
     Route::get('/cobros', [ContabilidadCobroController::class, 'index'])->name('contabilidad.cobros.index');
     Route::get('/cobros/crear', [ContabilidadCobroController::class, 'create'])->name('contabilidad.cobros.create');
     Route::get('/cobros/{id}', [ContabilidadCobroController::class, 'show'])->name('contabilidad.cobros.show');
     Route::post('/cobros', [ContabilidadCobroController::class, 'store'])->name('contabilidad.cobros.store');
-
-    Route::get('/periodos', [ContabilidadPeriodoController::class, 'index'])->name('contabilidad.periodos.index');
-    Route::patch('/periodos/{id}/toggle', [ContabilidadPeriodoController::class, 'toggleEstado'])->name('contabilidad.periodos.toggle');
-
-    // ─── Solo ADMIN puede acceder a las siguientes secciones (afectan rentabilidad/gastos globales) ───
-    Route::middleware('admin.only')->group(function () {
-        // Reporte ejecutivo
-        Route::get('/reporte-ejecutivo', [ContabilidadReporteController::class, 'index'])->name('contabilidad.reporte');
-
-        // Parámetros de rentabilidad (costo fijo por libra/pie³)
-        Route::get('/parametros', [ContabilidadParametroController::class, 'index'])->name('contabilidad.parametros.index');
-        Route::post('/parametros', [ContabilidadParametroController::class, 'store'])->name('contabilidad.parametros.store');
-        Route::delete('/parametros/{id}', [ContabilidadParametroController::class, 'destroy'])->whereNumber('id')->name('contabilidad.parametros.destroy');
-        Route::post('/parametros/{id}/restaurar', [ContabilidadParametroController::class, 'restore'])->whereNumber('id')->name('contabilidad.parametros.restore');
-
-        // Gastos operativos
-        Route::get('/gastos', [ContabilidadGastoController::class, 'index'])->name('contabilidad.gastos.index');
-        Route::get('/gastos/crear', [ContabilidadGastoController::class, 'create'])->name('contabilidad.gastos.create');
-        Route::post('/gastos', [ContabilidadGastoController::class, 'store'])->name('contabilidad.gastos.store');
-        Route::get('/gastos/{id}', [ContabilidadGastoController::class, 'show'])->whereNumber('id')->name('contabilidad.gastos.show');
-        Route::delete('/gastos/{id}', [ContabilidadGastoController::class, 'destroy'])->whereNumber('id')->name('contabilidad.gastos.destroy');
-
-        // Reporte de rentabilidad
-        Route::get('/rentabilidad', [ContabilidadRentabilidadController::class, 'index'])->name('contabilidad.rentabilidad.index');
-        Route::get('/rentabilidad/cliente/{cliente}', [ContabilidadRentabilidadController::class, 'cliente'])->whereNumber('cliente')->name('contabilidad.rentabilidad.cliente');
-    });
 });
 
 // Rutas para tracking
-Route::prefix('tracking')->group(function () {
+Route::middleware(['auth', 'permiso:tracking'])->prefix('tracking')->group(function () {
     Route::get('/', [TrackingController::class, 'index'])->name('tracking.index');
     Route::get('/dashboard', [TrackingController::class, 'dashboard'])->name('tracking.dashboard');
     Route::get('/crear', [TrackingController::class, 'create'])->name('tracking.create');
@@ -301,15 +326,17 @@ Route::prefix('tracking')->group(function () {
     Route::get('/vencidos/count', [TrackingController::class, 'countVencidos'])->name('tracking.vencidos.count');
 });
 
-// Tarifas
-Route::post('tarifas-clientes', [TarifaClienteController::class, 'store'])->name('tarifas-clientes.store');
-Route::delete('tarifas-clientes/{id}', [TarifaClienteController::class, 'destroy'])->name('tarifas-clientes.destroy');
+// Tarifas (solo usuarios autenticados con módulo clientes)
+Route::middleware(['auth', 'permiso:clientes'])->group(function () {
+    Route::post('tarifas-clientes', [TarifaClienteController::class, 'store'])->name('tarifas-clientes.store');
+    Route::delete('tarifas-clientes/{id}', [TarifaClienteController::class, 'destroy'])->name('tarifas-clientes.destroy');
+});
 
 // Historial de inventario
-Route::get('logs-inventario', [LogInventarioController::class, 'index'])->name('logs_inventario.index');
+Route::middleware(['auth', 'permiso:logs_inventario'])->get('logs-inventario', [LogInventarioController::class, 'index'])->name('logs_inventario.index');
 
 // API AJAX para dashboard: estadísticas de paquetes
-Route::middleware(['auth'])->get('/dashboard/estadisticas-paquetes', [DashboardController::class, 'estadisticasPaquetes'])->name('dashboard.estadisticas-paquetes');
+Route::middleware(['auth', 'staff'])->get('/dashboard/estadisticas-paquetes', [DashboardController::class, 'estadisticasPaquetes'])->name('dashboard.estadisticas-paquetes');
 
 // API AJAX para estadísticas por cliente con filtro de fechas y tipo de servicio
-Route::middleware(['auth', 'role:admin,agente'])->get('/dashboard/estadisticas-paquetes-cliente', [App\Http\Controllers\DashboardController::class, 'estadisticasPaquetesCliente'])->name('dashboard.estadisticas-paquetes-cliente');
+Route::middleware(['auth', 'permiso:dashboard'])->get('/dashboard/estadisticas-paquetes-cliente', [App\Http\Controllers\DashboardController::class, 'estadisticasPaquetesCliente'])->name('dashboard.estadisticas-paquetes-cliente');

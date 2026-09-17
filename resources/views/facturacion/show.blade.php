@@ -1,6 +1,6 @@
 @extends('layouts.app-new')
 
-@section('title', 'Factura #' . $factura->id . ' - CH LOGISTICS ERP')
+@section('title', 'Factura folio ' . $factura->etiquetaFolio() . ' - CH Logistics')
 @section('navbar-title', 'Facturación')
 
 @php
@@ -80,8 +80,9 @@
         <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
                 <p class="text-sm font-medium text-white/80">Facturación</p>
-                <h1 class="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">Factura #{{ $factura->id }}@if($factura->anulada ?? false)<span class="ml-2 align-middle text-base font-semibold text-amber-200">(Anulada)</span>@endif</h1>
-                <p class="mt-3 max-w-2xl text-sm leading-relaxed text-white/85">Registro interno en el sistema. Montos y diseño final del documento se confirman en el PDF.</p>
+                <h1 class="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">Factura folio {{ $factura->etiquetaFolio() }}@if($factura->anulada ?? false)<span class="ml-2 align-middle text-base font-semibold text-amber-200">(Anulada)</span>@endif</h1>
+                <p class="mt-1 text-xs font-medium text-white/60">Id interno (técnico): {{ $factura->id }}</p>
+                <p class="mt-3 max-w-2xl text-sm leading-relaxed text-white/85">El folio es el número correlativo para control y auditoría; el id interno solo enlaza registros en el sistema. Montos y diseño final del documento se confirman en el PDF.</p>
                 <div class="mt-4 flex flex-wrap items-center gap-2">
                     @if(($factura->tipo_factura ?? '') === 'encomienda_familiar')
                         <span class="inline-flex items-center gap-2 rounded-full bg-amber-400/25 px-3 py-1.5 text-sm font-semibold text-amber-50 ring-1 ring-amber-300/40 backdrop-blur-sm">
@@ -125,7 +126,13 @@
     @if(!empty($muestraSeccionAnular))
     <div class="rounded-xl border border-rose-200 bg-rose-50/80 p-5 shadow-sm sm:p-6">
         <h2 class="text-lg font-bold text-rose-950"><i class="fas fa-undo-alt mr-2"></i>Anular factura</h2>
-        @if(!empty($puedeAnular))
+        @if(empty($soporteAnulacionEnBd))
+            <p class="mt-2 text-base text-amber-950">La base de datos del servidor <strong>aún no tiene</strong> la columna de anulación. En el servidor ejecute:</p>
+            <pre class="mt-3 overflow-x-auto rounded-lg border border-amber-300 bg-white px-4 py-3 text-sm text-slate-800">cd /var/www/CHL_ERP
+php artisan migrate --force
+php artisan optimize:clear</pre>
+            <p class="mt-2 text-sm text-amber-900">Luego recargue esta página.</p>
+        @elseif(!empty($puedeAnular))
             <p class="mt-2 text-base text-rose-900/90">Se revierte el asiento y CxC de emisión, se quitan cobros <strong>solo importados</strong> desde pagos antiguos (si los hubiera) y se liberan los paquetes para volver a facturar. No aplica si ya registró cobros desde <strong>Contabilidad → Registrar cobro</strong>.</p>
             @if(($cobrosSoloImportados ?? 0) > 0)
                 <p class="mt-2 rounded-lg border border-rose-300/60 bg-white/80 px-3 py-2 text-sm text-rose-900">Hay <strong>{{ $cobrosSoloImportados }}</strong> movimiento(s) en contabilidad importados automáticamente; al anular se eliminarán junto con sus asientos.</p>

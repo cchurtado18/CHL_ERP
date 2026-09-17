@@ -1,6 +1,6 @@
 @extends('layouts.app-new')
 
-@section('title', 'CxC - Contabilidad - CH LOGISTICS ERP')
+@section('title', 'CxC - Contabilidad - CH Logistics')
 @section('navbar-title', 'Contabilidad')
 
 @section('content')
@@ -61,7 +61,7 @@
                             $cobrado = max(0, $montoOriginal - $faltante);
                         @endphp
                         <tr class="border-b border-slate-100 {{ $loop->iteration % 2 === 0 ? 'bg-slate-50' : 'bg-white' }} hover:bg-slate-100">
-                            <td class="px-4 py-2 font-semibold whitespace-nowrap text-[#15537c]">#{{ $cxc->factura_id }}</td>
+                            <td class="px-4 py-2 font-semibold whitespace-nowrap text-[#15537c]" title="Id interno: {{ $cxc->factura_id }}">Folio {{ $cxc->factura?->etiquetaFolio() ?? $cxc->factura_id }}</td>
                             <td class="px-4 py-2">
                                 @php
                                     $clienteNombre = $cxc->factura->cliente?->nombre_completo ?? null;

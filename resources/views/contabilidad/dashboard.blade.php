@@ -1,6 +1,6 @@
 @extends('layouts.app-new')
 
-@section('title', 'Contabilidad - CH LOGISTICS ERP')
+@section('title', 'Contabilidad - CH Logistics')
 @section('navbar-title', 'Contabilidad')
 
 @section('content')
@@ -44,12 +44,14 @@
         </div>
 
         {{-- Acciones agrupadas --}}
-        @php $esAdmin = auth()->user()->rol === 'admin'; @endphp
-        <div class="mt-5 grid grid-cols-1 gap-4 border-t border-slate-100 pt-4 {{ $esAdmin ? 'xl:grid-cols-2' : '' }}">
-            {{-- Reportes y análisis — SOLO ADMIN --}}
-            @if($esAdmin)
+        @php
+            $puedeReportes = auth()->user()->tienePermiso('contabilidad.reportes');
+        @endphp
+        <div class="mt-5 grid grid-cols-1 gap-4 border-t border-slate-100 pt-4 {{ $puedeReportes ? 'xl:grid-cols-2' : '' }}">
+            {{-- Reportes y análisis --}}
+            @if($puedeReportes)
                 <div>
-                    <p class="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-500"><i class="fas fa-chart-pie mr-1 text-[#15537c]"></i> Reportes y análisis <span class="ml-1 inline-flex items-center gap-1 rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold text-amber-800"><i class="fas fa-lock text-[8px]"></i> Solo admin</span></p>
+                    <p class="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-500"><i class="fas fa-chart-pie mr-1 text-[#15537c]"></i> Reportes y análisis</p>
                     <div class="flex flex-wrap gap-2">
                         <a href="{{ route('contabilidad.reporte') }}" class="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm hover:from-violet-700 hover:to-fuchsia-700">
                             <i class="fas fa-chart-line"></i> Reporte ejecutivo
@@ -68,7 +70,7 @@
             @endif
 
             {{-- Listas y consultas --}}
-            <div class="{{ $esAdmin ? 'xl:border-l xl:border-slate-100 xl:pl-4' : '' }}">
+            <div class="{{ $puedeReportes ? 'xl:border-l xl:border-slate-100 xl:pl-4' : '' }}">
                 <p class="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-500"><i class="fas fa-list-ul mr-1 text-[#15537c]"></i> Consultar registros</p>
                 <div class="flex flex-wrap gap-2">
                     <a href="{{ route('contabilidad.asientos.index') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">

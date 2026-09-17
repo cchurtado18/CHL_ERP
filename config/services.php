@@ -35,4 +35,25 @@ return [
         ],
     ],
 
+    'primetrack' => [
+        'base_url' => env('PRIMETRACK_BASE_URL', ''),
+        'api_key' => env('PRIMETRACK_API_KEY', ''),
+        'status_path' => env('PRIMETRACK_STATUS_PATH', '/api/tracking/{code}'),
+        'timeout' => (int) env('PRIMETRACK_TIMEOUT', 15),
+        // Estados remotos (minúsculas, sin acentos) => estado local en inventario
+        'estado_map' => [
+            'pendiente' => 'pendiente',
+            'recibido' => 'recibido',
+            'en_bodega' => 'recibido',
+            'en_transito' => 'en_transito',
+            'en transito' => 'en_transito',
+            'en_camino' => 'en_transito',
+            'en_aduana' => 'en_aduana',
+            'listo_para_entrega' => 'listo_entrega',
+            'entregado' => 'entregado',
+            'devuelto' => 'devuelto',
+            'cancelado' => 'cancelado',
+        ],
+    ],
+
 ];

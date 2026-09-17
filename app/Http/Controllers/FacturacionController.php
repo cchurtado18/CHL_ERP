@@ -416,20 +416,28 @@ class FacturacionController extends Controller
 
         // Solo bloquea si hubo "Registrar cobro" en Contabilidad (created_by). Los cobros importados
         // desde pagos históricos (created_by null) se pueden quitar al anular.
+        $soporteAnulacionEnBd = Schema::hasColumn('facturacion', 'anulada');
+        $estaAnulada = $soporteAnulacionEnBd && (bool) $factura->anulada;
         $tieneCobroRegistradoUsuario = ContaCobro::query()
             ->where('factura_id', $factura->id)
             ->whereNotNull('created_by')
             ->exists();
-        $puedeAnular = Schema::hasColumn('facturacion', 'anulada')
+        $puedeAnular = $soporteAnulacionEnBd
             && ! $factura->anulada
             && ! $tieneCobroRegistradoUsuario;
-        $muestraSeccionAnular = Schema::hasColumn('facturacion', 'anulada') && ! $factura->anulada;
+        $muestraSeccionAnular = ! $estaAnulada;
         $cobrosSoloImportados = (int) ContaCobro::query()
             ->where('factura_id', $factura->id)
             ->whereNull('created_by')
             ->count();
 
-        return view('facturacion.show', compact('factura', 'puedeAnular', 'muestraSeccionAnular', 'cobrosSoloImportados'));
+        return view('facturacion.show', compact(
+            'factura',
+            'puedeAnular',
+            'muestraSeccionAnular',
+            'cobrosSoloImportados',
+            'soporteAnulacionEnBd'
+        ));
     }
 
     // Editar factura
@@ -590,7 +598,7 @@ class FacturacionController extends Controller
         $view = ($factura->tipo_factura ?? 'paqueteria') === 'encomienda_familiar' ? 'facturacion.pdf-encomienda' : 'facturacion.pdf-paqueteria';
         $pdf = Pdf::loadView($view, compact('factura'));
 
-        return $pdf->download('factura_'.$factura->id.'.pdf');
+        return $pdf->download('factura_folio_'.$factura->etiquetaFolio().'.pdf');
     }
 
     public function previsualizarPDF($id)
@@ -605,7 +613,7 @@ class FacturacionController extends Controller
         $view = ($factura->tipo_factura ?? 'paqueteria') === 'encomienda_familiar' ? 'facturacion.pdf-encomienda' : 'facturacion.pdf-paqueteria';
         $pdf = Pdf::loadView($view, compact('factura'));
 
-        return $pdf->stream('factura_'.$factura->id.'.pdf');
+        return $pdf->stream('factura_folio_'.$factura->etiquetaFolio().'.pdf');
     }
 
     public function previewLivePDF(Request $request)
@@ -769,12 +777,16 @@ class FacturacionController extends Controller
                     'estado' => $inv->estado, // Agregar el estado del paquete
                 ];
             });
+        $historialCols = ['id', 'fecha_factura', 'monto_total', 'estado_pago'];
+        if (Schema::hasColumn('facturacion', 'folio')) {
+            $historialCols[] = 'folio';
+        }
         $historial = \App\Models\Facturacion::query()
             ->where('cliente_id', $clienteId)
             ->when(Schema::hasColumn('facturacion', 'anulada'), fn ($q) => $q->noAnulada())
             ->orderByDesc('fecha_factura')
             ->take(5)
-            ->get(['id', 'fecha_factura', 'monto_total', 'estado_pago']);
+            ->get($historialCols);
 
         return response()->json([
             'success' => true,
@@ -819,7 +831,7 @@ class FacturacionController extends Controller
             $this->notificarContabilidadPendiente($factura->fresh());
             $redirect->with(
                 'info_contabilidad',
-                'Factura #'.$factura->id.': registre el cobro en Contabilidad (Registrar cobro) con cuenta banco/caja, método y referencia para cerrar el control contable.'
+                'Factura folio '.$factura->etiquetaFolio().': registre el cobro en Contabilidad (Registrar cobro) con cuenta banco/caja, método y referencia para cerrar el control contable.'
             );
         }
 
@@ -923,8 +935,8 @@ class FacturacionController extends Controller
 
         $urlFactura = route('facturacion.show', $factura->id);
         $urlCobro = route('contabilidad.cobros.create', ['factura_id' => $factura->id]);
-        $titulo = 'Contabilidad pendiente — factura #'.$factura->id;
-        $mensaje = 'La factura #'.$factura->id.' quedó en estado Entregado y pagado. Debe registrarse el cobro en Contabilidad (cuenta, método, referencia).'
+        $titulo = 'Contabilidad pendiente — factura folio '.$factura->etiquetaFolio();
+        $mensaje = 'La factura folio '.$factura->etiquetaFolio().' quedó en estado Entregado y pagado. Debe registrarse el cobro en Contabilidad (cuenta, método, referencia).'
             ."\nVer factura: {$urlFactura}"
             ."\nRegistrar cobro: {$urlCobro}";
 

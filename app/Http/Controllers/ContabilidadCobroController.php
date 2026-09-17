@@ -138,7 +138,7 @@ class ContabilidadCobroController extends Controller
                         'fecha' => $cobro->fecha_pago,
                         'referencia_tipo' => 'cobro',
                         'referencia_id' => $cobro->id,
-                        'descripcion' => 'Cobro factura #'.$factura->id,
+                        'descripcion' => 'Cobro factura folio '.$factura->etiquetaFolio(),
                         'moneda' => $cobro->moneda,
                         'tasa_cambio' => $cobro->tasa_cambio,
                     ],
@@ -151,7 +151,7 @@ class ContabilidadCobroController extends Controller
                             'credito' => 0,
                             'monto_origen' => $monto,
                             'monto_funcional' => $monto,
-                            'glosa' => 'Ingreso de cobro factura #'.$factura->id,
+                            'glosa' => 'Ingreso de cobro factura folio '.$factura->etiquetaFolio(),
                         ],
                         [
                             'cuenta_id' => $cuentaCxc->id,
@@ -161,7 +161,7 @@ class ContabilidadCobroController extends Controller
                             'credito' => $monto,
                             'monto_origen' => $monto,
                             'monto_funcional' => $monto,
-                            'glosa' => 'Disminución CxC factura #'.$factura->id,
+                            'glosa' => 'Disminución CxC factura folio '.$factura->etiquetaFolio(),
                         ],
                     ]
                 );
@@ -207,34 +207,34 @@ class ContabilidadCobroController extends Controller
         }
 
         $query->chunkById(200, function ($facturas) use ($hasPagosTable) {
-                foreach ($facturas as $factura) {
-                    $montoOriginal = (float) $factura->monto_total;
-                    $pagadoHistorico = $hasPagosTable ? (float) $factura->pagos->sum('monto_pagado') : 0.0;
-                    $saldo = max(0, round($montoOriginal - $pagadoHistorico, 2));
-                    $fechaBase = $factura->fecha_factura ?: $factura->created_at ?: now();
-                    try {
-                        $fechaEmision = Carbon::parse($fechaBase);
-                    } catch (\Throwable) {
-                        $fechaEmision = now();
-                    }
-                    $fechaVencimiento = $fechaEmision->copy()->addDays(30);
-                    $diasMora = now()->greaterThan($fechaVencimiento) ? $fechaVencimiento->diffInDays(now()) : 0;
-                    $estado = $saldo <= 0 ? 'pagada' : ($diasMora > 0 ? 'vencida' : 'al_dia');
-
-                    ContaCxc::updateOrCreate(
-                        ['factura_id' => $factura->id],
-                        [
-                            'cliente_id' => $factura->cliente_id,
-                            'fecha_emision' => $fechaEmision->toDateString(),
-                            'fecha_vencimiento' => $fechaVencimiento->toDateString(),
-                            'dias_credito' => 30,
-                            'monto_original' => $montoOriginal,
-                            'saldo_actual' => $saldo,
-                            'estado_cobro' => $estado,
-                            'dias_mora' => $diasMora,
-                        ]
-                    );
+            foreach ($facturas as $factura) {
+                $montoOriginal = (float) $factura->monto_total;
+                $pagadoHistorico = $hasPagosTable ? (float) $factura->pagos->sum('monto_pagado') : 0.0;
+                $saldo = max(0, round($montoOriginal - $pagadoHistorico, 2));
+                $fechaBase = $factura->fecha_factura ?: $factura->created_at ?: now();
+                try {
+                    $fechaEmision = Carbon::parse($fechaBase);
+                } catch (\Throwable) {
+                    $fechaEmision = now();
                 }
-            });
+                $fechaVencimiento = $fechaEmision->copy()->addDays(30);
+                $diasMora = now()->greaterThan($fechaVencimiento) ? $fechaVencimiento->diffInDays(now()) : 0;
+                $estado = $saldo <= 0 ? 'pagada' : ($diasMora > 0 ? 'vencida' : 'al_dia');
+
+                ContaCxc::updateOrCreate(
+                    ['factura_id' => $factura->id],
+                    [
+                        'cliente_id' => $factura->cliente_id,
+                        'fecha_emision' => $fechaEmision->toDateString(),
+                        'fecha_vencimiento' => $fechaVencimiento->toDateString(),
+                        'dias_credito' => 30,
+                        'monto_original' => $montoOriginal,
+                        'saldo_actual' => $saldo,
+                        'estado_cobro' => $estado,
+                        'dias_mora' => $diasMora,
+                    ]
+                );
+            }
+        });
     }
 }

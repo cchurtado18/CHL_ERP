@@ -83,7 +83,7 @@ class InventarioExport implements FromCollection, WithMapping, WithStyles, WithT
                 // Logo en la fila 1 (A1:H1) y título grande en la fila 2 (A2:H2)
                 $event->sheet->mergeCells('A1:H1');
                 $event->sheet->mergeCells('A2:H2');
-                $event->sheet->setCellValue('A2', 'Inventario de Paquetes - CH Logistics ERP');
+                $event->sheet->setCellValue('A2', 'Inventario de Paquetes - CH Logistics');
                 // Encabezados manualmente en la fila 3
                 $headers = ['Cliente', 'Servicio', 'Peso', 'Warehouse', 'Estado', 'Ingreso', 'Monto', 'P. Unit.'];
                 $col = 'A';
@@ -108,7 +108,7 @@ class InventarioExport implements FromCollection, WithMapping, WithStyles, WithT
         $drawing = new Drawing();
         $drawing->setName('Logo CH Logistics');
         $drawing->setDescription('Logo CH Logistics');
-        $drawing->setPath(public_path('logo_skylinkone.png'));
+        $drawing->setPath(public_path('CH_Logistics_Logo.png'));
         $drawing->setHeight(120);
         $drawing->setCoordinates('E1'); // Centrado en la fila 1
         $drawing->setOffsetX(0);

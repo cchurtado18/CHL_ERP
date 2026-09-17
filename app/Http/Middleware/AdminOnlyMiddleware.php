@@ -7,10 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 /**
- * Middleware estricto: solo usuarios con rol "admin" pueden acceder.
- *
- * Se usa para secciones sensibles que afectan a toda la empresa
- * (costos por libra, gastos, reportes financieros).
+ * Middleware estricto: solo usuarios con rol "admin" (activos) pueden acceder.
  */
 class AdminOnlyMiddleware
 {
@@ -20,6 +17,16 @@ class AdminOnlyMiddleware
 
         if (! $user) {
             return redirect()->route('login');
+        }
+
+        if (! $user->estado) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()
+                ->route('login')
+                ->withErrors(['email' => 'Tu cuenta está desactivada. Contacta al administrador.']);
         }
 
         if ($user->rol !== 'admin') {

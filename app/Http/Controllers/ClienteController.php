@@ -165,7 +165,7 @@ class ClienteController extends Controller
     // Previsualización de cliente
     public function show($id)
     {
-        $cliente = \App\Models\Cliente::findOrFail($id);
+        $cliente = \App\Models\Cliente::with('usuarioPortal')->findOrFail($id);
         $tarifas = \App\Models\TarifaCliente::where('cliente_id', $id)->with('servicio')->get();
         $servicios = \App\Models\Servicio::all();
         return view('clientes.show', compact('cliente', 'tarifas', 'servicios'));

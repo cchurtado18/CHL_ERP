@@ -1,73 +1,132 @@
-@extends('layouts.app')
+@extends('layouts.app-new')
 
-@section('title', 'Usuarios - CH Logistics ERP')
-@section('page-title', 'Gestión de Usuarios')
+@section('title', 'Nuevo Usuario - CH Logistics')
+@section('navbar-title', 'Nuevo Usuario')
 
 @section('content')
-<div class="container-fluid px-4">
-    <!-- Header Section -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="rounded-4 shadow-sm px-4 py-4 mb-4 d-flex align-items-center justify-content-between" style="background: linear-gradient(90deg, #15537c 0%, #2d6a9a 100%); min-height:90px;">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="bg-white rounded-circle d-flex align-items-center justify-content-center" style="width:60px; height:60px; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
-                        <i class="fas fa-users text-primary" style="font-size:2.2rem;"></i>
-                    </div>
-                    <div>
-                        <h1 class="h3 mb-1 fw-bold text-white" style="letter-spacing:1px;">Usuarios</h1>
-                        <p class="mb-0 text-white-50" style="font-size:1.1rem;">Registra nuevos usuarios para el sistema</p>
-                    </div>
-                </div>
-                <a href="{{ route('usuarios.create') }}" class="btn btn-lg fw-semibold shadow-sm px-4" style="background:#15537c; color:#fff;">
-                    <i class="fas fa-user-plus me-2"></i> Nuevo Usuario
-                </a>
-            </div>
+@php
+    $permisosOld = old('permisos', []);
+@endphp
+<div class="mx-auto w-full max-w-4xl space-y-6">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900">Nuevo usuario</h1>
+            <p class="mt-1 text-base text-slate-600">Asigna rol y módulos a los que podrá acceder.</p>
         </div>
+        <a href="{{ route('usuarios.index') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
     </div>
-    <!-- Form Card -->
-    <div class="row justify-content-center">
-        <div class="col-lg-6 col-md-8">
-            <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-body p-4">
-                    <form action="{{ route('usuarios.store') }}" method="POST" autocomplete="off">
-                        @csrf
-                        <div class="mb-3">
-                            <label for="nombre" class="form-label fw-semibold">Nombre</label>
-                            <input type="text" name="nombre" class="form-control form-control-lg rounded-3 @error('nombre') is-invalid @enderror" value="{{ old('nombre') }}">
-                            @error('nombre') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
-                        <div class="mb-3">
-                            <label for="email" class="form-label fw-semibold">Correo Electrónico</label>
-                            <input type="email" name="email" class="form-control form-control-lg rounded-3 @error('email') is-invalid @enderror" value="{{ old('email') }}">
-                            @error('email') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
-                        <div class="mb-3">
-                            <label for="password" class="form-label fw-semibold">Contraseña</label>
-                            <input type="password" name="password" class="form-control form-control-lg rounded-3 @error('password') is-invalid @enderror">
-                            @error('password') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
-                        <div class="mb-3">
-                            <label for="rol" class="form-label fw-semibold">Rol</label>
-                            <select name="rol" class="form-select form-select-lg rounded-3 @error('rol') is-invalid @enderror">
-                                <option value="admin" {{ old('rol') == 'admin' ? 'selected' : '' }}>Administrador</option>
-                                <option value="agente" {{ old('rol') == 'agente' ? 'selected' : '' }}>Agente</option>
-                                <option value="auditor" {{ old('rol') == 'auditor' ? 'selected' : '' }}>Auditor</option>
-                                <option value="basico" {{ old('rol') == 'basico' ? 'selected' : '' }}>Básico</option>
-                            </select>
-                            @error('rol') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
-                        <div class="form-check form-switch mb-4 ps-0 d-flex align-items-center gap-2">
-                            <input class="form-check-input ms-0" type="checkbox" role="switch" name="estado" id="estado" value="1" {{ old('estado') ? 'checked' : '' }} style="height:1.5em;width:2.5em;">
-                            <label class="form-check-label fw-semibold" for="estado">Activo</label>
-                        </div>
-                        <div class="d-flex gap-2 justify-content-end">
-                            <button type="submit" class="btn btn-primary px-4 py-2 rounded-3 fw-semibold" style="font-size:1.1rem;">Guardar Usuario</button>
-                            <a href="{{ route('usuarios.index') }}" class="btn btn-outline-secondary px-4 py-2 rounded-3 fw-semibold" style="font-size:1.1rem;">Cancelar</a>
-                        </div>
-                    </form>
+
+    <form action="{{ route('usuarios.store') }}" method="POST" class="space-y-6" autocomplete="off" id="formUsuario">
+        @csrf
+
+        <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+            <h2 class="text-lg font-semibold text-slate-800">Datos básicos</h2>
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div class="sm:col-span-2">
+                    <label class="mb-1.5 block text-sm font-medium text-slate-600">Nombre</label>
+                    <input type="text" name="nombre" value="{{ old('nombre') }}" class="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-base focus:border-[#15537c] focus:ring-1 focus:ring-[#15537c] @error('nombre') border-rose-400 @enderror">
+                    @error('nombre') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label class="mb-1.5 block text-sm font-medium text-slate-600">Correo electrónico</label>
+                    <input type="email" name="email" value="{{ old('email') }}" class="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-base focus:border-[#15537c] focus:ring-1 focus:ring-[#15537c] @error('email') border-rose-400 @enderror">
+                    @error('email') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label class="mb-1.5 block text-sm font-medium text-slate-600">Contraseña</label>
+                    <input type="password" name="password" class="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-base focus:border-[#15537c] focus:ring-1 focus:ring-[#15537c] @error('password') border-rose-400 @enderror">
+                    @error('password') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label class="mb-1.5 block text-sm font-medium text-slate-600">Rol</label>
+                    <select name="rol" id="rolSelect" class="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-base focus:border-[#15537c] focus:ring-1 focus:ring-[#15537c] @error('rol') border-rose-400 @enderror">
+                        <option value="admin" {{ old('rol') == 'admin' ? 'selected' : '' }}>Administrador (acceso total)</option>
+                        <option value="agente" {{ old('rol', 'agente') == 'agente' ? 'selected' : '' }}>Agente</option>
+                        <option value="auditor" {{ old('rol') == 'auditor' ? 'selected' : '' }}>Auditor</option>
+                        <option value="basico" {{ old('rol') == 'basico' ? 'selected' : '' }}>Básico</option>
+                    </select>
+                    @error('rol') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
+                </div>
+                <div class="flex items-end">
+                    <label class="inline-flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" name="estado" value="1" class="h-5 w-5 rounded border-slate-300 text-[#15537c] focus:ring-[#15537c]" {{ old('estado', '1') ? 'checked' : '' }}>
+                        <span class="text-base font-medium text-slate-700">Usuario activo</span>
+                    </label>
                 </div>
             </div>
         </div>
-    </div>
+
+        <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm" id="permisosBox">
+            <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <h2 class="text-lg font-semibold text-slate-800">Permisos por módulo</h2>
+                    <p class="mt-1 text-sm text-slate-500">Marca solo lo que este usuario necesita. Para cobrar sin ser admin, activa <strong>Registrar cobros</strong>.</p>
+                </div>
+                <div class="flex gap-2">
+                    <button type="button" id="btnAll" class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Todos</button>
+                    <button type="button" id="btnNone" class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Ninguno</button>
+                </div>
+            </div>
+
+            <div id="adminNotice" class="mb-4 hidden rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                El rol <strong>Administrador</strong> tiene acceso a todos los módulos automáticamente.
+            </div>
+
+            <div class="grid gap-3 sm:grid-cols-2" id="permisosGrid">
+                @foreach($modulos as $key => $mod)
+                <label class="permiso-item flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 p-3 hover:border-[#15537c]/40 hover:bg-slate-50 {{ $key === 'contabilidad.cobros' ? 'border-emerald-300 bg-emerald-50/50' : '' }}">
+                    <input type="checkbox" name="permisos[]" value="{{ $key }}" class="permiso-check mt-1 h-4 w-4 rounded border-slate-300 text-[#15537c] focus:ring-[#15537c]"
+                        {{ in_array($key, $permisosOld, true) ? 'checked' : '' }}>
+                    <span>
+                        <span class="flex items-center gap-2 font-semibold text-slate-800">
+                            <i class="fas {{ $mod['icono'] }} text-[#15537c] w-5 text-center"></i>
+                            {{ $mod['label'] }}
+                        </span>
+                        <span class="mt-0.5 block text-sm text-slate-500">{{ $mod['descripcion'] }}</span>
+                    </span>
+                </label>
+                @endforeach
+            </div>
+            @error('permisos') <p class="mt-2 text-sm text-rose-600">{{ $message }}</p> @enderror
+            @error('permisos.*') <p class="mt-2 text-sm text-rose-600">{{ $message }}</p> @enderror
+        </div>
+
+        <div class="flex justify-end gap-3">
+            <a href="{{ route('usuarios.index') }}" class="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-base font-medium text-slate-700 hover:bg-slate-50">Cancelar</a>
+            <button type="submit" class="rounded-xl bg-[#15537c] px-6 py-2.5 text-base font-semibold text-white shadow-sm hover:bg-[#0f3d5c]">Guardar usuario</button>
+        </div>
+    </form>
 </div>
+
+<script>
+(function () {
+    const rol = document.getElementById('rolSelect');
+    const notice = document.getElementById('adminNotice');
+    const grid = document.getElementById('permisosGrid');
+    const checks = () => document.querySelectorAll('.permiso-check');
+
+    function syncAdmin() {
+        const isAdmin = rol.value === 'admin';
+        notice.classList.toggle('hidden', !isAdmin);
+        grid.style.opacity = isAdmin ? '0.45' : '1';
+        checks().forEach(c => {
+            c.disabled = isAdmin;
+            if (isAdmin) c.checked = true;
+        });
+    }
+
+    document.getElementById('btnAll').addEventListener('click', () => {
+        if (rol.value === 'admin') return;
+        checks().forEach(c => c.checked = true);
+    });
+    document.getElementById('btnNone').addEventListener('click', () => {
+        if (rol.value === 'admin') return;
+        checks().forEach(c => c.checked = false);
+    });
+    rol.addEventListener('change', syncAdmin);
+    syncAdmin();
+})();
+</script>
 @endsection

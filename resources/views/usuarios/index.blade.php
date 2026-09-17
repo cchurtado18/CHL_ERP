@@ -1,10 +1,10 @@
 @extends('layouts.app-new')
 
-@section('title', 'Usuarios - CH LOGISTICS ERP')
+@section('title', 'Usuarios - CH Logistics')
 @section('navbar-title', 'Usuarios')
 
 @section('content')
-@if(auth()->check() && auth()->user()->rol === 'admin')
+@if(auth()->check() && auth()->user()->tienePermiso('usuarios'))
 <div class="mx-auto w-full max-w-[1400px] space-y-8">
     @if (session('success'))
     <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-base text-emerald-800" role="alert">

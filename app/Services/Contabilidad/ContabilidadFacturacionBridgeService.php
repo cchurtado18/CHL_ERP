@@ -38,7 +38,7 @@ class ContabilidadFacturacionBridgeService
                 'fecha' => Carbon::parse($factura->fecha_factura),
                 'referencia_tipo' => 'factura',
                 'referencia_id' => $factura->id,
-                'descripcion' => 'Registro de factura #'.$factura->id,
+                'descripcion' => 'Registro de factura folio '.$factura->etiquetaFolio(),
                 'moneda' => $factura->moneda ?? 'USD',
                 'tasa_cambio' => $factura->tasa_cambio,
             ],
@@ -51,7 +51,7 @@ class ContabilidadFacturacionBridgeService
                     'credito' => 0,
                     'monto_origen' => $monto,
                     'monto_funcional' => (float) ($factura->monto_local ?? $monto),
-                    'glosa' => 'CxC factura #'.$factura->id,
+                    'glosa' => 'CxC factura folio '.$factura->etiquetaFolio(),
                 ],
                 [
                     'cuenta_id' => $cuentaIngreso->id,
@@ -61,7 +61,7 @@ class ContabilidadFacturacionBridgeService
                     'credito' => $monto,
                     'monto_origen' => $monto,
                     'monto_funcional' => (float) ($factura->monto_local ?? $monto),
-                    'glosa' => 'Ingreso factura #'.$factura->id,
+                    'glosa' => 'Ingreso factura folio '.$factura->etiquetaFolio(),
                 ],
             ]
         );

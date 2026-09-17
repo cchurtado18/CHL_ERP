@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'CH Logistics ERP')</title>
+    <title>@yield('title', 'CH Logistics')</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- jQuery (debe ir antes de select2 y de cualquier script que use $) -->
@@ -205,8 +205,8 @@
         @if(!$hideSidebar && !$inventarioEditSinSidebar)
         <!-- Sidebar -->
         <nav id="sidebar" class="sidebar d-flex flex-column p-3" style="background: #fff; box-shadow: 2px 0 10px rgba(21,83,124,0.04); position: fixed; top: 0; left: 0; height: 100vh; width: 260px; z-index: 1040;">
-            <div class="sidebar-logo d-flex justify-content-center align-items-center" style="background: #fff; border-radius: 1.5rem; margin-bottom: 2.5rem; padding-top: 3.5rem; padding-bottom: 3.5rem;">
-                <img src="/logo_skylinkone.png" alt="SkyLink One Logo" style="height: 200px; max-width: 260px; width: auto; display: block;">
+            <div class="sidebar-logo d-flex justify-content-center align-items-center" style="background: #fff; border-radius: 1rem; margin-bottom: 1.5rem; padding: 1rem 0.75rem;">
+                <img src="/CH_Logistics_Logo.png" alt="CH Logistics" style="height: 120px; max-width: 200px; width: auto; display: block; object-fit: contain;">
             </div>
             @include('layouts.sidebar-menu', ['user' => $user])
         </nav>
@@ -225,7 +225,7 @@
     </div>
     @else
     <div class="d-flex flex-column min-vh-100 justify-content-center align-items-center" style="background: #f4f6fb;">
-        <img src="/logo_skylinkone.png" alt="SkyLink One Logo" style="height: 230px; max-width: 420px; width: auto; display: block; margin-top: 2.5rem; margin-bottom: 0;">
+        <img src="/CH_Logistics_Logo.png" alt="CH Logistics" style="height: 160px; max-width: 280px; width: auto; display: block; margin-top: 2.5rem; margin-bottom: 0; object-fit: contain;">
         <main class="w-100 d-flex justify-content-center align-items-center" style="min-height: 300px; margin-top: -8rem;">
             @yield('content')
         </main>

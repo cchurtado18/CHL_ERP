@@ -1,6 +1,6 @@
 @extends('layouts.app-new')
 
-@section('title', 'Cobros - Contabilidad - CH LOGISTICS ERP')
+@section('title', 'Cobros - Contabilidad - CH Logistics')
 @section('navbar-title', 'Contabilidad')
 
 @section('content')
@@ -22,7 +22,9 @@
     </div>
 
     <div class="flex flex-wrap items-center justify-between gap-4">
+        @if(auth()->user()->tienePermiso('contabilidad'))
         <a href="{{ route('contabilidad.dashboard') }}" class="inline-flex items-center gap-2 text-base font-medium text-[#15537c] hover:underline"><i class="fas fa-arrow-left"></i> Tablero contabilidad</a>
+        @endif
         <p class="text-sm font-medium text-slate-600">Total: <span class="font-bold text-slate-900">{{ $cobros->total() }}</span> cobros</p>
     </div>
 
@@ -45,7 +47,7 @@
                     @forelse($cobros as $c)
                         <tr class="border-b border-slate-100 {{ $loop->iteration % 2 === 0 ? 'bg-slate-50' : 'bg-white' }} hover:bg-slate-100">
                             <td class="px-4 py-2 text-center text-slate-900">{{ $c->fecha_pago?->format('d/m/Y') }}</td>
-                            <td class="px-4 py-2 font-semibold text-[#15537c]">#{{ $c->factura_id }}</td>
+                            <td class="px-4 py-2 font-semibold text-[#15537c]" title="Id interno: {{ $c->factura_id }}">Folio {{ $c->factura?->etiquetaFolio() ?? $c->factura_id }}</td>
                             <td class="px-4 py-2 font-medium text-black">{{ $c->factura->cliente?->nombre_completo ?? $c->factura->encomienda?->remitente?->nombre_completo ?? '—' }}</td>
                             <td class="px-4 py-2 text-right font-semibold text-emerald-700">${{ number_format((float)$c->monto,2) }}</td>
                             <td class="px-4 py-2 text-center text-slate-800">{{ $c->moneda }}</td>

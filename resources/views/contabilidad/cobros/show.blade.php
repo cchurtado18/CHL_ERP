@@ -19,7 +19,8 @@
     <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
         <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Factura relacionada</div>
-            <div class="mt-1 text-xl font-bold text-[#15537c]">#{{ $cobro->factura_id }}</div>
+            <div class="mt-1 text-xl font-bold text-[#15537c]">Folio {{ $cobro->factura?->etiquetaFolio() ?? $cobro->factura_id }}</div>
+            <div class="text-xs text-slate-500">Id interno factura: {{ $cobro->factura_id }}</div>
             <div class="mt-1 text-base text-slate-700">{{ $cobro->factura->cliente?->nombre_completo ?? $cobro->factura->encomienda?->remitente?->nombre_completo ?? 'Sin cliente' }}</div>
             <a href="{{ route('facturacion.show', $cobro->factura_id) }}" class="mt-3 inline-flex items-center gap-2 text-base font-semibold text-[#15537c] hover:underline"><i class="fas fa-external-link-alt text-sm"></i> Ver factura</a>
         </div>

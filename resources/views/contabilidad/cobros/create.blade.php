@@ -1,6 +1,6 @@
 @extends('layouts.app-new')
 
-@section('title', 'Registrar cobro - Contabilidad - CH LOGISTICS ERP')
+@section('title', 'Registrar cobro - Contabilidad - CH Logistics')
 @section('navbar-title', 'Contabilidad')
 
 @section('content')
@@ -21,7 +21,7 @@
         <p class="mt-1 text-base text-slate-600">Aplicación a factura con saldo pendiente en CxC (puede ser menor al total de la factura si ya hubo cobros parciales).</p>
     </div>
 
-    <form method="POST" action="{{ route('contabilidad.cobros.store') }}" class="space-y-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+    <form id="form-cobro" method="POST" action="{{ route('contabilidad.cobros.store') }}" class="space-y-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
         @csrf
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div class="md:col-span-2">
@@ -32,7 +32,7 @@
                         @php
                             $saldoCxC = (float) optional($f->contaCxc)->saldo_actual;
                         @endphp
-                        <option value="{{ $f->id }}" @selected(old('factura_id', $facturaIdPrecarga ?? null) == $f->id)>#{{ $f->id }} — {{ $f->cliente?->nombre_completo ?? $f->encomienda?->remitente?->nombre_completo ?? 'Sin cliente' }} — Total ${{ number_format((float)$f->monto_total,2) }} — Saldo pendiente ${{ number_format($saldoCxC, 2) }}</option>
+                        <option value="{{ $f->id }}" @selected(old('factura_id', $facturaIdPrecarga ?? null) == $f->id)>Folio {{ $f->etiquetaFolio() }} (id {{ $f->id }}) — {{ $f->cliente?->nombre_completo ?? $f->encomienda?->remitente?->nombre_completo ?? 'Sin cliente' }} — Total ${{ number_format((float)$f->monto_total,2) }} — Saldo pendiente ${{ number_format($saldoCxC, 2) }}</option>
                     @endforeach
                 </select>
                 <p id="cxc-hint" class="mt-2 text-sm text-slate-600"></p>
@@ -84,7 +84,7 @@
         </div>
         <div class="flex flex-wrap justify-end gap-3 border-t border-slate-100 pt-6">
             <a href="{{ route('contabilidad.cobros.index') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-5 py-2.5 text-base font-medium text-slate-600 hover:bg-slate-50">Cancelar</a>
-            <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-[#15537c] px-6 py-2.5 text-base font-semibold text-white shadow-sm hover:bg-[#0f3d5c]"><i class="fas fa-save"></i> Guardar cobro</button>
+            <button id="btn-guardar-cobro" type="submit" class="inline-flex items-center gap-2 rounded-xl bg-[#15537c] px-6 py-2.5 text-base font-semibold text-white shadow-sm hover:bg-[#0f3d5c]"><i class="fas fa-save"></i> Guardar cobro</button>
         </div>
     </form>
 </div>
@@ -124,6 +124,15 @@
 
         facturaSelect?.addEventListener('change', sync);
         sync();
+
+        const formCobro = document.getElementById('form-cobro');
+        const btnGuardar = document.getElementById('btn-guardar-cobro');
+        formCobro?.addEventListener('submit', function () {
+            if (!btnGuardar) return;
+            btnGuardar.disabled = true;
+            btnGuardar.classList.add('opacity-70', 'cursor-not-allowed');
+            btnGuardar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+        });
     })();
 </script>
 @endsection

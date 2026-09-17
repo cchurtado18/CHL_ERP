@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Registrar Factura - CH Logistics ERP')
+@section('title', 'Registrar Factura - CH Logistics')
 @section('page-title', '')
 
 @section('content')
@@ -10,7 +10,7 @@
 <div class="facturacion-page-shell">
     <div class="facturacion-top-banner d-flex align-items-center justify-content-between flex-wrap gap-2 gap-md-3" role="banner">
         <div class="d-flex flex-wrap align-items-center gap-2">
-            <span class="mb-0">CH LOGISTICS ERP</span>
+            <span class="mb-0">CH Logistics</span>
             @if($esEncFamiliar)
                 <span class="badge rounded-pill px-3 py-2 fw-semibold" style="background: linear-gradient(135deg, #b45309 0%, #d97706 100%); color: #fff;"><i class="fas fa-people-carry me-1"></i>Encomienda familiar</span>
             @else
@@ -538,7 +538,7 @@ $(document).ready(function() {
                 if (!resp.historial || resp.historial.length === 0) {
                     $('#facturas_historial').html('<div class="alert alert-secondary">Sin historial de facturas.</div>');
                 } else {
-                    let hist = `<div class="card mb-2"><div class="card-body"><h6 class="fw-semibold">Últimas 5 facturas</h6><table class="table fact-table table-sm table-bordered mb-0"><thead class="table-light"><tr><th>#</th><th>Fecha</th><th>Monto</th><th>Estado</th></tr></thead><tbody>`;
+                    let hist = `<div class="card mb-2"><div class="card-body"><h6 class="fw-semibold">Últimas 5 facturas</h6><table class="table fact-table table-sm table-bordered mb-0"><thead class="table-light"><tr><th>Folio</th><th>Fecha</th><th>Monto</th><th>Estado</th></tr></thead><tbody>`;
                     resp.historial.forEach(f => {
                         let estadoLabel = 'Pendiente';
                         if (f.estado_pago === 'entregado_pagado') {
@@ -553,7 +553,8 @@ $(document).ready(function() {
                             estadoLabel = 'Pagado sin Entregar';
                         }
                         const estadoBadge = `<span class="badge estado-badge">${estadoLabel}</span>`;
-                        hist += `<tr><td>${f.id}</td><td>${f.fecha_factura}</td><td>$${parseFloat(f.monto_total).toFixed(2)}</td><td>${estadoBadge}</td></tr>`;
+                        const folioHist = (f.folio != null && f.folio !== '') ? f.folio : f.id;
+                        hist += `<tr><td title="Id interno: ${f.id}">${folioHist}</td><td>${f.fecha_factura}</td><td>$${parseFloat(f.monto_total).toFixed(2)}</td><td>${estadoBadge}</td></tr>`;
                     });
                     hist += '</tbody></table></div></div>';
                     $('#facturas_historial').html(hist);

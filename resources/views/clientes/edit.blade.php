@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Editar Cliente - CH Logistics ERP')
+@section('title', 'Editar Cliente - CH Logistics')
 @section('page-title', 'Editar Cliente')
 
 @section('content')

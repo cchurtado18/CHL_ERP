@@ -37,4 +37,15 @@ class Cliente extends Model
     {
         return $this->hasMany(Facturacion::class);
     }
+
+    public function paquetes()
+    {
+        return $this->hasMany(Inventario::class);
+    }
+
+    /** Usuario del portal vinculado a este cliente (rol=cliente). */
+    public function usuarioPortal()
+    {
+        return $this->hasOne(User::class, 'cliente_id')->where('rol', 'cliente');
+    }
 }

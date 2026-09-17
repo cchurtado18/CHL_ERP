@@ -52,4 +52,9 @@ class Inventario extends Model
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
+
+    public function estadoEventos()
+    {
+        return $this->hasMany(PaqueteEstadoEvento::class, 'inventario_id')->orderByDesc('evento_at');
+    }
 }

@@ -5,74 +5,98 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
-    // Listar todos los usuarios
     public function index()
     {
         $usuarios = User::all();
+
         return view('usuarios.index', compact('usuarios'));
     }
 
-    // Mostrar formulario de creación
     public function create()
     {
-        return view('usuarios.create');
+        $modulos = config('permisos.modulos', []);
+
+        return view('usuarios.create', compact('modulos'));
     }
 
-    // Guardar nuevo usuario
     public function store(Request $request)
     {
-        $request->validate([
-            'nombre'   => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email',
+        $modulosValidos = array_keys(config('permisos.modulos', []));
+
+        $data = $request->validate([
+            'nombre' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
             'password' => 'required|min:6',
-            'rol'      => 'required|in:admin,agente,auditor,basico',
-            'estado'   => 'required|boolean',
+            'rol' => 'required|in:admin,agente,auditor,basico',
+            'estado' => 'nullable|boolean',
+            'permisos' => 'nullable|array',
+            'permisos.*' => ['string', Rule::in($modulosValidos)],
         ]);
 
+        $permisos = $data['rol'] === 'admin'
+            ? null
+            : array_values(array_unique($data['permisos'] ?? []));
+
         User::create([
-            'nombre'   => $request->nombre,
-            'email'    => $request->email,
-            'password' => Hash::make($request->password),
-            'rol'      => $request->rol,
-            'estado'   => $request->estado,
+            'nombre' => $data['nombre'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
+            'rol' => $data['rol'],
+            'permisos' => $permisos,
+            'estado' => $request->boolean('estado'),
         ]);
 
         return redirect()->route('usuarios.index')->with('success', 'Usuario creado correctamente.');
     }
 
-    // Mostrar formulario de edición
     public function edit($id)
     {
         $usuario = User::findOrFail($id);
-        return view('usuarios.edit', compact('usuario'));
+        $modulos = config('permisos.modulos', []);
+
+        return view('usuarios.edit', compact('usuario', 'modulos'));
     }
 
-    // Actualizar usuario
     public function update(Request $request, $id)
     {
         $usuario = User::findOrFail($id);
+        $modulosValidos = array_keys(config('permisos.modulos', []));
 
-        $request->validate([
+        $data = $request->validate([
             'nombre' => 'required|string|max:255',
-            'email'  => 'required|email|unique:users,email,' . $id,
-            'rol'    => 'required|in:admin,agente,auditor,basico',
-            'estado' => 'required|boolean',
+            'email' => 'required|email|unique:users,email,'.$id,
+            'rol' => 'required|in:admin,agente,auditor,basico',
+            'estado' => 'nullable|boolean',
+            'permisos' => 'nullable|array',
+            'permisos.*' => ['string', Rule::in($modulosValidos)],
+            'password' => 'nullable|min:6',
         ]);
 
-        $usuario->update([
-            'nombre' => $request->nombre,
-            'email'  => $request->email,
-            'rol'    => $request->rol,
-            'estado' => $request->estado,
-        ]);
+        $permisos = $data['rol'] === 'admin'
+            ? null
+            : array_values(array_unique($data['permisos'] ?? []));
+
+        $payload = [
+            'nombre' => $data['nombre'],
+            'email' => $data['email'],
+            'rol' => $data['rol'],
+            'permisos' => $permisos,
+            'estado' => $request->boolean('estado'),
+        ];
+
+        if (! empty($data['password'])) {
+            $payload['password'] = Hash::make($data['password']);
+        }
+
+        $usuario->update($payload);
 
         return redirect()->route('usuarios.index')->with('success', 'Usuario actualizado correctamente.');
     }
 
-    // Eliminar usuario
     public function destroy($id)
     {
         $usuario = User::findOrFail($id);

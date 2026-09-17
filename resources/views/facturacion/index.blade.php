@@ -1,6 +1,6 @@
 @extends('layouts.app-new')
 
-@section('title', 'Facturación - CH LOGISTICS ERP')
+@section('title', 'Facturación - CH Logistics')
 @section('navbar-title', 'Facturación')
 
 @section('content')
@@ -101,7 +101,7 @@
                 </colgroup>
                 <thead class="border-b border-slate-200 bg-[#15537c] text-white">
                     <tr>
-                        <th class="px-3 py-2 font-semibold text-center">#</th>
+                        <th class="px-3 py-2 font-semibold text-center" title="Correlativo para auditoría (no es el id interno de base de datos)">Folio</th>
                         <th class="px-3 py-2 font-semibold text-center">Tipo</th>
                         <th class="px-4 py-2 font-semibold">Cliente</th>
                         <th class="px-4 py-2 font-semibold text-center">Fecha</th>
@@ -122,7 +122,7 @@
                             : 'border-l-[5px] border-l-[#15537c]';
                     @endphp
                     <tr class="border-b border-slate-100 {{ $filaTipoClass }} {{ $loop->iteration % 2 === 0 ? 'bg-slate-50' : 'bg-white' }} hover:bg-slate-100/90">
-                        <td class="px-3 py-1.5 text-center font-medium text-slate-700">{{ $factura->id }}</td>
+                        <td class="px-3 py-1.5 text-center font-medium text-slate-700" title="Id interno: {{ $factura->id }}">{{ $factura->etiquetaFolio() }}</td>
                         <td class="px-2 py-1.5 text-center align-middle">
                             @if($tipoFactura === 'encomienda_familiar')
                                 <span class="inline-flex max-w-full items-center justify-center gap-1 rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-900 ring-1 ring-amber-200/80" title="Factura por encomienda familiar">

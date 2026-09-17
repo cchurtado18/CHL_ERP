@@ -1,6 +1,6 @@
 @extends('layouts.app-new')
 
-@section('title', 'Reporte de Rentabilidad - CH LOGISTICS ERP')
+@section('title', 'Reporte de Rentabilidad - CH Logistics')
 @section('navbar-title', 'Rentabilidad')
 
 @push('scripts')

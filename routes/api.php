@@ -5,9 +5,9 @@ use Illuminate\Support\Facades\Route;
 
 /*
  * Misma sesión web que el panel (facturación usa jQuery GET a /api/clientes/{id}).
- * Solo admin y agente, alineado con las rutas web de facturación.
+ * Requiere autenticación + permiso de facturación (o admin).
  */
-Route::middleware(['web', 'auth', 'role:admin,agente'])->group(function () {
+Route::middleware(['web', 'auth', 'permiso:facturacion'])->group(function () {
     Route::get('/facturacion/cliente-detalle/{clienteId}', [FacturacionController::class, 'clienteDetalle']);
     Route::get('/clientes/{id}', [FacturacionController::class, 'clienteDetalle']);
 });
