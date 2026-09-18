@@ -33,22 +33,17 @@ class ContabilidadRentabilidadController extends Controller
         // Total combinado (paquetería + encomiendas) — usado para KPIs, run-rate, punto de equilibrio
         $rentabilidadActual = $this->combinarRentabilidad($rentaPaqueteria, $rentaEncomiendas);
 
-        // Comparativo mes actual / mes anterior (combinados)
-        $inicioMesActual = now()->startOfMonth();
-        $finMesActual = now()->endOfMonth();
-        $inicioMesAnterior = now()->subMonthNoOverflow()->startOfMonth();
-        $finMesAnterior = now()->subMonthNoOverflow()->endOfMonth();
+        // Comparativo: período seleccionado vs período anterior de igual duración
+        $diasPeriodo = max(1, (int) $desde->copy()->startOfDay()->diffInDays($hasta->copy()->startOfDay()) + 1);
+        $hastaComparativo = $desde->copy()->subDay()->endOfDay();
+        $desdeComparativo = $hastaComparativo->copy()->subDays($diasPeriodo - 1)->startOfDay();
 
-        $costosMapMesActual = $this->construirMapaCostos($finMesActual);
-        $costosMapMesAnterior = $this->construirMapaCostos($finMesAnterior);
+        $costosMapComparativo = $this->construirMapaCostos($hastaComparativo);
 
-        $rentaMesActual = $this->combinarRentabilidad(
-            $this->calcularRentabilidadGlobal($inicioMesActual, $finMesActual, $costosMapMesActual),
-            $this->calcularRentabilidadEncomiendas($inicioMesActual, $finMesActual, $costosMapMesActual)
-        );
+        $rentaMesActual = $rentabilidadActual;
         $rentaMesAnterior = $this->combinarRentabilidad(
-            $this->calcularRentabilidadGlobal($inicioMesAnterior, $finMesAnterior, $costosMapMesAnterior),
-            $this->calcularRentabilidadEncomiendas($inicioMesAnterior, $finMesAnterior, $costosMapMesAnterior)
+            $this->calcularRentabilidadGlobal($desdeComparativo, $hastaComparativo, $costosMapComparativo),
+            $this->calcularRentabilidadEncomiendas($desdeComparativo, $hastaComparativo, $costosMapComparativo)
         );
 
         $variaciones = [
@@ -66,8 +61,8 @@ class ContabilidadRentabilidadController extends Controller
         $clientesEnPerdida = collect($clientes)->where('estado', 'perdida')->count();
         $remitentesEnPerdida = collect($remitentes)->where('estado', 'perdida')->count();
 
-        $labelMesActual = mb_convert_case($inicioMesActual->isoFormat('MMMM YYYY'), MB_CASE_TITLE, 'UTF-8');
-        $labelMesAnterior = mb_convert_case($inicioMesAnterior->isoFormat('MMMM YYYY'), MB_CASE_TITLE, 'UTF-8');
+        $labelMesActual = $this->etiquetaPeriodo($desde, $hasta);
+        $labelMesAnterior = $this->etiquetaPeriodo($desdeComparativo, $hastaComparativo);
 
         // Para mostrar en la cabecera el detalle de costos por servicio
         $serviciosConCosto = $this->resumenCostosServicios($hasta);
@@ -245,6 +240,26 @@ class ContabilidadRentabilidadController extends Controller
             'ultimos_30' => [now()->subDays(30)->startOfDay(), now()->endOfDay(), 'Últimos 30 días', $preset],
             default => [now()->startOfMonth(), now()->endOfMonth(), 'Mes actual ('.$cap(now()->isoFormat('MMMM YYYY')).')', 'mes_actual'],
         };
+    }
+
+    /** Etiqueta legible de un período para el badge del comparativo. */
+    private function etiquetaPeriodo(Carbon $desde, Carbon $hasta): string
+    {
+        $d = $desde->copy()->startOfDay();
+        $h = $hasta->copy()->startOfDay();
+
+        if ($d->isSameMonth($h)
+            && $d->day === 1
+            && $h->day === $h->daysInMonth
+        ) {
+            return mb_convert_case($d->isoFormat('MMMM YYYY'), MB_CASE_TITLE, 'UTF-8');
+        }
+
+        if ($d->equalTo($h)) {
+            return $d->format('d/m/Y');
+        }
+
+        return $d->format('d/m/Y').' – '.$h->format('d/m/Y');
     }
 
     /**
