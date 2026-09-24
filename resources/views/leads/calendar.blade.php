@@ -145,60 +145,65 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 gap-3 md:grid-cols-4">
-        <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div class="text-xs text-slate-500">Nuevos del mes</div><div class="text-2xl font-bold">{{ $kpis['nuevos_mes'] }}</div></div>
-        <div class="rounded-xl border border-red-200 bg-white p-4 shadow-sm"><div class="text-xs text-slate-500">Seguimientos vencidos</div><div class="text-2xl font-bold text-red-700">{{ $kpis['vencidos'] }}</div></div>
-        <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div class="text-xs text-slate-500">Tasa conversión</div><div class="text-2xl font-bold">{{ $kpis['tasa_conversion'] }}%</div></div>
-        <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div class="text-xs text-slate-500">Campañas activas</div><div class="text-2xl font-bold">{{ $kpis['por_campana']->count() }}</div></div>
-    </div>
-
-    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <h2 class="text-xl font-semibold text-slate-900">{{ $baseMonth->translatedFormat('F Y') }}</h2>
-            <div class="flex gap-2">
-                <form method="GET" action="{{ route('leads.calendar') }}" class="inline">
-                    @if(!empty(request('etapa')))
-                        <input type="hidden" name="etapa" value="{{ request('etapa') }}">
-                    @endif
-                    @if(!empty(request('origen')))
-                        <input type="hidden" name="origen" value="{{ request('origen') }}">
-                    @endif
-                    @if(!empty(request('campana')))
-                        <input type="hidden" name="campana" value="{{ request('campana') }}">
-                    @endif
-                    @if(!empty(request('owner_id')))
-                        <input type="hidden" name="owner_id" value="{{ request('owner_id') }}">
-                    @endif
-                    <input type="hidden" name="mes" value="{{ $prevMonth }}">
-                    <button type="submit" class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm">Anterior</button>
-                </form>
-                <form method="GET" action="{{ route('leads.calendar') }}" class="inline">
-                    @if(!empty(request('etapa')))
-                        <input type="hidden" name="etapa" value="{{ request('etapa') }}">
-                    @endif
-                    @if(!empty(request('origen')))
-                        <input type="hidden" name="origen" value="{{ request('origen') }}">
-                    @endif
-                    @if(!empty(request('campana')))
-                        <input type="hidden" name="campana" value="{{ request('campana') }}">
-                    @endif
-                    @if(!empty(request('owner_id')))
-                        <input type="hidden" name="owner_id" value="{{ request('owner_id') }}">
-                    @endif
-                    <input type="hidden" name="mes" value="{{ $nextMonth }}">
-                    <button type="submit" class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm">Siguiente</button>
-                </form>
+    <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div class="flex items-center gap-3">
+                <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-[#15537c]/10 text-[#15537c]"><i class="fas fa-user-plus"></i></div>
+                <div>
+                    <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Nuevos del mes</p>
+                    <p class="text-xl font-bold text-slate-900">{{ $kpis['nuevos_mes'] }}</p>
+                </div>
             </div>
         </div>
-        <div class="mb-3 flex flex-wrap items-center gap-4 text-xs text-slate-600">
-            <span class="inline-flex items-center gap-2"><span class="h-3 w-6 rounded border border-sky-300 bg-sky-100"></span> Lead (próximo contacto)</span>
-            <span class="inline-flex items-center gap-2"><span class="h-3 w-6 rounded border border-violet-300 bg-violet-100"></span> Evento de agenda</span>
+        <div class="rounded-xl border border-red-200 bg-white p-4 shadow-sm">
+            <div class="flex items-center gap-3">
+                <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100 text-red-600"><i class="fas fa-exclamation-circle"></i></div>
+                <div>
+                    <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Seg. vencidos</p>
+                    <p class="text-xl font-bold text-red-700">{{ $kpis['vencidos'] }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div class="flex items-center gap-3">
+                <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600"><i class="fas fa-chart-line"></i></div>
+                <div>
+                    <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Tasa conversión</p>
+                    <p class="text-xl font-bold text-slate-900">{{ $kpis['tasa_conversion'] }}%</p>
+                </div>
+            </div>
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div class="flex items-center gap-3">
+                <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-100 text-violet-600"><i class="fas fa-bullhorn"></i></div>
+                <div>
+                    <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Campañas activas</p>
+                    <p class="text-xl font-bold text-slate-900">{{ $kpis['por_campana']->count() }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        {{-- Cabecera del calendario --}}
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-slate-50/60 px-5 py-3">
+            <div class="flex items-center gap-2">
+                <a href="{{ route('leads.calendar', array_merge($queryBase ?? [], ['mes' => $prevMonth])) }}" class="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 transition hover:border-[#15537c] hover:text-[#15537c]" title="Mes anterior"><i class="fas fa-chevron-left text-xs"></i></a>
+                <a href="{{ route('leads.calendar', array_merge($queryBase ?? [], ['mes' => now()->format('Y-m')])) }}" class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-[#15537c] hover:text-[#15537c]">Hoy</a>
+                <a href="{{ route('leads.calendar', array_merge($queryBase ?? [], ['mes' => $nextMonth])) }}" class="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 transition hover:border-[#15537c] hover:text-[#15537c]" title="Mes siguiente"><i class="fas fa-chevron-right text-xs"></i></a>
+            </div>
+            <h2 class="text-lg font-bold capitalize text-[#15537c]">{{ $baseMonth->translatedFormat('F Y') }}</h2>
+            <div class="flex flex-wrap items-center gap-3 text-[11px] text-slate-600">
+                <span class="inline-flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-full bg-sky-400"></span> Lead</span>
+                <span class="inline-flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-full bg-violet-400"></span> Evento</span>
+            </div>
         </div>
 
-        <div class="grid grid-cols-7 gap-2 text-center text-xs font-semibold uppercase tracking-wide text-slate-500">
-            <div>Dom</div><div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div>
-        </div>
-        <div class="mt-2 grid grid-cols-7 gap-2">
+        {{-- Grid --}}
+        <div class="grid grid-cols-7 gap-px bg-slate-200">
+            @foreach(['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'] as $dow)
+                <div class="bg-slate-50 px-2 py-1.5 text-center text-[10px] font-bold uppercase tracking-wider text-slate-500">{{ $dow }}</div>
+            @endforeach
             @foreach($days as $day)
                 @php
                     $key = $day->format('Y-m-d');
@@ -206,69 +211,65 @@
                     $isCurrent = $day->month === $baseMonth->month;
                     $isToday = $day->isToday();
                 @endphp
-                <div class="min-h-[130px] rounded-lg border {{ $isCurrent ? 'border-slate-200 bg-white' : 'border-slate-100 bg-slate-50' }} p-2">
-                    <div class="mb-1 flex items-center justify-between">
-                        <span class="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs {{ $isToday ? 'bg-[#15537c] text-white' : 'text-slate-600' }}">{{ $day->day }}</span>
-                        @if(count($items) > 0)
-                            <span class="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-800">{{ count($items) }}</span>
+                <div class="group min-h-[86px] p-1 transition {{ $isCurrent ? 'bg-white hover:bg-slate-50/70' : 'bg-slate-50/70' }}">
+                    <div class="mb-0.5 flex items-center justify-between px-0.5">
+                        <span class="inline-flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-semibold {{ $isToday ? 'bg-[#15537c] text-white shadow-sm' : ($isCurrent ? 'text-slate-700' : 'text-slate-400') }}">{{ $day->day }}</span>
+                        @if(count($items) > 2)
+                            <span class="rounded-full bg-[#15537c]/10 px-1.5 text-[9px] font-bold text-[#15537c]">{{ count($items) }}</span>
                         @endif
                     </div>
-                    <div class="space-y-1">
-                        @foreach(array_slice($items, 0, 3) as $entry)
+                    <div class="space-y-0.5">
+                        @foreach(array_slice($items, 0, 2) as $entry)
                             @if($entry['type'] === 'lead')
                                 @php $lead = $entry['lead']; @endphp
-                                <a href="{{ route('leads.show', $lead->id) }}" class="block rounded border border-sky-200 bg-sky-50/90 px-2 py-1 text-[11px] shadow-[inset_0_0_0_1px_rgba(125,211,252,0.2)] hover:border-sky-400">
-                                    <div class="truncate font-semibold text-slate-800">{{ $lead->nombre_completo }}</div>
-                                    <div class="truncate text-slate-500">{{ $lead->campana ?: 'Sin campaña' }}</div>
-                                    @if($lead->owner)
-                                        <div class="truncate text-[10px] text-slate-500">Resp: {{ $lead->owner->nombre ?? $lead->owner->email }}</div>
-                                    @endif
-                                    <div class="mt-1 flex flex-wrap items-center gap-1">
-                                        <span class="inline-flex rounded bg-sky-200/80 px-1.5 py-0.5 text-[10px] font-semibold text-sky-900">Lead</span>
-                                        <span class="inline-flex rounded px-1.5 py-0.5 text-[10px] {{ $etapaColors[$lead->etapa] ?? 'bg-slate-100 text-slate-700' }}">{{ $lead->etapa }}</span>
-                                    </div>
-                                </a>
-                                <details class="rounded border border-slate-200 bg-white px-2 py-1">
-                                    <summary class="cursor-pointer text-[10px] font-semibold text-[#15537c]">Ya contacté</summary>
-                                    <form method="POST" action="{{ route('leads.contactado-rapido', $lead->id) }}" class="mt-2 space-y-1">
-                                        @csrf
-                                        @method('PATCH')
-                                        <input type="hidden" name="tipo" value="llamada">
-                                        <textarea name="resumen" rows="2" required class="w-full rounded border border-slate-300 px-2 py-1 text-[10px]" placeholder="Resumen del contacto..."></textarea>
-                                        <input type="datetime-local" name="proximo_contacto_at" class="w-full rounded border border-slate-300 px-2 py-1 text-[10px]">
-                                        <select name="etapa_siguiente" class="w-full rounded border border-slate-300 px-2 py-1 text-[10px]">
-                                            <option value="">Mantener etapa</option>
-                                            @foreach($etapas as $etOpt)
-                                                <option value="{{ $etOpt }}">{{ ucwords(str_replace('_',' ', $etOpt)) }}</option>
-                                            @endforeach
-                                        </select>
-                                        <button class="w-full rounded bg-[#15537c] px-2 py-1 text-[10px] font-semibold text-white">Guardar</button>
-                                    </form>
-                                </details>
+                                <div class="overflow-hidden rounded-md border-l-2 border-sky-400 bg-sky-50 transition hover:bg-sky-100">
+                                    <a href="{{ route('leads.show', $lead->id) }}" class="block px-1.5 pt-1 text-[10px] leading-tight" title="{{ $lead->nombre_completo }} · {{ $lead->campana ?: 'Sin campaña' }}{{ $lead->owner ? ' · Resp: '.($lead->owner->nombre ?? $lead->owner->email) : '' }}">
+                                        <span class="block truncate font-semibold text-slate-800">{{ $lead->proximo_contacto_at?->format('H:i') }} {{ $lead->nombre_completo }}</span>
+                                        <span class="mt-0.5 mb-1 inline-flex rounded px-1 py-px text-[9px] font-semibold capitalize {{ $etapaColors[$lead->etapa] ?? 'bg-slate-100 text-slate-700' }}">{{ str_replace('_', ' ', $lead->etapa) }}</span>
+                                    </a>
+                                    <details class="border-t border-sky-200/60 px-1.5 py-0.5">
+                                        <summary class="cursor-pointer list-none text-[9px] font-semibold text-[#15537c] hover:underline"><i class="fas fa-phone-alt mr-0.5 text-[8px]"></i>Ya contacté</summary>
+                                        <form method="POST" action="{{ route('leads.contactado-rapido', $lead->id) }}" class="mt-1 space-y-1 pb-1">
+                                            @csrf
+                                            @method('PATCH')
+                                            <input type="hidden" name="tipo" value="llamada">
+                                            <textarea name="resumen" rows="2" required class="w-full rounded border border-slate-300 px-1.5 py-1 text-[10px]" placeholder="Resumen del contacto..."></textarea>
+                                            <input type="datetime-local" name="proximo_contacto_at" class="w-full rounded border border-slate-300 px-1.5 py-1 text-[10px]">
+                                            <select name="etapa_siguiente" class="w-full rounded border border-slate-300 px-1.5 py-1 text-[10px]">
+                                                <option value="">Mantener etapa</option>
+                                                @foreach($etapas as $etOpt)
+                                                    <option value="{{ $etOpt }}">{{ ucwords(str_replace('_',' ', $etOpt)) }}</option>
+                                                @endforeach
+                                            </select>
+                                            <button class="w-full rounded bg-[#15537c] px-2 py-1 text-[10px] font-semibold text-white hover:bg-[#0f3d5c]">Guardar</button>
+                                        </form>
+                                    </details>
+                                </div>
                             @else
                                 @php $ev = $entry['evento']; @endphp
-                                <div class="rounded border border-violet-200 bg-violet-50/90 px-2 py-1 text-[11px] shadow-[inset_0_0_0_1px_rgba(196,181,253,0.25)]">
-                                    <div class="truncate font-semibold text-slate-900">{{ $ev->titulo }}</div>
-                                    <div class="text-[10px] text-violet-900/80">
-                                        @if($ev->todo_el_dia)
-                                            Todo el día
-                                        @else
-                                            {{ $ev->starts_at->timezone(config('app.timezone'))->format('H:i') }}
-                                            @if($ev->ends_at)
-                                                – {{ $ev->ends_at->timezone(config('app.timezone'))->format('H:i') }}
+                                <details class="overflow-hidden rounded-md border-l-2 border-violet-400 bg-violet-50 transition hover:bg-violet-100">
+                                    <summary class="cursor-pointer list-none px-1.5 py-1 text-[10px] leading-tight" title="{{ $ev->titulo }}{{ $ev->ubicacion ? ' · '.$ev->ubicacion : '' }}">
+                                        <span class="block truncate font-semibold text-slate-800">
+                                            @unless($ev->todo_el_dia){{ $ev->starts_at->timezone(config('app.timezone'))->format('H:i') }}@endunless
+                                            {{ $ev->titulo }}
+                                        </span>
+                                    </summary>
+                                    <div class="space-y-0.5 border-t border-violet-200/60 px-1.5 py-1 text-[9px] text-slate-600">
+                                        <div>
+                                            @if($ev->todo_el_dia)
+                                                Todo el día
+                                            @else
+                                                {{ $ev->starts_at->timezone(config('app.timezone'))->format('H:i') }}@if($ev->ends_at) – {{ $ev->ends_at->timezone(config('app.timezone'))->format('H:i') }}@endif
                                             @endif
+                                        </div>
+                                        @if($ev->ubicacion)
+                                            <div class="truncate"><i class="fas fa-map-marker-alt mr-0.5 opacity-70"></i>{{ $ev->ubicacion }}</div>
                                         @endif
-                                    </div>
-                                    @if($ev->ubicacion)
-                                        <div class="truncate text-[10px] text-slate-600"><i class="fas fa-map-marker-alt mr-0.5 opacity-70"></i>{{ $ev->ubicacion }}</div>
-                                    @endif
-                                    @if($ev->descripcion)
-                                        <div class="mt-0.5 line-clamp-2 text-[10px] text-slate-600">{{ $ev->descripcion }}</div>
-                                    @endif
-                                    <div class="mt-1 flex flex-wrap items-center justify-between gap-1">
-                                        <span class="inline-flex rounded bg-violet-200/90 px-1.5 py-0.5 text-[10px] font-semibold text-violet-900">Evento</span>
+                                        @if($ev->descripcion)
+                                            <div class="line-clamp-2">{{ $ev->descripcion }}</div>
+                                        @endif
                                         @if(auth()->check() && (auth()->user()->rol === 'admin' || (int) $ev->created_by === (int) auth()->id()))
-                                            <form method="POST" action="{{ route('leads.agenda-eventos.destroy', $ev) }}" class="inline" onsubmit="return confirm('¿Eliminar este evento de la agenda?');">
+                                            <form method="POST" action="{{ route('leads.agenda-eventos.destroy', $ev) }}" onsubmit="return confirm('¿Eliminar este evento de la agenda?');">
                                                 @csrf
                                                 @method('DELETE')
                                                 <input type="hidden" name="mes" value="{{ $baseMonth->format('Y-m') }}">
@@ -276,15 +277,15 @@
                                                 @if(request()->filled('origen'))<input type="hidden" name="origen" value="{{ request('origen') }}">@endif
                                                 @if(request()->filled('campana'))<input type="hidden" name="campana" value="{{ request('campana') }}">@endif
                                                 @if(request()->filled('owner_id'))<input type="hidden" name="filter_owner_id" value="{{ request('owner_id') }}">@endif
-                                                <button type="submit" class="text-[10px] font-semibold text-red-700 hover:underline">Eliminar</button>
+                                                <button type="submit" class="font-semibold text-red-700 hover:underline">Eliminar</button>
                                             </form>
                                         @endif
                                     </div>
-                                </div>
+                                </details>
                             @endif
                         @endforeach
-                        @if(count($items) > 3)
-                            <div class="text-[10px] text-slate-500">+{{ count($items) - 3 }} más…</div>
+                        @if(count($items) > 2)
+                            <div class="px-1 text-[9px] font-medium text-slate-400">+{{ count($items) - 2 }} más…</div>
                         @endif
                     </div>
                 </div>
