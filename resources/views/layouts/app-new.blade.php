@@ -43,7 +43,7 @@
                     <a href="{{ url('/encomiendas') }}" class="mb-1 flex h-12 items-center gap-3 rounded-r-lg px-3 text-[#15537c] {{ request()->is('encomiendas*') ? 'bg-[#15537c]/10 border-l-4 border-[#15537c] font-semibold' : 'hover:bg-slate-100' }}" title="Encomiendas"><i class="fas fa-people-carry-box w-6 text-center text-lg"></i><span>Encomiendas</span></a>
                     @endif
                     @if($user->tienePermiso('leads'))
-                    <a href="{{ url('/leads') }}" class="mb-1 flex h-12 items-center gap-3 rounded-r-lg px-3 text-[#15537c] {{ request()->is('leads*') ? 'bg-[#15537c]/10 border-l-4 border-[#15537c] font-semibold' : 'hover:bg-slate-100' }}" title="Leads"><i class="fas fa-bullseye w-6 text-center text-lg"></i><span>Leads</span></a>
+                    <a href="{{ url('/leads') }}" class="mb-1 flex h-12 items-center gap-3 rounded-r-lg px-3 text-[#15537c] {{ request()->is('leads*') ? 'bg-[#15537c]/10 border-l-4 border-[#15537c] font-semibold' : 'hover:bg-slate-100' }}" title="Leads y trabajos"><i class="fas fa-bullseye w-6 text-center text-lg"></i><span>Leads / Trabajos</span></a>
                     @endif
                     @if($user->tienePermiso('facturacion'))
                     <a href="{{ url('/facturacion') }}" class="mb-1 flex h-12 items-center gap-3 rounded-r-lg px-3 text-[#15537c] {{ request()->is('facturacion*') ? 'bg-[#15537c]/10 border-l-4 border-[#15537c] font-semibold' : 'hover:bg-slate-100' }}" title="Facturación"><i class="fas fa-file-invoice w-6 text-center text-lg"></i><span>Facturación</span></a>

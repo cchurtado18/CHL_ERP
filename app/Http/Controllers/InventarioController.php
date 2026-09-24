@@ -23,6 +23,7 @@ class InventarioController extends Controller
         $cliente_id = $request->input('cliente_id');
         $servicio_id = $request->input('servicio_id');
         $estado = $request->input('estado');
+        $facturacion = $request->input('facturacion');
 
         if ($busqueda) {
             $query->where(function ($q) use ($busqueda) {
@@ -44,6 +45,11 @@ class InventarioController extends Controller
         if ($estado) {
             $query->where('estado', $estado);
         }
+        if ($facturacion === 'no_facturados') {
+            $query->whereNull('factura_id');
+        } elseif ($facturacion === 'facturados') {
+            $query->whereNotNull('factura_id');
+        }
 
         // Clonar query para totales globales (sin paginar)
         $queryTotales = clone $query;
@@ -51,10 +57,11 @@ class InventarioController extends Controller
         $totalEntregados = (clone $queryTotales)->where('estado', 'entregado')->count();
         $totalRecibidos = (clone $queryTotales)->where('estado', 'recibido')->count();
         $valorTotal = (clone $queryTotales)->sum('monto_calculado');
+        $totalNoFacturados = Inventario::whereNull('factura_id')->count();
 
         $inventarios = $query->latest()->paginate(10)->appends($request->all());
 
-        return view('inventario.index', compact('inventarios', 'clientes', 'servicios', 'busqueda', 'cliente_id', 'servicio_id', 'estado', 'totalPaquetes', 'totalEntregados', 'totalRecibidos', 'valorTotal'));
+        return view('inventario.index', compact('inventarios', 'clientes', 'servicios', 'busqueda', 'cliente_id', 'servicio_id', 'estado', 'facturacion', 'totalPaquetes', 'totalEntregados', 'totalRecibidos', 'valorTotal', 'totalNoFacturados'));
     }
 
     public function create()

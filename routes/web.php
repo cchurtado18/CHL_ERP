@@ -23,6 +23,7 @@ use App\Http\Controllers\InventarioController;
 use App\Http\Controllers\InventarioSalidaController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\LogInventarioController;
+use App\Http\Controllers\TrabajoController;
 use App\Http\Controllers\NotificacionController;
 use App\Http\Controllers\Portal\PortalCuentaController;
 use App\Http\Controllers\Portal\PortalFacturaController;
@@ -247,7 +248,7 @@ Route::middleware(['auth', 'permiso:notificaciones'])->prefix('notificaciones')-
     Route::patch('/marcar-todas-leidas', [NotificacionController::class, 'marcarTodasLeidas'])->name('notificaciones.marcar-todas-leidas');
 });
 
-// Rutas para leads (CRM comercial)
+// Rutas para leads (CRM comercial) + trabajos del equipo
 Route::middleware(['auth', 'permiso:leads'])->prefix('leads')->group(function () {
     Route::get('/', [LeadController::class, 'calendar'])->name('leads.calendar');
     Route::get('/lista', [LeadController::class, 'index'])->name('leads.index');
@@ -255,13 +256,23 @@ Route::middleware(['auth', 'permiso:leads'])->prefix('leads')->group(function ()
     Route::post('/', [LeadController::class, 'store'])->name('leads.store');
     Route::post('/agenda-eventos', [AgendaEventoController::class, 'store'])->name('leads.agenda-eventos.store');
     Route::delete('/agenda-eventos/{agendaEvento}', [AgendaEventoController::class, 'destroy'])->name('leads.agenda-eventos.destroy');
-    Route::get('/{id}', [LeadController::class, 'show'])->name('leads.show');
-    Route::get('/{id}/editar', [LeadController::class, 'edit'])->name('leads.edit');
-    Route::put('/{id}', [LeadController::class, 'update'])->name('leads.update');
-    Route::delete('/{id}', [LeadController::class, 'destroy'])->name('leads.destroy');
-    Route::post('/{id}/interacciones', [LeadController::class, 'storeInteraccion'])->name('leads.interacciones.store');
-    Route::patch('/{id}/etapa', [LeadController::class, 'cambiarEtapa'])->name('leads.cambiar-etapa');
-    Route::patch('/{id}/contactado-rapido', [LeadController::class, 'marcarContactadoRapido'])->name('leads.contactado-rapido');
+
+    // Trabajos asignados a muchachos (admin asigna; cada uno ve su calendario)
+    Route::get('/trabajos', [TrabajoController::class, 'calendar'])->name('leads.trabajos.calendar');
+    Route::get('/trabajos/lista', [TrabajoController::class, 'index'])->name('leads.trabajos.index');
+    Route::get('/trabajos/crear', [TrabajoController::class, 'create'])->name('leads.trabajos.create');
+    Route::post('/trabajos', [TrabajoController::class, 'store'])->name('leads.trabajos.store');
+    Route::get('/trabajos/{id}', [TrabajoController::class, 'show'])->whereNumber('id')->name('leads.trabajos.show');
+    Route::patch('/trabajos/{id}/estado', [TrabajoController::class, 'updateEstado'])->whereNumber('id')->name('leads.trabajos.estado');
+    Route::delete('/trabajos/{id}', [TrabajoController::class, 'destroy'])->whereNumber('id')->name('leads.trabajos.destroy');
+
+    Route::get('/{id}', [LeadController::class, 'show'])->whereNumber('id')->name('leads.show');
+    Route::get('/{id}/editar', [LeadController::class, 'edit'])->whereNumber('id')->name('leads.edit');
+    Route::put('/{id}', [LeadController::class, 'update'])->whereNumber('id')->name('leads.update');
+    Route::delete('/{id}', [LeadController::class, 'destroy'])->whereNumber('id')->name('leads.destroy');
+    Route::post('/{id}/interacciones', [LeadController::class, 'storeInteraccion'])->whereNumber('id')->name('leads.interacciones.store');
+    Route::patch('/{id}/etapa', [LeadController::class, 'cambiarEtapa'])->whereNumber('id')->name('leads.cambiar-etapa');
+    Route::patch('/{id}/contactado-rapido', [LeadController::class, 'marcarContactadoRapido'])->whereNumber('id')->name('leads.contactado-rapido');
 });
 
 // Rutas para contabilidad

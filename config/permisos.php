@@ -39,7 +39,7 @@ return [
         ],
         'leads' => [
             'label' => 'Leads',
-            'descripcion' => 'Agenda comercial y seguimiento',
+            'descripcion' => 'Agenda comercial, seguimiento y trabajos del equipo',
             'icono' => 'fa-bullseye',
         ],
         'facturacion' => [

@@ -23,7 +23,7 @@
     @endif
 
     {{-- Stats - tarjetas más grandes --}}
-    <div class="grid grid-cols-2 gap-5 lg:grid-cols-4">
+    <div class="grid grid-cols-2 gap-5 {{ auth()->user() && auth()->user()->rol === 'admin' ? 'lg:grid-cols-5' : 'lg:grid-cols-4' }}">
         <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div class="flex items-center gap-4">
                 <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-[#15537c]/10 text-[#15537c] text-2xl"><i class="fas fa-boxes"></i></div>
@@ -51,6 +51,15 @@
                 </div>
             </div>
         </div>
+        <a href="{{ route('inventario.index', ['facturacion' => 'no_facturados']) }}" class="rounded-xl border border-orange-200 bg-orange-50 p-5 shadow-sm transition hover:border-orange-300 hover:bg-orange-100 {{ request('facturacion') === 'no_facturados' ? 'ring-2 ring-orange-400' : '' }}">
+            <div class="flex items-center gap-4">
+                <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-orange-100 text-orange-600 text-2xl"><i class="fas fa-file-invoice-dollar"></i></div>
+                <div>
+                    <p class="text-sm font-medium uppercase tracking-wide text-orange-700">No facturados</p>
+                    <p class="text-2xl font-bold text-orange-900">{{ $totalNoFacturados }}</p>
+                </div>
+            </div>
+        </a>
         @if(auth()->user() && auth()->user()->rol === 'admin')
         <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div class="flex items-center gap-4">
@@ -86,6 +95,14 @@
                     <option value="">Todos</option>
                     <option value="recibido" {{ request('estado', $estado ?? '') == 'recibido' ? 'selected' : '' }}>Recibido</option>
                     <option value="entregado" {{ request('estado', $estado ?? '') == 'entregado' ? 'selected' : '' }}>Entregado</option>
+                </select>
+            </div>
+            <div class="w-52">
+                <label class="mb-1.5 block text-sm font-medium text-slate-600">Facturación</label>
+                <select name="facturacion" class="w-full appearance-none rounded-lg border border-slate-300 bg-white bg-[length:1.25rem] bg-[right_0.75rem_center] bg-no-repeat px-4 py-2.5 pr-10 text-base focus:border-[#15537c] focus:ring-1 focus:ring-[#15537c]" style="background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 24 24%22 stroke=%22%2364758b%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%222%22 d=%22M19 9l-7 7-7-7%22/%3E%3C/svg%3E');">
+                    <option value="">Todos</option>
+                    <option value="no_facturados" {{ request('facturacion', $facturacion ?? '') == 'no_facturados' ? 'selected' : '' }}>Paquetes no facturados</option>
+                    <option value="facturados" {{ request('facturacion', $facturacion ?? '') == 'facturados' ? 'selected' : '' }}>Paquetes facturados</option>
                 </select>
             </div>
             <div class="w-52">
@@ -166,6 +183,7 @@
                         <th class="px-4 py-2 font-semibold text-center">Guía</th>
                         <th class="px-4 py-2 font-semibold text-center">Tracking</th>
                         <th class="px-4 py-2 font-semibold text-center">Estado</th>
+                        <th class="px-4 py-2 font-semibold text-center">Factura</th>
                         <th class="px-4 py-2 font-semibold text-center">Ingreso</th>
                         @unless($esAgente)
                         <th class="px-4 py-2 font-semibold text-center">Monto</th>
@@ -202,6 +220,17 @@
                             @endphp
                             <span class="inline-flex items-center rounded-full px-2 py-0.5 text-sm font-semibold {{ $estadoBadge }}">{{ ucfirst(str_replace('_', ' ', $item->estado)) }}</span>
                         </td>
+                        <td class="px-4 py-1.5 text-center">
+                            @if($item->factura_id)
+                                @unless($esAgente)
+                                <a href="{{ route('facturacion.show', $item->factura_id) }}" class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-sm font-semibold text-emerald-800 hover:bg-emerald-200" title="Ver factura">Facturado</a>
+                                @else
+                                <span class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-sm font-semibold text-emerald-800">Facturado</span>
+                                @endunless
+                            @else
+                                <span class="inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-sm font-semibold text-orange-800">Sin factura</span>
+                            @endif
+                        </td>
                         <td class="px-4 py-1.5 text-center font-medium text-slate-900">{{ \Carbon\Carbon::parse($item->fecha_ingreso)->format('d/m/Y') }}</td>
                         @unless($esAgente)
                         <td class="px-4 py-1.5 text-center font-semibold text-emerald-800">${{ number_format($item->monto_calculado, 2) }}</td>
@@ -217,7 +246,7 @@
                         </td>
                     </tr>
                     @empty
-                    <tr><td colspan="{{ $esAgente ? '9' : '10' }}" class="px-4 py-12 text-center text-base text-slate-700">No hay paquetes. <a href="{{ route('inventario.create') }}" class="font-medium text-[#15537c] hover:underline">Registrar uno</a>.</td></tr>{{-- colspan: incluye columna oculta de selección --}}
+                    <tr><td colspan="{{ $esAgente ? '10' : '11' }}" class="px-4 py-12 text-center text-base text-slate-700">No hay paquetes. <a href="{{ route('inventario.create') }}" class="font-medium text-[#15537c] hover:underline">Registrar uno</a>.</td></tr>{{-- colspan: incluye columna oculta de selección --}}
                     @endforelse
                 </tbody>
             </table>
@@ -239,7 +268,18 @@
                         <p class="mt-1 text-sm font-medium text-slate-700">{{ $item->servicio->tipo_servicio ?? 'N/A' }} · {{ number_format($item->peso_lb, 2) }} lb</p>
                     </div>
                     @php $estadoBadge = $item->estado === 'recibido' ? 'bg-amber-200 text-amber-900' : ($item->estado === 'entregado' ? 'bg-emerald-200 text-emerald-900' : 'bg-slate-200 text-slate-900'); @endphp
-                    <span class="shrink-0 rounded-full px-3 py-1 text-sm font-semibold {{ $estadoBadge }}">{{ ucfirst($item->estado) }}</span>
+                    <div class="flex shrink-0 flex-col items-end gap-1">
+                        <span class="rounded-full px-3 py-1 text-sm font-semibold {{ $estadoBadge }}">{{ ucfirst($item->estado) }}</span>
+                        @if($item->factura_id)
+                            @unless($esAgente)
+                            <a href="{{ route('facturacion.show', $item->factura_id) }}" class="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-200">Facturado</a>
+                            @else
+                            <span class="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">Facturado</span>
+                            @endunless
+                        @else
+                            <span class="rounded-full bg-orange-100 px-2.5 py-0.5 text-xs font-semibold text-orange-800">Sin factura</span>
+                        @endif
+                    </div>
                 </div>
                 <div class="mt-4 grid {{ $esAgente ? 'grid-cols-2' : 'grid-cols-3' }} gap-4 border-t border-slate-100 pt-4">
                     <div class="min-w-0">

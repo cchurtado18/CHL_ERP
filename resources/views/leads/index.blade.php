@@ -9,6 +9,8 @@
         <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-emerald-800">{{ session('success') }}</div>
     @endif
 
+    @include('leads._nav')
+
     <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
