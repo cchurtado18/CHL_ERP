@@ -128,11 +128,20 @@ class TrabajoController extends Controller
     {
         $this->autorizarAdmin();
 
+        if ($request->input('cliente_id') === '' || $request->input('cliente_id') === null) {
+            $request->merge(['cliente_id' => null]);
+        }
+
+        $horaRaw = $request->input('hora');
+        if (is_string($horaRaw) && preg_match('/^\d{2}:\d{2}:\d{2}$/', $horaRaw)) {
+            $request->merge(['hora' => substr($horaRaw, 0, 5)]);
+        }
+
         $data = $request->validate([
             'titulo' => 'required|string|max:200',
-            'asignado_a' => ['required', 'exists:users,id', Rule::in($this->equipoAsignable()->pluck('id')->all())],
+            'asignado_a' => ['required', 'integer', 'exists:users,id', Rule::in($this->equipoAsignable()->pluck('id')->map(fn ($id) => (int) $id)->all())],
             'prioridad' => ['required', Rule::in(Trabajo::PRIORIDADES)],
-            'cliente_id' => 'nullable|exists:clientes,id',
+            'cliente_id' => 'nullable|integer|exists:clientes,id',
             'descripcion' => 'nullable|string|max:5000',
             'fecha' => 'nullable|date',
             'hora' => 'nullable|date_format:H:i',
@@ -153,9 +162,13 @@ class TrabajoController extends Controller
             'prioridad' => $data['prioridad'],
         ]);
 
+        // El asignado lo ve solo en su calendario; el admin queda filtrado a esa persona para confirmar.
         return redirect()
-            ->route('leads.trabajos.calendar', ['mes' => $fechaProgramada->format('Y-m'), 'asignado_a' => $data['asignado_a']])
-            ->with('success', 'Trabajo asignado correctamente.');
+            ->route('leads.trabajos.calendar', [
+                'mes' => $fechaProgramada->format('Y-m'),
+                'asignado_a' => (int) $data['asignado_a'],
+            ])
+            ->with('success', 'Trabajo asignado. Solo lo verá la persona seleccionada en su calendario.');
     }
 
     public function show($id)
@@ -218,12 +231,18 @@ class TrabajoController extends Controller
 
     private function aplicarVisibilidad($query, User $user, Request $request): void
     {
+        // Por defecto cada usuario solo ve lo suyo.
+        // El admin puede filtrar por persona o ver todo el equipo con asignado_a=todos.
         if ($user->esAdmin()) {
-            if ($request->filled('asignado_a')) {
-                $query->where('asignado_a', (int) $request->input('asignado_a'));
+            $filtro = $request->input('asignado_a');
+            if ($filtro === 'todos') {
+                return;
             }
+            if ($filtro !== null && $filtro !== '') {
+                $query->where('asignado_a', (int) $filtro);
 
-            return;
+                return;
+            }
         }
 
         $query->where('asignado_a', $user->id);
@@ -248,8 +267,15 @@ class TrabajoController extends Controller
     private function equipoAsignable()
     {
         return User::query()
-            ->whereIn('rol', ['admin', 'agente', 'basico'])
-            ->where('estado', true)
+            ->where(function ($q) {
+                $q->whereIn('rol', ['admin', 'agente', 'basico'])
+                    ->orWhere(function ($q2) {
+                        $q2->whereNotNull('rol')->where('rol', '!=', 'cliente');
+                    });
+            })
+            ->where(function ($q) {
+                $q->where('estado', 1)->orWhere('estado', true);
+            })
             ->orderBy('nombre')
             ->get(['id', 'nombre', 'email', 'rol']);
     }

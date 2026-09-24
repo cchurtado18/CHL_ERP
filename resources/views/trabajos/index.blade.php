@@ -46,7 +46,8 @@
             <div class="w-52">
                 <label class="mb-1 block text-sm font-medium text-slate-600">Asignado a</label>
                 <select name="asignado_a" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                    <option value="">Todo el equipo</option>
+                    <option value="" @selected(! request()->filled('asignado_a'))>Mis trabajos</option>
+                    <option value="todos" @selected(request('asignado_a') === 'todos')>Todo el equipo</option>
                     @foreach($equipo as $u)
                         <option value="{{ $u->id }}" @selected((string) request('asignado_a') === (string) $u->id)>{{ $u->nombre ?? $u->email }}</option>
                     @endforeach

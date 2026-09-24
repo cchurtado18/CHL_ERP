@@ -9,6 +9,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (! Schema::hasTable('trabajos')) {
+            return;
+        }
+
         if (! Schema::hasColumn('trabajos', 'prioridad')) {
             Schema::table('trabajos', function (Blueprint $table) {
                 $table->string('prioridad', 20)->default('promedio');
@@ -46,18 +50,33 @@ return new class extends Migration
             return;
         }
 
-        Schema::table('trabajos', function (Blueprint $table) {
-            $table->dropForeign(['cliente_id']);
-        });
-        DB::statement('ALTER TABLE trabajos MODIFY cliente_id BIGINT UNSIGNED NULL');
-        Schema::table('trabajos', function (Blueprint $table) {
-            $table->foreign('cliente_id')->references('id')->on('clientes')->nullOnDelete();
-        });
+        // MySQL/MariaDB: solo ajustar FK si hace falta
+        try {
+            Schema::table('trabajos', function (Blueprint $table) {
+                $table->dropForeign(['cliente_id']);
+            });
+        } catch (\Throwable $e) {
+            // FK puede no existir o ya estar recreada
+        }
+
+        try {
+            DB::statement('ALTER TABLE trabajos MODIFY cliente_id BIGINT UNSIGNED NULL');
+        } catch (\Throwable $e) {
+            // Ya es nullable
+        }
+
+        try {
+            Schema::table('trabajos', function (Blueprint $table) {
+                $table->foreign('cliente_id')->references('id')->on('clientes')->nullOnDelete();
+            });
+        } catch (\Throwable $e) {
+            // FK ya existe
+        }
     }
 
     public function down(): void
     {
-        if (Schema::hasColumn('trabajos', 'prioridad')) {
+        if (Schema::hasTable('trabajos') && Schema::hasColumn('trabajos', 'prioridad')) {
             Schema::table('trabajos', function (Blueprint $table) {
                 $table->dropColumn('prioridad');
             });

@@ -35,9 +35,11 @@
                     @endif
                 </h1>
                 <p class="text-sm text-slate-600">
-                    Recorrido: Asignado → Visto → Trabajando → Casi termino → Finalizado.
+                    Cada persona ve solo sus trabajos. Recorrido: Asignado → Visto → Trabajando → Casi termino → Finalizado.
                     @unless($esAdmin)
                         Tienes <strong>{{ $misPendientes }}</strong> trabajo(s) pendiente(s).
+                    @else
+                        Como admin puedes filtrar por persona o ver todo el equipo.
                     @endunless
                 </p>
             </div>
@@ -64,7 +66,8 @@
             </select>
             @if($esAdmin)
             <select name="asignado_a" class="rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                <option value="">Todo el equipo</option>
+                <option value="" @selected(! request()->filled('asignado_a'))>Mis trabajos</option>
+                <option value="todos" @selected(request('asignado_a') === 'todos')>Todo el equipo</option>
                 @foreach($equipo as $u)
                     <option value="{{ $u->id }}" @selected((string) request('asignado_a') === (string) $u->id)>{{ $u->nombre ?? $u->email }}</option>
                 @endforeach
