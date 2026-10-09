@@ -100,6 +100,32 @@
                     <p class="mt-2 text-sm text-white/60">Ingresa tus credenciales para entrar al panel.</p>
                 </div>
 
+                <form method="GET" action="{{ route('public.tracking') }}" class="mb-8 space-y-3">
+                    <label for="tracking" class="mb-2 block text-sm font-semibold text-white/80">Tracking</label>
+                    <div class="flex gap-2">
+                        <div class="relative flex-1">
+                            <span class="pointer-events-none absolute inset-y-0 left-0 flex w-11 items-center justify-center text-white/40">
+                                <i class="fas fa-location-crosshairs"></i>
+                            </span>
+                            <input type="text" name="tracking" id="tracking"
+                                placeholder="Código de tracking o guía"
+                                class="input-dark w-full rounded-xl py-3.5 pl-11 pr-4 text-base">
+                        </div>
+                        <button type="submit"
+                            class="shrink-0 rounded-xl border border-[#F0A63A]/50 bg-[#F0A63A]/15 px-4 py-3 text-sm font-bold text-[#F0A63A] transition hover:bg-[#F0A63A]/25"
+                            title="Rastrear paquete">
+                            Buscar
+                        </button>
+                    </div>
+                    <p class="text-xs text-white/40">Consulta el estado de un paquete sin iniciar sesión.</p>
+                </form>
+
+                <div class="mb-8 flex items-center gap-3">
+                    <div class="h-px flex-1 bg-white/10"></div>
+                    <span class="text-xs font-semibold uppercase tracking-wider text-white/35">o inicia sesión</span>
+                    <div class="h-px flex-1 bg-white/10"></div>
+                </div>
+
                 @if($errors->any())
                     <div class="mb-6 flex items-start gap-3 rounded-xl border border-rose-400/40 bg-rose-500/15 px-4 py-3 text-sm text-rose-200" role="alert">
                         <i class="fas fa-circle-exclamation mt-0.5"></i>
@@ -156,9 +182,6 @@
 
                 <p class="mt-10 text-center text-xs font-medium text-white/35">
                     &copy; {{ date('Y') }} CH Logistics &middot; Todos los derechos reservados
-                </p>
-                <p class="mt-3 text-center text-sm">
-                    <a href="{{ route('public.tracking') }}" class="font-semibold text-[#F0A63A] hover:underline">Rastrear paquete sin cuenta</a>
                 </p>
             </div>
         </div>

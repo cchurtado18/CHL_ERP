@@ -22,11 +22,11 @@
 
     <main class="mx-auto max-w-3xl px-4 py-10">
         <h1 class="text-3xl font-extrabold text-slate-800">Rastrear paquete</h1>
-        <p class="mt-2 text-sm text-slate-500">Ingresa el código de tracking o el número de guía. No necesitas cuenta.</p>
+        <p class="mt-2 text-sm text-slate-500">Ingresa el código de tracking o el número de guía (WRH). No necesitas cuenta.</p>
 
         <form method="GET" action="{{ route('public.tracking') }}" class="mt-6 flex flex-col gap-3 sm:flex-row">
-            <input type="text" name="code" value="{{ $code }}" required
-                placeholder="Ej: 000123 o tracking"
+            <input type="text" name="tracking" value="{{ $code }}" required
+                placeholder="Tracking o guía"
                 class="flex-1 rounded-xl border border-slate-300 px-4 py-3 text-base shadow-sm focus:border-[#15537c] focus:outline-none focus:ring-2 focus:ring-[#15537c]/20">
             <button type="submit" class="rounded-xl bg-[#15537c] px-6 py-3 font-bold text-white hover:bg-[#0f3d5c]">
                 Buscar
@@ -36,10 +36,14 @@
         @if($buscado)
             <div class="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                 @if($paquete)
+                    @php
+                        $titulo = $paquete->numero_guia ?: $paquete->tracking_codigo;
+                        $eventosLocal = $paquete->estadoEventos->sortBy('evento_at')->values();
+                    @endphp
                     <div class="flex flex-wrap items-start justify-between gap-3">
                         <div>
-                            <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Resultado</p>
-                            <h2 class="text-xl font-extrabold text-slate-800">{{ $paquete->tracking_codigo ?: $paquete->numero_guia }}</h2>
+                            <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Resultado · CH Logistics</p>
+                            <h2 class="text-xl font-extrabold text-slate-800">Guía {{ $titulo }}</h2>
                         </div>
                         <span class="rounded-full bg-[#15537c]/10 px-3 py-1 text-sm font-bold capitalize text-[#15537c]">
                             {{ str_replace('_', ' ', $paquete->estado) }}
@@ -47,34 +51,86 @@
                     </div>
                     <dl class="mt-5 grid gap-3 text-sm sm:grid-cols-2">
                         <div>
-                            <dt class="text-slate-400">Servicio</dt>
-                            <dd class="font-semibold capitalize">{{ $paquete->servicio->tipo_servicio ?? '—' }}</dd>
+                            <dt class="text-slate-400">Nº guía (WRH)</dt>
+                            <dd class="font-semibold font-mono">{{ $paquete->numero_guia ?: '—' }}</dd>
                         </div>
                         <div>
-                            <dt class="text-slate-400">Fecha ingreso</dt>
-                            <dd class="font-semibold">{{ \Carbon\Carbon::parse($paquete->fecha_ingreso)->format('d/m/Y') }}</dd>
+                            <dt class="text-slate-400">Tracking</dt>
+                            <dd class="font-semibold font-mono text-[#15537c]">{{ $paquete->tracking_codigo ?: '—' }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-slate-400">Servicio</dt>
+                            <dd class="font-semibold capitalize">{{ $paquete->servicio->tipo_servicio ?? '—' }}</dd>
                         </div>
                         <div>
                             <dt class="text-slate-400">Peso</dt>
                             <dd class="font-semibold">{{ number_format($paquete->peso_lb ?? 0, 2) }} lb</dd>
                         </div>
                         <div>
-                            <dt class="text-slate-400">Nº guía</dt>
-                            <dd class="font-semibold">{{ $paquete->numero_guia ?: '—' }}</dd>
+                            <dt class="text-slate-400">Fecha ingreso</dt>
+                            <dd class="font-semibold">{{ $paquete->fecha_ingreso ? \Carbon\Carbon::parse($paquete->fecha_ingreso)->format('d/m/Y') : '—' }}</dd>
                         </div>
                     </dl>
 
-                    @if($paquete->estadoEventos->isNotEmpty())
-                        <h3 class="mt-6 mb-3 font-bold text-slate-800">Historial</h3>
-                        <ol class="space-y-3 border-l-2 border-slate-200 pl-4">
-                            @foreach($paquete->estadoEventos->take(10) as $evt)
-                                <li>
-                                    <p class="font-semibold capitalize">{{ str_replace('_',' ', $evt->estado) }}</p>
-                                    <p class="text-xs text-slate-500">{{ optional($evt->evento_at)->format('d/m/Y H:i') }}</p>
-                                </li>
-                            @endforeach
-                        </ol>
+                    <div class="mt-8 border-t border-slate-100 pt-6">
+                        @include('partials.tracking-timeline', [
+                            'estadoActual' => $paquete->estado,
+                            'eventos' => $eventosLocal,
+                            'ingresadoLocal' => true,
+                        ])
+                    </div>
+                @elseif($remoto)
+                    @php
+                        $guiaRemota = $remoto['wrh'] ?? null;
+                        $trackingRemoto = $remoto['tracking_number'] ?? $code;
+                        $tituloRemoto = $guiaRemota ?: $trackingRemoto;
+                    @endphp
+                    <div class="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Resultado · Tracking</p>
+                            <h2 class="text-xl font-extrabold text-slate-800">
+                                @if($guiaRemota) Guía {{ $guiaRemota }} @else {{ $trackingRemoto }} @endif
+                            </h2>
+                        </div>
+                        <span class="rounded-full bg-[#15537c]/10 px-3 py-1 text-sm font-bold capitalize text-[#15537c]">
+                            {{ str_replace('_', ' ', $remoto['status'] ?? '') }}
+                        </span>
+                    </div>
+                    @if(!empty($remoto['status_raw']))
+                        <p class="mt-2 text-sm text-slate-500">{{ $remoto['status_raw'] }}</p>
                     @endif
+                    <dl class="mt-5 grid gap-3 text-sm sm:grid-cols-2">
+                        <div>
+                            <dt class="text-slate-400">Nº guía (WRH)</dt>
+                            <dd class="font-semibold font-mono">{{ $guiaRemota ?: '—' }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-slate-400">Tracking</dt>
+                            <dd class="font-semibold font-mono text-[#15537c]">{{ $trackingRemoto ?: '—' }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-slate-400">Peso</dt>
+                            <dd class="font-semibold">{{ isset($remoto['weight']) ? number_format((float) $remoto['weight'], 2).' lb' : '—' }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-slate-400">Fecha recepción</dt>
+                            <dd class="font-semibold">
+                                {{ !empty($remoto['pickup_date']) ? \Carbon\Carbon::parse($remoto['pickup_date'])->format('d/m/Y H:i') : '—' }}
+                            </dd>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <dt class="text-slate-400">Descripción</dt>
+                            <dd class="font-semibold">{{ $remoto['description'] ?: '—' }}</dd>
+                        </div>
+                    </dl>
+
+                    <div class="mt-8 border-t border-slate-100 pt-6">
+                        @include('partials.tracking-timeline', [
+                            'estadoActual' => $remoto['status'] ?? 'pendiente',
+                            'eventos' => $remoto['events'] ?? [],
+                            'ingresadoLocal' => false,
+                        ])
+                    </div>
                 @else
                     <p class="text-center text-slate-500">No encontramos un paquete con el código <strong>{{ $code }}</strong>.</p>
                 @endif

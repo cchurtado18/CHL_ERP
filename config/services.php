@@ -56,4 +56,43 @@ return [
         ],
     ],
 
+    /*
+    | Provider de tracking externo (swappable).
+    | TRACKING_PROVIDER=cargotrack|none
+    */
+    'tracking' => [
+        'provider' => env('TRACKING_PROVIDER', 'cargotrack'),
+    ],
+
+    'cargotrack' => [
+        'base_url' => env('CARGOTRACK_BASE_URL', 'https://gc.cargotrack.net'),
+        'track_path' => env('CARGOTRACK_TRACK_PATH', '/m/track.asp'),
+        'timeout' => (int) env('CARGOTRACK_TIMEOUT', 20),
+        'user_agent' => env(
+            'CARGOTRACK_USER_AGENT',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        ),
+        'estado_map' => [
+            'in transit' => 'en_transito',
+            'in_transit' => 'en_transito',
+            'shipped' => 'en_transito',
+            'received' => 'recibido',
+            'warehouse' => 'recibido',
+            'in warehouse' => 'recibido',
+            'in destination country' => 'en_aduana',
+            'in_destination_country' => 'en_aduana',
+            'arrived' => 'en_aduana',
+            'customs' => 'en_aduana',
+            // Listo (listo_entrega) solo se marca al ingresar el paquete en el CRM.
+            'ready for pickup' => 'en_aduana',
+            'ready for delivery' => 'en_aduana',
+            'out for delivery' => 'en_aduana',
+            'delivered' => 'entregado',
+            'returned' => 'devuelto',
+            'cancelled' => 'cancelado',
+            'canceled' => 'cancelado',
+            'pending' => 'pendiente',
+        ],
+    ],
+
 ];
