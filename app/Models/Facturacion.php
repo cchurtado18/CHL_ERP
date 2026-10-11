@@ -16,13 +16,15 @@ class Facturacion extends Model
     protected static function booted(): void
     {
         static::creating(function (Facturacion $model) {
-            if (! Schema::hasColumn('facturacion', 'folio')) {
-                return;
+            if (Schema::hasColumn('facturacion', 'folio') && $model->folio === null) {
+                $model->folio = app(DocumentSequence::class)->next('facturacion');
             }
-            if ($model->folio !== null) {
-                return;
-            }
-            $model->folio = app(DocumentSequence::class)->next('facturacion');
+            // Una sola numeración: Nota de cobro = folio (ignora cualquier acta del formulario).
+            $model->syncNumeroActaConFolio();
+        });
+
+        static::updating(function (Facturacion $model) {
+            $model->syncNumeroActaConFolio();
         });
     }
 
@@ -35,6 +37,23 @@ class Facturacion extends Model
         $key = $this->getKey();
 
         return $key !== null ? (string) $key : '0';
+    }
+
+    /**
+     * Número de la Nota de cobro (PDF, correo y listados).
+     * Siempre igual al folio del sistema.
+     */
+    public function numeroNotaCobro(): string
+    {
+        $digits = preg_replace('/\D+/', '', $this->etiquetaFolio()) ?: '0';
+
+        return 'NO-'.str_pad((string) $digits, 5, '0', STR_PAD_LEFT);
+    }
+
+    /** Mantiene numero_acta alineado al folio (compatibilidad con columna histórica). */
+    public function syncNumeroActaConFolio(): void
+    {
+        $this->numero_acta = $this->numeroNotaCobro();
     }
 
     protected $casts = [

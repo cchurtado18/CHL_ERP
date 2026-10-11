@@ -24,18 +24,11 @@ use Illuminate\Validation\Rule;
 class FacturacionController extends Controller
 {
     /**
-     * Vacío o solo espacios se guarda como null (número de acta opcional).
+     * La Nota de cobro la asigna el folio del sistema; se ignora cualquier valor del formulario.
      */
     private function normalizeNumeroActaInput(Request $request): void
     {
-        $raw = $request->input('numero_acta');
-        if ($raw === null || $raw === '') {
-            $request->merge(['numero_acta' => null]);
-
-            return;
-        }
-        $trimmed = trim((string) $raw);
-        $request->merge(['numero_acta' => $trimmed === '' ? null : $trimmed]);
+        $request->merge(['numero_acta' => null]);
     }
 
     /**
@@ -487,7 +480,6 @@ class FacturacionController extends Controller
         $factura->update([
             'cliente_id' => $request->cliente_id,
             'fecha_factura' => $request->fecha_factura,
-            'numero_acta' => $request->numero_acta,
             'tipo_factura' => $request->tipo_factura,
             'monto_total' => $request->monto_total,
             'moneda' => $request->moneda,
@@ -620,6 +612,19 @@ class FacturacionController extends Controller
     {
         // Crear un objeto temporal con los datos recibidos
         $factura = new \App\Models\Facturacion($request->all());
+        // Preview: mostrar el próximo folio sin consumirlo (el real se asigna al guardar).
+        if (blank($factura->folio) && ! $request->filled('factura_id')) {
+            try {
+                $factura->folio = app(\App\Support\DocumentSequence::class)->peek('facturacion');
+            } catch (\Throwable) {
+                // sin secuencia aún
+            }
+        } elseif ($request->filled('factura_id')) {
+            $existente = Facturacion::query()->find($request->input('factura_id'));
+            if ($existente) {
+                $factura->folio = $existente->folio;
+            }
+        }
         // Simular relación con cliente
         $factura->cliente = (object) [
             'nombre_completo' => $request->input('cliente_nombre', ''),
@@ -668,7 +673,7 @@ class FacturacionController extends Controller
         $factura->delivery = $delivery;
         $factura->tipo_factura = $request->input('tipo_factura', 'paqueteria');
         $factura->fecha_factura = $request->input('fecha_factura');
-        $factura->numero_acta = $request->input('numero_acta');
+        $factura->syncNumeroActaConFolio();
         $factura->moneda = $request->input('moneda', 'USD');
         $factura->nota = $request->input('nota');
 

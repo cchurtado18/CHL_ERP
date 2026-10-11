@@ -19,4 +19,15 @@ class DocumentSequence
             return $next;
         });
     }
+
+    /** Lee el próximo valor sin consumir la secuencia (solo previews). */
+    public function peek(string $name): int
+    {
+        $row = DB::table('document_sequences')->where('name', $name)->first();
+        if (! $row) {
+            return 1;
+        }
+
+        return (int) $row->current_value + 1;
+    }
 }

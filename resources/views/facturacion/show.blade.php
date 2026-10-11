@@ -82,7 +82,7 @@
                 <p class="text-sm font-medium text-white/80">Facturación</p>
                 <h1 class="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">Factura folio {{ $factura->etiquetaFolio() }}@if($factura->anulada ?? false)<span class="ml-2 align-middle text-base font-semibold text-amber-200">(Anulada)</span>@endif</h1>
                 <p class="mt-1 text-xs font-medium text-white/60">Id interno (técnico): {{ $factura->id }}</p>
-                <p class="mt-3 max-w-2xl text-sm leading-relaxed text-white/85">El folio es el número correlativo para control y auditoría; el id interno solo enlaza registros en el sistema. Montos y diseño final del documento se confirman en el PDF.</p>
+                <p class="mt-3 max-w-2xl text-sm leading-relaxed text-white/85">Nota de cobro {{ $factura->numeroNotaCobro() }} — mismo número en listado, PDF y correo.</p>
                 <div class="mt-4 flex flex-wrap items-center gap-2">
                     @if(($factura->tipo_factura ?? '') === 'encomienda_familiar')
                         <span class="inline-flex items-center gap-2 rounded-full bg-amber-400/25 px-3 py-1.5 text-sm font-semibold text-amber-50 ring-1 ring-amber-300/40 backdrop-blur-sm">
@@ -178,8 +178,8 @@ php artisan optimize:clear</pre>
                 <dd class="mt-1 text-base font-medium text-slate-900">{{ \Carbon\Carbon::parse($factura->fecha_factura)->format('d/m/Y') }}</dd>
             </div>
             <div class="rounded-xl border border-slate-100 bg-slate-50/80 p-4">
-                <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Número de acta</dt>
-                <dd class="mt-1 text-base text-slate-900">{{ $factura->numero_acta ?: '—' }}</dd>
+                <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Nota de cobro</dt>
+                <dd class="mt-1 text-base font-semibold text-slate-900">{{ $factura->numeroNotaCobro() }}</dd>
             </div>
             <div class="rounded-xl border border-[#15537c]/15 bg-[#15537c]/5 p-4">
                 <dt class="text-xs font-semibold uppercase tracking-wide text-slate-600">Monto total</dt>

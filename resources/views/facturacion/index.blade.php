@@ -105,7 +105,7 @@
                         <th class="px-3 py-2 font-semibold text-center">Tipo</th>
                         <th class="px-4 py-2 font-semibold">Cliente</th>
                         <th class="px-4 py-2 font-semibold text-center">Fecha</th>
-                        <th class="px-4 py-2 font-semibold text-center">Acta</th>
+                        <th class="px-4 py-2 font-semibold text-center" title="Mismo número que el PDF/correo">Nota de cobro</th>
                         <th class="px-4 py-2 font-semibold text-center">Paq.</th>
                         <th class="px-4 py-2 font-semibold text-center">Monto</th>
                         <th class="px-4 py-2 font-semibold text-center">Moneda</th>
@@ -145,7 +145,7 @@
                             <div class="truncate font-medium text-black" title="{{ $nombreFacturaCliente }}">{{ $nombreFacturaCliente }}</div>
                         </td>
                         <td class="px-4 py-1.5 text-center font-medium text-slate-900 whitespace-nowrap">{{ \Carbon\Carbon::parse($factura->fecha_factura)->format('d/m/Y') }}</td>
-                        <td class="px-4 py-1.5 text-center font-medium text-slate-900">{{ $factura->numero_acta ?: '—' }}</td>
+                        <td class="px-4 py-1.5 text-center font-medium text-slate-900">{{ $factura->numeroNotaCobro() }}</td>
                         <td class="px-4 py-1.5 text-center">
                             <span class="inline-flex items-center rounded-full bg-sky-100 px-2 py-0.5 text-sm font-semibold text-sky-800">{{ $factura->cantidad_paquetes ?? 0 }}</span>
                         </td>

@@ -3,21 +3,10 @@
     $rem = $enc ? ($enc->remitente ?? null) : null;
     $dest = $enc ? ($enc->destinatario ?? null) : null;
 
-    $fmtActa = function ($raw) {
-        $raw = trim((string) ($raw ?? ''));
-        if ($raw === '') {
-            return 'NO-00000';
-        }
-        if (preg_match('/^NO[\s\-]/i', $raw)) {
-            return $raw;
-        }
-        return 'NO-' . ltrim(preg_replace('/^NO[\s\-]*/i', '', $raw), '-');
-    };
-    $numeroNota = $fmtActa($factura->numero_acta ?? null);
-    if ($numeroNota === 'NO-00000') {
-        $folioPdf = method_exists($factura, 'etiquetaFolio') ? $factura->etiquetaFolio() : (string) ($factura->id ?? '0');
-        $numeroNota = 'NO-' . str_pad($folioPdf, 5, '0', STR_PAD_LEFT);
-    }
+    // Una sola fuente de verdad: el folio del sistema (evita desfase con numero_acta).
+    $numeroNota = method_exists($factura, 'numeroNotaCobro')
+        ? $factura->numeroNotaCobro()
+        : ('NO-'.str_pad((string) ($factura->folio ?? $factura->id ?? '0'), 5, '0', STR_PAD_LEFT));
 
     $servicioTxt = function ($tipo) {
         return ($tipo ?? 'maritimo') === 'aereo' ? 'Aéreo' : 'Marítimo';

@@ -2,7 +2,7 @@
     <h2 style="color: #15537c;">Factura de CH Logistics</h2>
     <p>Hola {{ $factura->cliente?->nombre_completo ?? $factura->encomienda?->remitente?->nombre_completo ?? '' }},</p>
     <p>Adjunto encontrarás tu factura generada por CH Logistics.</p>
-    <p><strong>Folio:</strong> {{ $factura->etiquetaFolio() }}</p>
+    <p><strong>Nota de cobro:</strong> {{ $factura->numeroNotaCobro() }}</p>
     <p><strong>Monto total:</strong> ${{ number_format($factura->monto_total, 2) }} USD</p>
     <p><strong>Fecha:</strong> {{ $factura->fecha_factura }}</p>
     <p>Si tienes alguna duda, contáctanos.</p>

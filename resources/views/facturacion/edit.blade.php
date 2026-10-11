@@ -56,9 +56,10 @@
                                 @error('fecha_factura') <div class="text-danger">{{ $message }}</div> @enderror
                             </div>
                             <div class="mb-3">
-                                <label for="numero_acta" class="form-label fw-semibold">Número de Acta <span class="text-muted fw-normal">(opcional)</span></label>
-                                <input type="text" name="numero_acta" class="form-control" value="{{ old('numero_acta', $factura->numero_acta) }}" placeholder="Puede dejarse vacío" autocomplete="off">
-                                @error('numero_acta') <div class="text-danger">{{ $message }}</div> @enderror
+                                <div class="alert alert-light border small mb-0">
+                                    <strong>Nota de cobro:</strong> {{ $factura->numeroNotaCobro() }}
+                                    <span class="text-muted">(folio {{ $factura->etiquetaFolio() }} — no se edita; coincide con PDF y correo)</span>
+                                </div>
                             </div>
                             <div class="mb-3">
                                 <label for="tipo_factura" class="form-label fw-semibold">Tipo</label>
@@ -309,7 +310,7 @@ $(document).ready(function() {
         }, delayMs);
     }
 
-    var SLOW_PREVIEW_NAMES = { entrega_nombre: 1, entrega_cedula: 1, entrega_telefono: 1, numero_acta: 1 };
+    var SLOW_PREVIEW_NAMES = { entrega_nombre: 1, entrega_cedula: 1, entrega_telefono: 1 };
 
     function previewDelayForElement(el, evtKind) {
         if (!el) return 400;
@@ -384,47 +385,6 @@ $(document).ready(function() {
         cliente.telefono = resumen.match(/Teléfono:\s*([^\n]+)/) ? resumen.match(/Teléfono:\s*([^\n]+)/)[1].trim() : '';
         return cliente;
     }
-
-    // Validación en tiempo real del número de acta para edición
-    let timeoutNumeroActa;
-    $('input[name="numero_acta"]').on('input', function() {
-        clearTimeout(timeoutNumeroActa);
-        const numeroActa = $(this).val().trim();
-        
-        if (numeroActa.length > 0) {
-            timeoutNumeroActa = setTimeout(function() {
-                $.ajax({
-                    url: '{{ route("facturacion.validar-numero-acta") }}',
-                    method: 'POST',
-                    data: {
-                        numero_acta: numeroActa,
-                        factura_id: {{ $factura->id }},
-                        _token: '{{ csrf_token() }}'
-                    },
-                    success: function(response) {
-                        const input = $('input[name="numero_acta"]');
-                        const errorDiv = input.siblings('.numero-acta-error');
-                        
-                        if (response.exists) {
-                            if (errorDiv.length === 0) {
-                                input.after('<div class="numero-acta-error text-danger mt-1"><i class="fas fa-exclamation-triangle me-1"></i>' + response.message + '</div>');
-                            }
-                            input.addClass('is-invalid');
-                            $('#btn_guardar_factura').prop('disabled', true);
-                        } else {
-                            errorDiv.remove();
-                            input.removeClass('is-invalid');
-                            $('#btn_guardar_factura').prop('disabled', false);
-                        }
-                    }
-                });
-            }, 500);
-        } else {
-            $('.numero-acta-error').remove();
-            $('input[name="numero_acta"]').removeClass('is-invalid');
-            $('#btn_guardar_factura').prop('disabled', false);
-        }
-    });
 
     $('#cliente_id').on('change', function() { schedulePreview(350); });
     $(document).on('change', '.paquete-checkbox', function() { schedulePreview(350); });

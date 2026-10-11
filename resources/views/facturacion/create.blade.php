@@ -91,9 +91,9 @@
                                 @error('fecha_factura') <div class="text-danger">{{ $message }}</div> @enderror
                             </div>
                             <div class="mb-3">
-                                <label for="numero_acta" class="form-label fw-semibold">Número de Acta <span class="text-muted fw-normal">(opcional)</span></label>
-                                <input type="text" name="numero_acta" id="numero_acta" class="form-control" value="{{ old('numero_acta') }}" placeholder="Ej. NO-00101 — puede dejarse vacío" autocomplete="off">
-                                @error('numero_acta') <div class="text-danger">{{ $message }}</div> @enderror
+                                <div class="alert alert-light border small mb-0">
+                                    <strong>Nota de cobro:</strong> el número se asigna solo al guardar (mismo folio en pantalla, PDF y correo). No hay que digitarlo.
+                                </div>
                             </div>
                             @else
                             <input type="hidden" name="fecha_factura" id="fecha_factura" value="{{ old('fecha_factura', now()->format('Y-m-d')) }}">
@@ -239,9 +239,8 @@ $(document).ready(function() {
         if (!ES_ENCOMIENDA_FAMILIAR) {
             return;
         }
-        var actaOk = !$('input[name="numero_acta"]').hasClass('is-invalid');
         var encOk = !!$('#encomienda_id').val();
-        $('#btn_guardar_factura').prop('disabled', !(actaOk && encOk));
+        $('#btn_guardar_factura').prop('disabled', !encOk);
     }
 
     const ENCOMIENDA_ITEMS_BASE_URL = @json(url('/facturacion/encomienda-items'));
@@ -665,7 +664,7 @@ $(document).ready(function() {
         }, delayMs);
     }
 
-    var SLOW_PREVIEW_NAMES = { entrega_nombre: 1, entrega_cedula: 1, entrega_telefono: 1, numero_acta: 1 };
+    var SLOW_PREVIEW_NAMES = { entrega_nombre: 1, entrega_cedula: 1, entrega_telefono: 1 };
 
     function previewDelayForElement(el, evtKind) {
         if (!el) return 400;
@@ -687,9 +686,6 @@ $(document).ready(function() {
         formData.set('cliente_nombre', cliente.nombre_completo || '');
         formData.set('cliente_direccion', cliente.direccion || '');
         formData.set('cliente_telefono', cliente.telefono || '');
-        var na = form.numero_acta ? (form.numero_acta.value || '') : '';
-        formData.set('numero_acta', na);
-
         var modoEnc = form.tipo_factura && form.tipo_factura.value === 'encomienda_familiar';
         if (modoEnc) {
             if (!form.encomienda_id || !form.encomienda_id.value) {
@@ -766,54 +762,6 @@ $(document).ready(function() {
             telefono: telefonoMatch ? telefonoMatch[1].trim() : ''
         };
     }
-
-    // Validación en tiempo real del número de acta
-    let timeoutNumeroActa;
-    $('input[name="numero_acta"]').on('input', function() {
-        clearTimeout(timeoutNumeroActa);
-        const numeroActa = $(this).val().trim();
-        
-        if (numeroActa.length > 0) {
-            timeoutNumeroActa = setTimeout(function() {
-                $.ajax({
-                    url: '{{ route("facturacion.validar-numero-acta") }}',
-                    method: 'POST',
-                    data: {
-                        numero_acta: numeroActa,
-                        _token: '{{ csrf_token() }}'
-                    },
-                    success: function(response) {
-                        const input = $('input[name="numero_acta"]');
-                        const errorDiv = input.siblings('.numero-acta-error');
-                        
-                        if (response.exists) {
-                            if (errorDiv.length === 0) {
-                                input.after('<div class="numero-acta-error text-danger mt-1"><i class="fas fa-exclamation-triangle me-1"></i>' + response.message + '</div>');
-                            }
-                            input.addClass('is-invalid');
-                            $('#btn_guardar_factura').prop('disabled', true);
-                        } else {
-                            errorDiv.remove();
-                            input.removeClass('is-invalid');
-                            if ($('#tipo_factura').val() === 'encomienda_familiar') {
-                                revisarBotonGuardarEncomienda();
-                            } else {
-                                $('#btn_guardar_factura').prop('disabled', $('.paquete-checkbox:checked').length === 0);
-                            }
-                        }
-                    }
-                });
-            }, 500);
-        } else {
-            $('.numero-acta-error').remove();
-            $('input[name="numero_acta"]').removeClass('is-invalid');
-            if ($('#tipo_factura').val() === 'encomienda_familiar') {
-                revisarBotonGuardarEncomienda();
-            } else {
-                $('#btn_guardar_factura').prop('disabled', $('.paquete-checkbox:checked').length === 0);
-            }
-        }
-    });
 
     $('#encomienda_id').on('change', function() {
         revisarBotonGuardarEncomienda();
