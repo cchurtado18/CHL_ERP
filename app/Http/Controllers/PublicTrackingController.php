@@ -3,14 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Contracts\TrackingProvider;
-use App\Models\Inventario;
-use App\Support\TrackingCode;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 /**
- * Rastreo público sin login (por guía o tracking).
- * Primero busca en inventario local; si no hay, consulta el proveedor externo.
+ * Rastreo público: toma el código escrito y lo consulta en CargoTrack.
  */
 class PublicTrackingController extends Controller
 {
@@ -23,32 +19,19 @@ class PublicTrackingController extends Controller
             ?: $request->input('code', '')
         ));
 
-        $paquete = null;
         $remoto = null;
         $fuente = null;
 
-        if ($code !== '') {
-            $paquete = Inventario::findByPublicCode($code);
-            if ($paquete) {
-                $paquete->load(['servicio', 'estadoEventos']);
-                $fuente = 'local';
-            } elseif ($provider->enabled()) {
-                $remoto = $provider->lookup($code);
-                if ($remoto) {
-                    $fuente = $provider->driver();
-                } else {
-                    Log::info('Rastreo público sin coincidencia', [
-                        'code' => $code,
-                        'normalized' => TrackingCode::normalize($code),
-                        'provider' => $provider->driver(),
-                    ]);
-                }
+        if ($code !== '' && $provider->enabled()) {
+            $remoto = $provider->lookup($code);
+            if ($remoto) {
+                $fuente = $provider->driver();
             }
         }
 
         return view('public.tracking', [
             'code' => $code,
-            'paquete' => $paquete,
+            'paquete' => null,
             'remoto' => $remoto,
             'fuente' => $fuente,
             'buscado' => $code !== '',

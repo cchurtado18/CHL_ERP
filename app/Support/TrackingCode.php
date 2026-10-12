@@ -35,13 +35,22 @@ class TrackingCode
     }
 
     /**
-     * Pocas variantes para no martillar el proveedor externo.
+     * Códigos a enviar a CargoTrack: el escrito, en mayúsculas, y TBA de 15 si pegaron dígitos de más.
      *
      * @return list<string>
      */
     public static function lookupVariants(string $code): array
     {
-        return array_slice(self::variants($code), 0, 3);
+        $raw = trim($code);
+        $norm = self::normalize($raw);
+        $out = array_values(array_unique(array_filter([$raw, $norm])));
+
+        // Amazon TBA = TBA + 12 dígitos. Un 0 extra al pegar hace que CargoTrack responda NOT FOUND.
+        if (preg_match('/^(TBA\d{12})\d+$/i', $norm, $m) && ! in_array($m[1], $out, true)) {
+            $out[] = $m[1];
+        }
+
+        return $out;
     }
 
     public static function isNumericGuia(string $code): bool

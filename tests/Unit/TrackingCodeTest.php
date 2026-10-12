@@ -28,4 +28,13 @@ class TrackingCodeTest extends TestCase
         $this->assertTrue(TrackingCode::isNumericGuia('WRH-6521593'));
         $this->assertFalse(TrackingCode::isNumericGuia('SPXMIA05675207852732'));
     }
+
+    public function test_lookup_variants_include_amazon_tba_without_extra_digit(): void
+    {
+        $variants = TrackingCode::lookupVariants('tba3352623529960');
+
+        $this->assertContains('tba3352623529960', $variants);
+        $this->assertContains('TBA3352623529960', $variants);
+        $this->assertContains('TBA335262352996', $variants);
+    }
 }

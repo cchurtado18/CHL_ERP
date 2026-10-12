@@ -3,63 +3,23 @@
 namespace Tests\Feature;
 
 use App\Contracts\TrackingProvider;
-use App\Models\Cliente;
-use App\Models\Inventario;
 use App\Services\Tracking\CargoTrackProvider;
 use App\Services\Tracking\NullTrackingProvider;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class PublicTrackingTest extends TestCase
 {
-    use RefreshDatabase;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->app->instance(TrackingProvider::class, new NullTrackingProvider);
-    }
-
-    public function test_public_tracking_finds_guia_with_wrh_prefix(): void
-    {
-        $this->seedPaquete('6521593', 'SPXMIA05675207852732');
-
-        $this->get('/rastreo?tracking='.urlencode('WRH-6521593'))
-            ->assertOk()
-            ->assertSee('6521593')
-            ->assertSee('SPXMIA05675207852732')
-            ->assertDontSee('No encontramos un paquete');
-    }
-
-    public function test_public_tracking_finds_tracking_with_extra_spaces(): void
-    {
-        $this->seedPaquete('662258', '1ZF96V330346312809');
-
-        $this->get('/rastreo?tracking='.urlencode(' 1ZF96V330346312809 '))
-            ->assertOk()
-            ->assertSee('1ZF96V330346312809')
-            ->assertDontSee('No encontramos un paquete');
-    }
-
-    public function test_public_tracking_finds_truncated_stored_tracking_by_prefix(): void
-    {
-        $this->seedPaquete('398234', 'SPXMIA056752078527');
-
-        $this->get('/rastreo?tracking=SPXMIA05675207852732')
-            ->assertOk()
-            ->assertSee('SPXMIA056752078527')
-            ->assertDontSee('No encontramos un paquete');
-    }
-
     public function test_public_tracking_shows_not_found_for_unknown_code(): void
     {
+        $this->app->instance(TrackingProvider::class, new NullTrackingProvider);
+
         $this->get('/rastreo?tracking=NOEXISTE999')
             ->assertOk()
             ->assertSee('No encontramos un paquete');
     }
 
-    public function test_public_tracking_shows_cargotrack_result_when_status_uses_font_tags(): void
+    public function test_public_tracking_sends_code_to_cargotrack_and_shows_result(): void
     {
         $this->app->instance(TrackingProvider::class, new CargoTrackProvider);
 
@@ -68,17 +28,25 @@ class PublicTrackingTest extends TestCase
                 return Http::response('<html><form name="form1"></form></html>', 200);
             }
 
+            $track = (string) ($request->data()['track'] ?? '');
+            if (strcasecmp($track, 'TBA335262352996') !== 0) {
+                return Http::response(
+                    '<table><tr><td>Searching for&nbsp;'.$track.'</td></tr><tr><td><strong>NOT FOUND</strong></td></tr></table>',
+                    200
+                );
+            }
+
             return Http::response(
                 <<<'HTML'
                 <table class="ntextbig">
-                  <tr><td><div align="center"><strong class="ntextbig">Searching for&nbsp;TBA999888777</strong></div></td></tr>
-                  <tr><td><div align="center"><strong><font color="#006600">In Transit</font></strong></div></td></tr>
+                  <tr><td><div align="center"><strong class="ntextbig">Searching for&nbsp;TBA335262352996</strong></div></td></tr>
+                  <tr><td><div align="center"><strong>IN TRANSIT</strong></div></td></tr>
                   <tr><td>
-                    <span class="ntextbig"><strong>778899</strong></span>
+                    <span class="ntextbig"><strong>276462</strong></span>
                     <br>
-                    TBA999888777
+                    tba335262352996
                     <br>
-                    <strong>1</strong>&nbsp;piece(s)&nbsp;with&nbsp;<strong>2.00&nbsp;lbs</strong>
+                    <strong>1</strong>&nbsp;piece(s)&nbsp;with&nbsp;<strong>2.8&nbsp;lbs</strong>
                   </td></tr>
                 </table>
                 HTML,
@@ -86,29 +54,10 @@ class PublicTrackingTest extends TestCase
             );
         });
 
-        $this->get('/rastreo?tracking=TBA999888777')
+        $this->get('/rastreo?tracking=tba3352623529960')
             ->assertOk()
-            ->assertSee('TBA999888777')
-            ->assertSee('778899')
+            ->assertSee('276462')
+            ->assertSee('IN TRANSIT')
             ->assertDontSee('No encontramos un paquete');
-    }
-
-    protected function seedPaquete(string $guia, string $tracking): Inventario
-    {
-        $cliente = Cliente::create([
-            'nombre_completo' => 'Cliente Test',
-            'correo' => 'test@example.com',
-            'telefono' => '88888888',
-            'tipo_cliente' => 'normal',
-        ]);
-
-        return Inventario::create([
-            'cliente_id' => $cliente->id,
-            'numero_guia' => $guia,
-            'tracking_codigo' => $tracking,
-            'estado' => 'recibido',
-            'peso_lb' => 1,
-            'fecha_ingreso' => now()->toDateString(),
-        ]);
     }
 }
