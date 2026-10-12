@@ -124,8 +124,9 @@
 
         <aside class="brand-pane relative hidden overflow-hidden text-white lg:flex lg:flex-col">
             <div class="relative z-10 flex flex-1 flex-col px-12 py-10 xl:px-16">
-                <a href="{{ url('/') }}" class="inline-flex w-fit items-center rounded-2xl bg-white px-3.5 py-2.5 shadow-lg shadow-black/10">
-                    <img src="/CH_Logistics_Logo_hd.png" alt="CH Logistics" class="h-11 w-auto object-contain">
+                <a href="{{ url('/') }}" class="inline-flex w-fit items-center gap-3 rounded-2xl bg-white py-2 pl-2 pr-4 shadow-lg shadow-black/15">
+                    <img src="/CH_Logistics_Logo_3d.jpg" alt="CH Logistics" class="h-16 w-16 rounded-xl object-cover">
+                    <span class="text-lg font-extrabold tracking-tight text-[#15537c]">Logistics</span>
                 </a>
 
                 <div class="rise-1 my-auto max-w-lg py-10">
@@ -152,7 +153,7 @@
         <main class="relative flex flex-col bg-[#f4f6f8]">
             <div class="relative z-10 mx-auto flex w-full max-w-[460px] flex-1 flex-col justify-center gap-5 px-5 py-8 sm:px-8">
                 <div class="flex items-center justify-between lg:hidden">
-                    <img src="/CH_Logistics_Logo_hd.png" alt="CH Logistics" class="h-10 w-auto object-contain">
+                    <img src="/CH_Logistics_Logo_3d.jpg" alt="CH Logistics" class="h-12 w-12 rounded-xl object-cover shadow-sm">
                 </div>
 
                 <section class="rise-2 rounded-3xl border border-[#F0A63A]/25 bg-white p-5 shadow-[0_18px_40px_-24px_rgba(240,166,58,0.45)] sm:p-6">

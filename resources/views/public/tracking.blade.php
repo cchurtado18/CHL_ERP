@@ -14,7 +14,7 @@
     <header class="border-b border-slate-200 bg-white">
         <div class="mx-auto flex max-w-3xl items-center justify-between px-4 py-4">
             <a href="{{ url('/') }}" class="flex items-center gap-3">
-                <img src="/CH_Logistics_Logo_hd.png" alt="CH Logistics" class="h-10 w-auto object-contain">
+                <img src="/CH_Logistics_Logo_3d.jpg" alt="CH Logistics" class="h-11 w-11 rounded-xl object-cover">
             </a>
             <a href="{{ route('login') }}" class="text-sm font-semibold text-[#15537c] hover:underline">Iniciar sesión</a>
         </div>
@@ -133,6 +133,7 @@
                     </div>
                 @else
                     <p class="text-center text-slate-500">No encontramos un paquete con el código <strong>{{ $code }}</strong>.</p>
+                    <p class="mt-2 text-center text-sm text-slate-400">Prueba con el tracking completo o el número de guía (WRH). Si acaba de llegar a bodega, puede tardar un día en aparecer.</p>
                 @endif
             </div>
         @endif

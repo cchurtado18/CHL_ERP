@@ -27,7 +27,7 @@
         class="fixed left-0 top-0 z-50 flex h-screen w-64 -translate-x-full flex-col border-r border-slate-200/80 bg-white shadow-sm transition-transform duration-200 lg:translate-x-0">
         <div class="flex h-36 flex-shrink-0 items-center justify-center border-b border-slate-100 px-4 py-3">
             <a href="{{ route('portal.home') }}" class="block w-full" title="CH Logistics">
-                <img src="/CH_Logistics_Logo_hd.png" alt="CH Logistics" class="mx-auto h-24 w-auto max-w-full object-contain">
+                <img src="/CH_Logistics_Logo_3d.jpg" alt="CH Logistics" class="mx-auto h-24 w-24 rounded-2xl object-cover">
             </a>
         </div>
         <nav class="flex-1 overflow-y-auto py-4 px-3">

@@ -24,9 +24,9 @@
 
         {{-- Sidebar: logo grande en la esquina + menú --}}
         <aside id="erpSidebar" class="fixed left-0 top-0 z-50 flex h-screen w-64 -translate-x-full flex-col border-r border-slate-200/80 bg-white shadow-sm transition-transform duration-200 lg:translate-x-0">
-            <div class="flex h-44 flex-shrink-0 items-center justify-center border-b border-slate-100 bg-white px-4 py-4">
+            <div class="flex h-40 flex-shrink-0 items-center justify-center border-b border-slate-100 bg-white px-4 py-4">
                 <a href="{{ url('/inventario') }}" class="block w-full" title="CH Logistics">
-                    <img src="/CH_Logistics_Logo.png" alt="CH Logistics" class="mx-auto h-36 w-auto max-w-full object-contain object-center">
+                    <img src="/CH_Logistics_Logo_3d.jpg" alt="CH Logistics" class="mx-auto h-32 w-32 rounded-2xl object-cover">
                 </a>
             </div>
             <nav class="flex-1 overflow-y-auto py-4 px-3">

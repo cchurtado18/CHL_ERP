@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Contracts\TrackingProvider;
 use App\Models\Inventario;
+use App\Support\TrackingCode;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Rastreo público sin login (por guía o tracking).
@@ -26,19 +28,20 @@ class PublicTrackingController extends Controller
         $fuente = null;
 
         if ($code !== '') {
-            $paquete = Inventario::with(['servicio', 'estadoEventos'])
-                ->where(function ($q) use ($code) {
-                    $q->where('tracking_codigo', $code)
-                        ->orWhere('numero_guia', $code);
-                })
-                ->first();
-
+            $paquete = Inventario::findByPublicCode($code);
             if ($paquete) {
+                $paquete->load(['servicio', 'estadoEventos']);
                 $fuente = 'local';
             } elseif ($provider->enabled()) {
                 $remoto = $provider->lookup($code);
                 if ($remoto) {
                     $fuente = $provider->driver();
+                } else {
+                    Log::info('Rastreo público sin coincidencia', [
+                        'code' => $code,
+                        'normalized' => TrackingCode::normalize($code),
+                        'provider' => $provider->driver(),
+                    ]);
                 }
             }
         }

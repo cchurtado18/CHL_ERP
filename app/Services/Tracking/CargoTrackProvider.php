@@ -3,6 +3,8 @@
 namespace App\Services\Tracking;
 
 use App\Contracts\TrackingProvider;
+use App\Support\TrackingCode;
+use GuzzleHttp\Cookie\CookieJar;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -27,14 +29,36 @@ class CargoTrackProvider implements TrackingProvider
             return null;
         }
 
+        foreach (TrackingCode::lookupVariants($code) as $variant) {
+            $result = $this->lookupExact($variant);
+            if ($result) {
+                return $result;
+            }
+        }
+
+        return null;
+    }
+
+    protected function lookupExact(string $code): ?array
+    {
         $base = rtrim((string) config('services.cargotrack.base_url'), '/');
         $path = (string) config('services.cargotrack.track_path', '/m/track.asp');
         $timeout = (int) config('services.cargotrack.timeout', 20);
+        $url = $base.$path;
+        $jar = new CookieJar;
 
         try {
-            $response = $this->http($timeout)
+            // Igual que el navegador: primero abre la página (cookie de sesión ASP) y luego envía el form.
+            $http = $this->http($timeout, [], $jar);
+            $http->get($url);
+
+            $response = $http
                 ->asForm()
-                ->post($base.$path, [
+                ->withHeaders([
+                    'Referer' => $url,
+                    'Origin' => $base,
+                ])
+                ->post($url, [
                     'track' => $code,
                     'action2' => 'process',
                 ]);
@@ -48,9 +72,7 @@ class CargoTrackProvider implements TrackingProvider
                 return null;
             }
 
-            $html = $this->toUtf8($response->body());
-
-            return $this->parseTrackHtml($html, $code);
+            return $this->parseTrackHtml($this->toUtf8($response->body()), $code);
         } catch (\Throwable $e) {
             Log::error('CargoTrack lookup failed', [
                 'code' => $code,
@@ -240,26 +262,27 @@ class CargoTrackProvider implements TrackingProvider
 
     protected function parseTrackHtml(string $html, string $fallbackCode): ?array
     {
-        if (stripos($html, 'NOT FOUND') !== false) {
-            return null;
-        }
-
         if (! preg_match('/Searching for/i', $html)) {
+            Log::info('CargoTrack HTML without tracking result', [
+                'code' => $fallbackCode,
+                'snippet' => Str::limit(trim(preg_replace('/\s+/', ' ', strip_tags($html)) ?: ''), 180),
+            ]);
+
             return null;
         }
 
-        $statusRaw = null;
-        if (preg_match(
-            '/Searching for.*?<\/tr>\s*<tr>\s*<td[^>]*>\s*<div[^>]*>\s*<strong>\s*([^<]+?)\s*<\/strong>/is',
-            $html,
-            $m
-        )) {
-            $statusRaw = html_entity_decode(trim($m[1]), ENT_QUOTES | ENT_HTML5);
-        }
+        $statusRaw = $this->extractStatus($html);
+        $hasDetails = (bool) preg_match('/piece\(s\)/i', $html);
 
-        if ($statusRaw === null || strtoupper($statusRaw) === 'NOT FOUND') {
+        if ($this->isNotFoundStatus($statusRaw) && ! $hasDetails) {
             return null;
         }
+
+        if ($statusRaw === null && ! $hasDetails) {
+            return null;
+        }
+
+        $statusRaw = $statusRaw ?: 'In Transit';
 
         $pickupDate = null;
         if (preg_match(
@@ -352,6 +375,29 @@ class CargoTrackProvider implements TrackingProvider
             'delivery_date' => null,
             'events' => $events,
         ];
+    }
+
+    protected function extractStatus(string $html): ?string
+    {
+        if (! preg_match('/Searching for.*?<\/tr>\s*<tr>\s*<td[^>]*>(.*?)<\/td>/is', $html, $m)) {
+            return null;
+        }
+
+        $text = trim(html_entity_decode(strip_tags($m[1]), ENT_QUOTES | ENT_HTML5));
+        $text = preg_replace('/\s+/', ' ', $text) ?: $text;
+
+        return $text !== '' ? $text : null;
+    }
+
+    protected function isNotFoundStatus(?string $status): bool
+    {
+        if ($status === null || trim($status) === '') {
+            return false;
+        }
+
+        $key = strtoupper(trim($status));
+
+        return $key === 'NOT FOUND' || $key === 'NOTFOUND';
     }
 
     protected function looksLikeGuia(string $value): bool
@@ -481,8 +527,13 @@ class CargoTrackProvider implements TrackingProvider
     /**
      * @param  array<string, string>  $cookieJar
      */
-    protected function http(int $timeout, array $cookieJar = []): PendingRequest
+    protected function http(int $timeout, array $cookieJar = [], ?CookieJar $jar = null): PendingRequest
     {
+        $options = ['allow_redirects' => true];
+        if ($jar !== null) {
+            $options['cookies'] = $jar;
+        }
+
         $request = Http::timeout($timeout)
             ->withHeaders([
                 'User-Agent' => (string) config(
@@ -492,7 +543,7 @@ class CargoTrackProvider implements TrackingProvider
                 'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
                 'Accept-Language' => 'en-US,en;q=0.9,es;q=0.8',
             ])
-            ->withOptions(['allow_redirects' => true]);
+            ->withOptions($options);
 
         if ($cookieJar !== []) {
             $parts = [];
