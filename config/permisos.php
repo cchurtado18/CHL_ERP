@@ -63,9 +63,9 @@ return [
             'icono' => 'fa-user-cog',
         ],
         'logs_inventario' => [
-            'label' => 'Historial de inventario',
-            'descripcion' => 'Auditoría de cambios en inventario',
-            'icono' => 'fa-history',
+            'label' => 'Auditoría',
+            'descripcion' => 'Bitácora de cambios en todos los módulos',
+            'icono' => 'fa-clipboard-list',
         ],
         'contabilidad' => [
             'label' => 'Contabilidad (completa)',

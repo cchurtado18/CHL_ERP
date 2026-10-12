@@ -95,9 +95,9 @@
         @endif
         @if($user->tienePermiso('logs_inventario'))
             <li class="nav-item">
-                <a class="nav-link d-flex @if(request()->is('logs-inventario')) active @endif" href="{{ url('/logs-inventario') }}">
-                    <i class="fas fa-history"></i>
-                    <span>Historial de Inventario</span>
+                <a class="nav-link d-flex @if(request()->is('auditoria*') || request()->is('logs-inventario')) active @endif" href="{{ route('auditoria.index') }}">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Auditoría</span>
                 </a>
             </li>
         @endif

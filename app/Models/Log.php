@@ -21,6 +21,10 @@ class Log extends Model
 
     public $timestamps = false;
 
+    protected $casts = [
+        'fecha' => 'datetime',
+    ];
+
     public function usuario()
     {
         return $this->belongsTo(User::class, 'user_id');

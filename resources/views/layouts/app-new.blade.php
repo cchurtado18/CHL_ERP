@@ -69,7 +69,7 @@
                     <a href="{{ url('/usuarios') }}" class="mb-1 flex h-12 items-center gap-3 rounded-r-lg px-3 text-[#15537c] {{ request()->is('usuarios*') ? 'bg-[#15537c]/10 border-l-4 border-[#15537c] font-semibold' : 'hover:bg-slate-100' }}" title="Usuarios"><i class="fas fa-user-cog w-6 text-center text-lg"></i><span>Usuarios</span></a>
                     @endif
                     @if($user->tienePermiso('logs_inventario'))
-                    <a href="{{ url('/logs-inventario') }}" class="mb-1 flex h-12 items-center gap-3 rounded-r-lg px-3 text-[#15537c] {{ request()->is('logs-inventario') ? 'bg-[#15537c]/10 border-l-4 border-[#15537c] font-semibold' : 'hover:bg-slate-100' }}" title="Historial"><i class="fas fa-history w-6 text-center text-lg"></i><span>Historial</span></a>
+                    <a href="{{ route('auditoria.index') }}" class="mb-1 flex h-12 items-center gap-3 rounded-r-lg px-3 text-[#15537c] {{ request()->is('auditoria*') || request()->is('logs-inventario') ? 'bg-[#15537c]/10 border-l-4 border-[#15537c] font-semibold' : 'hover:bg-slate-100' }}" title="Auditoría"><i class="fas fa-clipboard-list w-6 text-center text-lg"></i><span>Auditoría</span></a>
                     @endif
             </nav>
             {{-- Usuario, tracking y cerrar sesión en el sidebar --}}

@@ -10,17 +10,25 @@ use Throwable;
 
 class AuditChangesMiddleware
 {
+    /** Rutas que no se auditan (consulta, auth o la propia bitácora). */
+    private array $skipPrefixes = [
+        'login',
+        'logout',
+        'sin-acceso',
+        'auditoria',
+        'logs-inventario',
+        'rastreo',
+        'up',
+        'livewire',
+    ];
+
     /** @var string[] */
-    private array $trackedPrefixes = [
-        'leads',
-        'facturacion',
-        'inventario',
-        'tracking',
-        'notificaciones',
-        'contabilidad',
-        'encomiendas',
-        'remitentes',
-        'destinatarios',
+    private array $skipPathNeedles = [
+        'preview',
+        'validar-numero',
+        'estadisticas',
+        'vencidos/count',
+        'notif-unread',
     ];
 
     public function handle(Request $request, Closure $next): Response
@@ -30,7 +38,7 @@ class AuditChangesMiddleware
         try {
             $this->registrarCambioSiAplica($request, $response);
         } catch (Throwable $e) {
-            // No bloquear flujo principal por fallas de bitácora.
+            // No bloquear el flujo principal por fallas de bitácora.
         }
 
         return $response;
@@ -43,10 +51,6 @@ class AuditChangesMiddleware
             return;
         }
 
-        if (! in_array((string) $user->rol, ['agente', 'auditor', 'basico'], true)) {
-            return;
-        }
-
         if (! in_array($request->method(), ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
             return;
         }
@@ -55,9 +59,16 @@ class AuditChangesMiddleware
             return;
         }
 
-        $firstSegment = (string) $request->segment(1);
-        if (! in_array($firstSegment, $this->trackedPrefixes, true)) {
+        $firstSegment = strtolower((string) $request->segment(1));
+        if ($firstSegment === '' || in_array($firstSegment, $this->skipPrefixes, true)) {
             return;
+        }
+
+        $path = strtolower($request->path());
+        foreach ($this->skipPathNeedles as $needle) {
+            if (str_contains($path, $needle)) {
+                return;
+            }
         }
 
         $accion = match ($request->method()) {
@@ -79,13 +90,14 @@ class AuditChangesMiddleware
             }
         }
 
-        $payload = $request->except([
+        $payload = $this->sanitizePayload($request->except([
             '_token',
             '_method',
             'password',
             'password_confirmation',
             'current_password',
-        ]);
+            'remember',
+        ]));
 
         $descripcion = json_encode([
             'rol' => $user->rol,
@@ -105,5 +117,24 @@ class AuditChangesMiddleware
             'fecha' => now(),
         ]);
     }
-}
 
+    /** @param  array<string, mixed>  $payload */
+    private function sanitizePayload(array $payload): array
+    {
+        $clean = [];
+        foreach ($payload as $key => $value) {
+            if (is_array($value)) {
+                $clean[$key] = $this->sanitizePayload($value);
+                continue;
+            }
+            if (is_bool($value) || is_int($value) || is_float($value) || $value === null) {
+                $clean[$key] = $value;
+                continue;
+            }
+            $text = (string) $value;
+            $clean[$key] = mb_strlen($text) > 180 ? mb_substr($text, 0, 177).'...' : $text;
+        }
+
+        return $clean;
+    }
+}

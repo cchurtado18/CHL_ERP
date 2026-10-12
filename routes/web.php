@@ -22,7 +22,7 @@ use App\Http\Controllers\FacturacionController;
 use App\Http\Controllers\InventarioController;
 use App\Http\Controllers\InventarioSalidaController;
 use App\Http\Controllers\LeadController;
-use App\Http\Controllers\LogInventarioController;
+use App\Http\Controllers\AuditoriaController;
 use App\Http\Controllers\TrabajoController;
 use App\Http\Controllers\NotificacionController;
 use App\Http\Controllers\Portal\PortalCuentaController;
@@ -346,8 +346,11 @@ Route::middleware(['auth', 'permiso:clientes'])->group(function () {
     Route::delete('tarifas-clientes/{id}', [TarifaClienteController::class, 'destroy'])->name('tarifas-clientes.destroy');
 });
 
-// Historial de inventario
-Route::middleware(['auth', 'permiso:logs_inventario'])->get('logs-inventario', [LogInventarioController::class, 'index'])->name('logs_inventario.index');
+// Auditoría (antes Historial)
+Route::middleware(['auth', 'permiso:logs_inventario'])->group(function () {
+    Route::get('auditoria', [AuditoriaController::class, 'index'])->name('auditoria.index');
+    Route::get('logs-inventario', fn () => redirect()->route('auditoria.index'))->name('logs_inventario.index');
+});
 
 // API AJAX para dashboard: estadísticas de paquetes
 Route::middleware(['auth', 'staff'])->get('/dashboard/estadisticas-paquetes', [DashboardController::class, 'estadisticasPaquetes'])->name('dashboard.estadisticas-paquetes');

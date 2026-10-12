@@ -146,7 +146,7 @@ class User extends Authenticatable
             'usuarios' => '/usuarios',
             'remitentes' => '/remitentes',
             'destinatarios' => '/destinatarios',
-            'logs_inventario' => '/logs-inventario',
+            'logs_inventario' => '/auditoria',
         ];
 
         foreach ($rutas as $modulo => $path) {
