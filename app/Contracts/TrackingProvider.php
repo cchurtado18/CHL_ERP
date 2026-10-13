@@ -10,6 +10,8 @@ interface TrackingProvider
 
     public function driver(): string;
 
+    public function lastError(): ?string;
+
     /**
      * Consulta pública por código de tracking/guía.
      * Retorna null si no hay datos o el driver está apagado.

@@ -133,7 +133,11 @@
                     </div>
                 @else
                     <p class="text-center text-slate-500">No encontramos un paquete con el código <strong>{{ $code }}</strong>.</p>
-                    <p class="mt-2 text-center text-sm text-slate-400">Prueba con el tracking completo o el número de guía (WRH). Si acaba de llegar a bodega, puede tardar un día en aparecer.</p>
+                    @if(!empty($error))
+                        <p class="mt-2 text-center text-sm text-rose-600">{{ $error }}</p>
+                    @else
+                        <p class="mt-2 text-center text-sm text-slate-400">CargoTrack no tiene ese código exacto. Copia el tracking o la guía tal como aparece en gc.cargotrack.net.</p>
+                    @endif
                 @endif
             </div>
         @endif

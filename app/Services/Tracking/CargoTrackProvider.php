@@ -12,6 +12,8 @@ use Illuminate\Support\Str;
 
 class CargoTrackProvider implements TrackingProvider
 {
+    protected ?string $lastError = null;
+
     public function enabled(): bool
     {
         return rtrim((string) config('services.cargotrack.base_url'), '/') !== '';
@@ -22,16 +24,26 @@ class CargoTrackProvider implements TrackingProvider
         return 'cargotrack';
     }
 
+    public function lastError(): ?string
+    {
+        return $this->lastError;
+    }
+
     public function lookup(string $code): ?array
     {
+        $this->lastError = null;
         $code = trim($code);
         if ($code === '' || ! $this->enabled()) {
+            $this->lastError = $this->enabled() ? null : 'CargoTrack no está configurado.';
+
             return null;
         }
 
         foreach (TrackingCode::lookupVariants($code) as $variant) {
             $result = $this->lookupExact($variant);
             if ($result) {
+                $this->lastError = null;
+
                 return $result;
             }
         }
@@ -45,42 +57,84 @@ class CargoTrackProvider implements TrackingProvider
         $path = (string) config('services.cargotrack.track_path', '/m/track.asp');
         $timeout = (int) config('services.cargotrack.timeout', 20);
         $url = $base.$path;
-        $jar = new CookieJar;
 
         try {
-            // Igual que el navegador: primero abre la página (cookie de sesión ASP) y luego envía el form.
-            $http = $this->http($timeout, [], $jar);
-            $http->get($url);
-
-            $response = $http
-                ->asForm()
-                ->withHeaders([
-                    'Referer' => $url,
-                    'Origin' => $base,
-                ])
-                ->post($url, [
-                    'track' => $code,
-                    'action2' => 'process',
-                ]);
-
-            if (! $response->successful()) {
-                Log::warning('CargoTrack lookup HTTP error', [
-                    'code' => $code,
-                    'status' => $response->status(),
-                ]);
-
+            // El form de track.asp es POST track + action2=process. Sin GET previo.
+            $response = $this->postTrack($url, $base, $code, $timeout, verify: true);
+            if ($response === null) {
                 return null;
             }
 
-            return $this->parseTrackHtml($this->toUtf8($response->body()), $code);
+            $parsed = $this->parseTrackHtml($this->toUtf8($response), $code);
+            if ($parsed) {
+                return $parsed;
+            }
+
+            return null;
         } catch (\Throwable $e) {
+            $message = $e->getMessage();
+            $this->lastError = 'No se pudo consultar CargoTrack: '.$message;
             Log::error('CargoTrack lookup failed', [
                 'code' => $code,
-                'error' => $e->getMessage(),
+                'error' => $message,
+            ]);
+
+            if ($this->looksLikeSslError($message)) {
+                try {
+                    $response = $this->postTrack($url, $base, $code, $timeout, verify: false);
+                    if ($response === null) {
+                        return null;
+                    }
+
+                    $parsed = $this->parseTrackHtml($this->toUtf8($response), $code);
+                    if ($parsed) {
+                        $this->lastError = null;
+
+                        return $parsed;
+                    }
+                } catch (\Throwable $retry) {
+                    $this->lastError = 'No se pudo consultar CargoTrack: '.$retry->getMessage();
+                }
+            }
+
+            return null;
+        }
+    }
+
+    protected function postTrack(string $url, string $base, string $code, int $timeout, bool $verify): ?string
+    {
+        $request = $this->http($timeout, verify: $verify)
+            ->asForm()
+            ->withHeaders([
+                'Referer' => $url,
+                'Origin' => $base,
+            ]);
+
+        $response = $request->post($url, [
+            'track' => $code,
+            'action2' => 'process',
+        ]);
+
+        if (! $response->successful()) {
+            $this->lastError = 'CargoTrack respondió HTTP '.$response->status();
+            Log::warning('CargoTrack lookup HTTP error', [
+                'code' => $code,
+                'status' => $response->status(),
             ]);
 
             return null;
         }
+
+        return $response->body();
+    }
+
+    protected function looksLikeSslError(string $message): bool
+    {
+        $key = strtolower($message);
+
+        return str_contains($key, 'ssl')
+            || str_contains($key, 'certificate')
+            || str_contains($key, 'cainfo');
     }
 
     public function listPackagesForCredentials(string $username, string $password): array
@@ -527,9 +581,14 @@ class CargoTrackProvider implements TrackingProvider
     /**
      * @param  array<string, string>  $cookieJar
      */
-    protected function http(int $timeout, array $cookieJar = [], ?CookieJar $jar = null): PendingRequest
+    protected function http(int $timeout, array $cookieJar = [], ?CookieJar $jar = null, bool $verify = true): PendingRequest
     {
-        $options = ['allow_redirects' => true];
+        $options = [
+            'allow_redirects' => true,
+            'force_ip_resolve' => 'v4',
+            'connect_timeout' => 8,
+            'verify' => $verify,
+        ];
         if ($jar !== null) {
             $options['cookies'] = $jar;
         }

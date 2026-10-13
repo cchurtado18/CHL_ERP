@@ -21,12 +21,17 @@ class PublicTrackingController extends Controller
 
         $remoto = null;
         $fuente = null;
+        $error = null;
 
         if ($code !== '' && $provider->enabled()) {
             $remoto = $provider->lookup($code);
             if ($remoto) {
                 $fuente = $provider->driver();
+            } else {
+                $error = $provider->lastError();
             }
+        } elseif ($code !== '' && ! $provider->enabled()) {
+            $error = 'El rastreo de CargoTrack no está activo en este servidor.';
         }
 
         return view('public.tracking', [
@@ -35,6 +40,7 @@ class PublicTrackingController extends Controller
             'remoto' => $remoto,
             'fuente' => $fuente,
             'buscado' => $code !== '',
+            'error' => $error,
         ]);
     }
 }

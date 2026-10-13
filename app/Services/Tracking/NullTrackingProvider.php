@@ -16,6 +16,11 @@ class NullTrackingProvider implements TrackingProvider
         return 'none';
     }
 
+    public function lastError(): ?string
+    {
+        return null;
+    }
+
     public function lookup(string $code): ?array
     {
         return null;
