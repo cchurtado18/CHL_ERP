@@ -144,8 +144,8 @@
                         const csrf = document.querySelector('meta[name="csrf-token"]').content;
                         const box = document.getElementById('trackingExtract');
                         const proxies = [
-                            'https://api.allorigins.win/raw?url=' + encodeURIComponent(trackUrl),
-                            'https://corsproxy.io/?' + encodeURIComponent(trackUrl)
+                            'https://r.jina.ai/' + trackUrl,
+                            'https://api.allorigins.win/raw?url=' + encodeURIComponent(trackUrl)
                         ];
 
                         function esc(v) {

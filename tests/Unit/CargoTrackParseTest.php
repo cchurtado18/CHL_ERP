@@ -61,13 +61,36 @@ class CargoTrackParseTest extends TestCase
         $this->assertSame('recibido', $parsed['status']);
     }
 
+    public function test_jina_markdown_extracts_wrh_weight_and_status(): void
+    {
+        $markdown = <<<'MD'
+        Searching for 4203316626129434608106244617510560
+        IN TRANSIT
+        Received on 10/14/2026 at 4:37:00 PM
+        279860
+        4203316626129434608106244617510560
+        1 piece(s) with 2.5 lbs
+        Tracking Events
+        Received
+        10/14/2026 4:38:40 PM
+        MD;
+
+        $parsed = $this->parser()->parse($markdown, '4203316626129434608106244617510560');
+
+        $this->assertNotNull($parsed);
+        $this->assertSame('IN TRANSIT', $parsed['status_raw']);
+        $this->assertSame('279860', $parsed['wrh']);
+        $this->assertSame(2.5, $parsed['weight']);
+        $this->assertSame('Received', $parsed['events'][0]['status'] ?? null);
+    }
+
     protected function parser(): CargoTrackProvider
     {
         return new class extends CargoTrackProvider
         {
             public function parse(string $html, string $code): ?array
             {
-                return $this->parseTrackHtml($html, $code);
+                return $this->parseScrapedHtml($html, $code);
             }
         };
     }

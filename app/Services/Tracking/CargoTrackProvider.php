@@ -53,33 +53,14 @@ class CargoTrackProvider implements TrackingProvider
 
     protected function lookupExact(string $code): ?array
     {
-        $httpsBase = rtrim((string) config('services.cargotrack.base_url'), '/');
+        $base = rtrim((string) config('services.cargotrack.base_url'), '/');
         $path = (string) config('services.cargotrack.track_path', '/m/track.asp');
         $timeout = (int) config('services.cargotrack.timeout', 20);
-        $httpBase = (string) preg_replace('/^https:/i', 'http:', $httpsBase);
+        $url = $base.$path;
 
-        // Igual que WordPress: POST público a track.asp, sin login.
-        $attempts = [
-            ['base' => $httpsBase, 'verify' => true],
-            ['base' => $httpsBase, 'verify' => false],
-            ['base' => $httpBase, 'verify' => false],
-        ];
-
-        $lastMessage = null;
-
-        foreach ($attempts as $attempt) {
-            $base = rtrim((string) $attempt['base'], '/');
-            if ($base === '') {
-                continue;
-            }
-            $url = $base.$path;
-
-            try {
-                $html = $this->scrapeTrack($url, $base, $code, $timeout, (bool) $attempt['verify']);
-                if ($html === null) {
-                    continue;
-                }
-
+        try {
+            $html = $this->scrapeTrack($url, $base, $code, $timeout, true);
+            if ($html !== null) {
                 $parsed = $this->parseScrapedHtml($html, $code);
                 if ($parsed) {
                     $this->lastError = null;
@@ -88,26 +69,164 @@ class CargoTrackProvider implements TrackingProvider
                 }
 
                 return null;
-            } catch (\Throwable $e) {
-                $lastMessage = $e->getMessage();
-                Log::warning('CargoTrack scrape attempt failed', [
-                    'code' => $code,
-                    'url' => $url,
-                    'error' => $lastMessage,
-                ]);
             }
+        } catch (\Throwable $e) {
+            $this->lastError = 'No se pudo consultar CargoTrack: '.$e->getMessage();
+            Log::warning('CargoTrack scrape directo falló', [
+                'code' => $code,
+                'error' => $e->getMessage(),
+            ]);
         }
 
-        if ($lastMessage) {
-            $this->lastError = 'No se pudo consultar CargoTrack: '.$lastMessage;
-        }
-
-        return null;
+        return $this->lookupViaReader($code);
     }
 
     public function parseScrapedHtml(string $html, string $code): ?array
     {
-        return $this->parseTrackHtml($this->toUtf8($html), $code);
+        $html = $this->toUtf8($html);
+        if (stripos($html, '<td') !== false || stripos($html, '<table') !== false) {
+            $parsed = $this->parseTrackHtml($html, $code);
+            if ($parsed) {
+                return $parsed;
+            }
+        }
+
+        return $this->parseTrackPlain($html, $code);
+    }
+
+    /**
+     * El droplet no alcanza gc.cargotrack.net; r.jina.ai sí y devuelve el texto de track.asp.
+     */
+    protected function lookupViaReader(string $code): ?array
+    {
+        $trackUrl = rtrim((string) config('services.cargotrack.base_url'), '/').
+            (string) config('services.cargotrack.track_path', '/m/track.asp').
+            '?track='.rawurlencode($code).'&action2=process';
+        $reader = 'https://r.jina.ai/'.$trackUrl;
+
+        try {
+            $response = Http::timeout(25)
+                ->withHeaders([
+                    'User-Agent' => 'Mozilla/5.0',
+                    'Accept' => 'text/plain,text/markdown,text/html',
+                ])
+                ->get($reader);
+
+            if (! $response->successful()) {
+                $this->lastError = 'No se pudo leer CargoTrack (HTTP '.$response->status().').';
+
+                return null;
+            }
+
+            $parsed = $this->parseScrapedHtml($response->body(), $code);
+            if ($parsed) {
+                $this->lastError = null;
+
+                return $parsed;
+            }
+
+            return null;
+        } catch (\Throwable $e) {
+            $this->lastError = 'No se pudo consultar CargoTrack: '.$e->getMessage();
+            Log::warning('CargoTrack reader scrape failed', [
+                'code' => $code,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    protected function parseTrackPlain(string $text, string $fallbackCode): ?array
+    {
+        $plain = html_entity_decode(strip_tags($text), ENT_QUOTES | ENT_HTML5);
+        $plain = (string) preg_replace('/\*+/', ' ', $plain);
+        $plain = (string) preg_replace('/\s+/', ' ', $plain);
+
+        if (! preg_match('/Searching for/i', $plain)) {
+            return null;
+        }
+
+        $statusRaw = null;
+        if (preg_match(
+            '/Searching for\s+\S+\s+(NOT FOUND|IN TRANSIT|IN DESTINATION COUNTRY|READY FOR PICKUP|READY FOR DELIVERY|RECEIVED|DELIVERED|WAREHOUSE|SHIPPED)/i',
+            $plain,
+            $m
+        )) {
+            $statusRaw = strtoupper(trim($m[1]));
+        }
+
+        if ($this->isNotFoundStatus($statusRaw)) {
+            return null;
+        }
+
+        if ($statusRaw === null && ! preg_match('/piece\(s\)/i', $plain)) {
+            return null;
+        }
+
+        $statusRaw = $statusRaw ?: 'IN TRANSIT';
+
+        $pickupDate = null;
+        if (preg_match(
+            '/Received on\s*(\d{1,2}\/\d{1,2}\/\d{4})\s*at\s*(\d{1,2}:\d{2}:\d{2}\s*[AP]M)/i',
+            $plain,
+            $m
+        )) {
+            $pickupDate = $this->normalizeDate(trim($m[1]).' '.trim($m[2]));
+        }
+
+        $guia = null;
+        if (preg_match('/[AP]M\s+(\d{5,9})\s+\d{10,}/i', $plain, $m)) {
+            $guia = $m[1];
+        } elseif (preg_match('/\b(\d{6,9})\b/', $plain, $m) && ! $this->looksLikeGuia($fallbackCode)) {
+            $guia = $m[1];
+        }
+
+        $weight = null;
+        if (preg_match('/([\d.]+)\s*lbs/i', $plain, $m)) {
+            $weight = (float) $m[1];
+        }
+
+        $pieces = null;
+        if (preg_match('/(\d+)\s*piece\(s\)/i', $plain, $m)) {
+            $pieces = (int) $m[1];
+        }
+
+        $trackingNumber = $fallbackCode;
+        if (preg_match('/\b([A-Z0-9]{12,})\b/i', $plain, $m) && ! $this->looksLikeGuia($m[1])) {
+            $trackingNumber = $m[1];
+        }
+
+        $events = [];
+        if (preg_match('/Tracking Events(.*?)(?:Login|Settings|$)/is', $plain, $block)) {
+            if (preg_match_all(
+                '/\b(Received|In Transit|Delivered|Shipped|Warehouse|In Destination Country)\b\s+(\d{1,2}\/\d{1,2}\/\d{4}\s+\d{1,2}:\d{2}(?::\d{2})?(?:\s*[AP]M)?)/i',
+                $block[1],
+                $rows,
+                PREG_SET_ORDER
+            )) {
+                foreach ($rows as $row) {
+                    $events[] = [
+                        'status' => $row[1],
+                        'description' => $row[1],
+                        'date' => $row[2],
+                        'evento_at' => $this->normalizeDate($row[2]),
+                    ];
+                }
+            }
+        }
+
+        return [
+            'tracking_number' => $trackingNumber,
+            'status' => $this->mapStatus($statusRaw),
+            'status_raw' => $statusRaw,
+            'wrh' => $guia,
+            'weight' => $weight,
+            'description' => $pieces ? $pieces.' piece(s)' : null,
+            'pickup_date' => $pickupDate,
+            'delivery_date' => null,
+            'events' => $events,
+        ];
     }
 
     protected function scrapeTrack(string $url, string $base, string $code, int $timeout, bool $verify): ?string
@@ -603,7 +722,7 @@ class CargoTrackProvider implements TrackingProvider
         $options = [
             'allow_redirects' => true,
             'force_ip_resolve' => 'v4',
-            'connect_timeout' => 8,
+            'connect_timeout' => 5,
             'verify' => $verify,
         ];
         if ($jar !== null) {

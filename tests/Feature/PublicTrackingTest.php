@@ -61,20 +61,39 @@ class PublicTrackingTest extends TestCase
             ->assertDontSee('No encontramos un paquete');
     }
 
-    public function test_public_tracking_falls_back_to_browser_scrape_on_timeout(): void
+    public function test_public_tracking_uses_reader_when_cargotrack_times_out(): void
     {
         $this->app->instance(TrackingProvider::class, new CargoTrackProvider);
 
-        Http::fake(function () {
+        Http::fake(function ($request) {
+            if (str_contains($request->url(), 'r.jina.ai')) {
+                return Http::response(
+                    <<<'MD'
+                    Searching for 4203316626129434608106244617510560
+                    IN TRANSIT
+                    Received on 10/14/2026 at 4:37:00 PM
+                    279860
+                    4203316626129434608106244617510560
+                    1 piece(s) with 2.5 lbs
+                    Tracking Events
+                    Received
+                    10/14/2026 4:38:40 PM
+                    MD,
+                    200
+                );
+            }
+
             throw new \Illuminate\Http\Client\ConnectionException(
                 'cURL error 28: Failed to connect to gc.cargotrack.net port 443 after 8002 ms: Timeout was reached'
             );
         });
 
-        $this->get('/rastreo?tracking=TBA335262352996')
+        $this->get('/rastreo?tracking=4203316626129434608106244617510560')
             ->assertOk()
-            ->assertSee('Extrayendo datos de CargoTrack')
-            ->assertSee('TBA335262352996')
+            ->assertSee('279860')
+            ->assertSee('IN TRANSIT')
+            ->assertSee('2.50 lb')
+            ->assertDontSee('No encontramos un paquete')
             ->assertDontSee('iframe', false);
     }
 
