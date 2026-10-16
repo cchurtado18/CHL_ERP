@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Contracts\TrackingProvider;
+use App\Services\Tracking\CargoTrackProvider;
 use Illuminate\Http\Request;
 
 /**
@@ -53,6 +54,28 @@ class PublicTrackingController extends Controller
             'error' => $error,
             'cargotrackUrl' => $cargotrackUrl,
             'usarNavegador' => $usarNavegador,
+        ]);
+    }
+
+    public function parse(Request $request, CargoTrackProvider $provider)
+    {
+        $data = $request->validate([
+            'code' => ['required', 'string', 'max:80'],
+            'html' => ['required', 'string', 'max:80000'],
+        ]);
+
+        $remoto = $provider->parseScrapedHtml($data['html'], $data['code']);
+
+        if (! $remoto) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'CargoTrack no tiene ese código.',
+            ]);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'remoto' => $remoto,
         ]);
     }
 }

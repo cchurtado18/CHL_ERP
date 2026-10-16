@@ -75,12 +75,12 @@ class CargoTrackProvider implements TrackingProvider
             $url = $base.$path;
 
             try {
-                $html = $this->postTrack($url, $base, $code, $timeout, (bool) $attempt['verify']);
+                $html = $this->scrapeTrack($url, $base, $code, $timeout, (bool) $attempt['verify']);
                 if ($html === null) {
                     continue;
                 }
 
-                $parsed = $this->parseTrackHtml($this->toUtf8($html), $code);
+                $parsed = $this->parseScrapedHtml($html, $code);
                 if ($parsed) {
                     $this->lastError = null;
 
@@ -105,31 +105,44 @@ class CargoTrackProvider implements TrackingProvider
         return null;
     }
 
-    protected function postTrack(string $url, string $base, string $code, int $timeout, bool $verify): ?string
+    public function parseScrapedHtml(string $html, string $code): ?array
     {
-        $request = $this->http($timeout, verify: $verify)
-            ->asForm()
+        return $this->parseTrackHtml($this->toUtf8($html), $code);
+    }
+
+    protected function scrapeTrack(string $url, string $base, string $code, int $timeout, bool $verify): ?string
+    {
+        $http = $this->http($timeout, verify: $verify)
             ->withHeaders([
                 'Referer' => $url,
                 'Origin' => $base,
             ]);
 
-        $response = $request->post($url, [
+        // GET con query (como un scrape simple) y POST del form público.
+        $get = $http->get($url, [
+            'track' => $code,
+            'action2' => 'process',
+        ]);
+        if ($get->successful() && stripos($get->body(), 'Searching for') !== false) {
+            return $get->body();
+        }
+
+        $post = $http->asForm()->post($url, [
             'track' => $code,
             'action2' => 'process',
         ]);
 
-        if (! $response->successful()) {
-            $this->lastError = 'CargoTrack respondió HTTP '.$response->status();
+        if (! $post->successful()) {
+            $this->lastError = 'CargoTrack respondió HTTP '.$post->status();
             Log::warning('CargoTrack lookup HTTP error', [
                 'code' => $code,
-                'status' => $response->status(),
+                'status' => $post->status(),
             ]);
 
             return null;
         }
 
-        return $response->body();
+        return $post->body();
     }
 
     protected function looksLikeSslError(string $message): bool

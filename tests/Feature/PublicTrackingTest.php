@@ -73,9 +73,33 @@ class PublicTrackingTest extends TestCase
 
         $this->get('/rastreo?tracking=TBA335262352996')
             ->assertOk()
-            ->assertSee('gc.cargotrack.net')
-            ->assertSee('name="track"', false)
+            ->assertSee('Extrayendo datos de CargoTrack')
             ->assertSee('TBA335262352996')
-            ->assertDontSee('No encontramos un paquete');
+            ->assertDontSee('iframe', false);
+    }
+
+    public function test_parse_extracts_cargotrack_fields(): void
+    {
+        $html = <<<'HTML'
+        <table class="ntextbig">
+          <tr><td><div align="center"><strong class="ntextbig">Searching for&nbsp;4203316626129434608106244617510560</strong></div></td></tr>
+          <tr><td><div align="center"><strong>IN TRANSIT</strong></div></td></tr>
+          <tr><td>
+            <span class="ntextbig"><strong>279860</strong></span>
+            <br>
+            4203316626129434608106244617510560
+            <br>
+            <strong>1</strong>&nbsp;piece(s)&nbsp;with&nbsp;<strong>2.5&nbsp;lbs</strong>
+          </td></tr>
+        </table>
+        HTML;
+
+        $this->postJson(route('public.tracking.parse'), [
+            'code' => '4203316626129434608106244617510560',
+            'html' => $html,
+        ])->assertOk()
+            ->assertJsonPath('ok', true)
+            ->assertJsonPath('remoto.wrh', '279860')
+            ->assertJsonPath('remoto.status_raw', 'IN TRANSIT');
     }
 }

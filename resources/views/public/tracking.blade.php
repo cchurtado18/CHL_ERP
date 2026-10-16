@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Rastrear paquete - CH Logistics</title>
     <link rel="icon" type="image/png" href="/CH_Logistics_Logo.png">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -132,14 +133,89 @@
                         ])
                     </div>
                 @elseif(!empty($usarNavegador))
-                    <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Resultado · CargoTrack</p>
-                    <p class="mt-1 text-sm text-slate-500">Consultando el tracking en gc.cargotrack.net…</p>
-                    <iframe name="cargotrackResult" title="Rastreo CargoTrack" class="mt-4 h-[520px] w-full rounded-xl border border-slate-200 bg-white"></iframe>
-                    <form id="cargotrackScrape" method="POST" action="{{ $cargotrackUrl }}" target="cargotrackResult" class="hidden">
-                        <input type="hidden" name="track" value="{{ $code }}">
-                        <input type="hidden" name="action2" value="process">
-                    </form>
-                    <script>document.getElementById('cargotrackScrape').submit();</script>
+                    <div id="trackingExtract">
+                        <p class="text-sm text-slate-500">Extrayendo datos de CargoTrack…</p>
+                    </div>
+                    <script>
+                    (function () {
+                        const code = @json($code);
+                        const trackUrl = @json($cargotrackUrl) + '?track=' + encodeURIComponent(code) + '&action2=process';
+                        const parseUrl = @json(route('public.tracking.parse'));
+                        const csrf = document.querySelector('meta[name="csrf-token"]').content;
+                        const box = document.getElementById('trackingExtract');
+                        const proxies = [
+                            'https://api.allorigins.win/raw?url=' + encodeURIComponent(trackUrl),
+                            'https://corsproxy.io/?' + encodeURIComponent(trackUrl)
+                        ];
+
+                        function esc(v) {
+                            return String(v ?? '').replace(/[&<>"']/g, function (c) {
+                                return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]);
+                            });
+                        }
+
+                        function render(d) {
+                            const guia = d.wrh || '';
+                            const track = d.tracking_number || code;
+                            const estado = String(d.status || '').replace(/_/g, ' ');
+                            const peso = d.weight != null ? Number(d.weight).toFixed(2) + ' lb' : '—';
+                            let fecha = '—';
+                            if (d.pickup_date) {
+                                const dt = new Date(d.pickup_date.replace(' ', 'T'));
+                                if (!isNaN(dt)) {
+                                    fecha = dt.toLocaleString('es-CR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                                }
+                            }
+                            const events = Array.isArray(d.events) ? d.events : [];
+                            const eventosHtml = events.map(function (ev) {
+                                return '<li class="text-sm text-slate-700"><span class="font-semibold">' + esc(ev.status || ev.description || '') + '</span>' +
+                                    (ev.date ? ' <span class="text-slate-400">· ' + esc(ev.date) + '</span>' : '') + '</li>';
+                            }).join('');
+                            box.innerHTML =
+                                '<p class="text-xs font-bold uppercase tracking-wide text-slate-400">Resultado · Tracking</p>' +
+                                '<div class="mt-2 flex flex-wrap items-start justify-between gap-3">' +
+                                    '<h2 class="text-xl font-extrabold text-slate-800">' + (guia ? 'Guía ' + esc(guia) : esc(track)) + '</h2>' +
+                                    '<span class="rounded-full bg-[#15537c]/10 px-3 py-1 text-sm font-bold capitalize text-[#15537c]">' + esc(estado) + '</span>' +
+                                '</div>' +
+                                (d.status_raw ? '<p class="mt-2 text-sm text-slate-500">' + esc(d.status_raw) + '</p>' : '') +
+                                '<dl class="mt-5 grid gap-3 text-sm sm:grid-cols-2">' +
+                                    '<div><dt class="text-slate-400">Nº guía (WRH)</dt><dd class="font-semibold font-mono">' + esc(guia || '—') + '</dd></div>' +
+                                    '<div><dt class="text-slate-400">Tracking</dt><dd class="font-semibold font-mono text-[#15537c]">' + esc(track || '—') + '</dd></div>' +
+                                    '<div><dt class="text-slate-400">Peso</dt><dd class="font-semibold">' + esc(peso) + '</dd></div>' +
+                                    '<div><dt class="text-slate-400">Fecha recepción</dt><dd class="font-semibold">' + esc(fecha) + '</dd></div>' +
+                                    '<div class="sm:col-span-2"><dt class="text-slate-400">Descripción</dt><dd class="font-semibold">' + esc(d.description || '—') + '</dd></div>' +
+                                '</dl>' +
+                                (eventosHtml ? '<div class="mt-8 border-t border-slate-100 pt-6"><p class="mb-3 text-sm font-semibold text-slate-700">Avance del envío</p><ul class="space-y-2">' + eventosHtml + '</ul></div>' : '');
+                        }
+
+                        async function run() {
+                            for (let i = 0; i < proxies.length; i++) {
+                                try {
+                                    const page = await fetch(proxies[i]);
+                                    if (!page.ok) continue;
+                                    const html = await page.text();
+                                    if (html.indexOf('Searching for') === -1) continue;
+                                    const parsed = await fetch(parseUrl, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'Accept': 'application/json',
+                                            'X-CSRF-TOKEN': csrf
+                                        },
+                                        body: JSON.stringify({ code: code, html: html })
+                                    });
+                                    const data = await parsed.json();
+                                    if (data.ok && data.remoto) {
+                                        render(data.remoto);
+                                        return;
+                                    }
+                                } catch (e) {}
+                            }
+                            box.innerHTML = '<p class="text-center text-slate-500">No encontramos un paquete con el código <strong>' + esc(code) + '</strong>.</p>';
+                        }
+                        run();
+                    })();
+                    </script>
                 @else
                     <p class="text-center text-slate-500">No encontramos un paquete con el código <strong>{{ $code }}</strong>.</p>
                     <p class="mt-2 text-center text-sm text-slate-400">CargoTrack no tiene ese código exacto. Copia el tracking o la guía tal como aparece en gc.cargotrack.net.</p>

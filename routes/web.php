@@ -50,6 +50,7 @@ Route::middleware('auth')->get('/sin-acceso', [AuthController::class, 'sinAcceso
 
 // Rastreo público (sin login)
 Route::get('/rastreo', [PublicTrackingController::class, 'index'])->name('public.tracking');
+Route::post('/rastreo/parse', [PublicTrackingController::class, 'parse'])->name('public.tracking.parse');
 
 // Portal de clientes
 Route::middleware(['auth', 'portal.cliente'])->prefix('portal')->name('portal.')->group(function () {
