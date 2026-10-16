@@ -43,14 +43,17 @@ class TrackingCode
     {
         $raw = trim($code);
         $norm = self::normalize($raw);
-        $out = array_values(array_unique(array_filter([$raw, $norm])));
+        $out = [];
 
-        // Amazon TBA = TBA + 12 dígitos. Un 0 extra al pegar hace que CargoTrack responda NOT FOUND.
-        if (preg_match('/^(TBA\d{12})\d+$/i', $norm, $m) && ! in_array($m[1], $out, true)) {
+        // Amazon TBA de 15 primero: un dígito extra al pegar hace timeout extra en vano.
+        if (preg_match('/^(TBA\d{12})\d+$/i', $norm, $m)) {
             $out[] = $m[1];
         }
 
-        return $out;
+        $out[] = $raw;
+        $out[] = $norm;
+
+        return array_values(array_unique(array_filter($out)));
     }
 
     public static function isNumericGuia(string $code): bool

@@ -33,8 +33,8 @@ class TrackingCodeTest extends TestCase
     {
         $variants = TrackingCode::lookupVariants('tba3352623529960');
 
+        $this->assertSame('TBA335262352996', $variants[0]);
         $this->assertContains('tba3352623529960', $variants);
         $this->assertContains('TBA3352623529960', $variants);
-        $this->assertContains('TBA335262352996', $variants);
     }
 }

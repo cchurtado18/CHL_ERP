@@ -24,34 +24,29 @@ class PublicTrackingTest extends TestCase
         $this->app->instance(TrackingProvider::class, new CargoTrackProvider);
 
         Http::fake(function ($request) {
-            if ($request->method() === 'GET') {
-                return Http::response('<html><form name="form1"></form></html>', 200);
-            }
+            $url = $request->url();
+            $isHit = str_contains(strtoupper($url), 'TBA335262352996')
+                && ! str_contains(strtoupper($url), 'TBA3352623529960');
 
-            $track = (string) ($request->data()['track'] ?? '');
-            if (strcasecmp($track, 'TBA335262352996') !== 0) {
+            if (str_contains($url, 'r.jina.ai') || $request->method() === 'GET') {
+                if (! $isHit) {
+                    return Http::response('Searching for CODE NOT FOUND', 200);
+                }
+
                 return Http::response(
-                    '<table><tr><td>Searching for&nbsp;'.$track.'</td></tr><tr><td><strong>NOT FOUND</strong></td></tr></table>',
+                    <<<'MD'
+                    Searching for TBA335262352996
+                    IN TRANSIT
+                    Received on 10/12/2026 at 11:58:00 AM
+                    276462
+                    TBA335262352996
+                    1 piece(s) with 2.8 lbs
+                    MD,
                     200
                 );
             }
 
-            return Http::response(
-                <<<'HTML'
-                <table class="ntextbig">
-                  <tr><td><div align="center"><strong class="ntextbig">Searching for&nbsp;TBA335262352996</strong></div></td></tr>
-                  <tr><td><div align="center"><strong>IN TRANSIT</strong></div></td></tr>
-                  <tr><td>
-                    <span class="ntextbig"><strong>276462</strong></span>
-                    <br>
-                    tba335262352996
-                    <br>
-                    <strong>1</strong>&nbsp;piece(s)&nbsp;with&nbsp;<strong>2.8&nbsp;lbs</strong>
-                  </td></tr>
-                </table>
-                HTML,
-                200
-            );
+            return Http::response('Searching for CODE NOT FOUND', 200);
         });
 
         $this->get('/rastreo?tracking=tba3352623529960')

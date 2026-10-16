@@ -6,6 +6,7 @@ use App\Contracts\TrackingProvider;
 use App\Support\TrackingCode;
 use GuzzleHttp\Cookie\CookieJar;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -13,6 +14,8 @@ use Illuminate\Support\Str;
 class CargoTrackProvider implements TrackingProvider
 {
     protected ?string $lastError = null;
+
+    protected bool $readerReached = false;
 
     public function enabled(): bool
     {
@@ -39,10 +42,23 @@ class CargoTrackProvider implements TrackingProvider
             return null;
         }
 
-        foreach (TrackingCode::lookupVariants($code) as $variant) {
+        $variants = TrackingCode::lookupVariants($code);
+        foreach ($variants as $variant) {
+            $cached = Cache::get($this->lookupCacheKey($variant));
+            if (is_array($cached)) {
+                $this->lastError = null;
+
+                return $cached;
+            }
+        }
+
+        foreach ($variants as $variant) {
             $result = $this->lookupExact($variant);
             if ($result) {
                 $this->lastError = null;
+                foreach ($variants as $key) {
+                    Cache::put($this->lookupCacheKey($key), $result, 90);
+                }
 
                 return $result;
             }
@@ -53,9 +69,20 @@ class CargoTrackProvider implements TrackingProvider
 
     protected function lookupExact(string $code): ?array
     {
+        // En producción gc.cargotrack.net hace timeout; r.jina.ai responde en ~3s.
+        $viaReader = $this->lookupViaReader($code);
+        if ($viaReader) {
+            return $viaReader;
+        }
+
+        // Si r.jina.ai ya trajo la página, no esperar el timeout de CargoTrack.
+        if ($this->readerReached || Cache::get('cargotrack.direct_unreachable')) {
+            return null;
+        }
+
         $base = rtrim((string) config('services.cargotrack.base_url'), '/');
         $path = (string) config('services.cargotrack.track_path', '/m/track.asp');
-        $timeout = (int) config('services.cargotrack.timeout', 20);
+        $timeout = (int) config('services.cargotrack.timeout', 8);
         $url = $base.$path;
 
         try {
@@ -67,18 +94,17 @@ class CargoTrackProvider implements TrackingProvider
 
                     return $parsed;
                 }
-
-                return null;
             }
         } catch (\Throwable $e) {
-            $this->lastError = 'No se pudo consultar CargoTrack: '.$e->getMessage();
+            Cache::put('cargotrack.direct_unreachable', true, now()->addHour());
+            $this->lastError = $this->lastError ?: 'No se pudo consultar CargoTrack: '.$e->getMessage();
             Log::warning('CargoTrack scrape directo falló', [
                 'code' => $code,
                 'error' => $e->getMessage(),
             ]);
         }
 
-        return $this->lookupViaReader($code);
+        return null;
     }
 
     public function parseScrapedHtml(string $html, string $code): ?array
@@ -99,13 +125,15 @@ class CargoTrackProvider implements TrackingProvider
      */
     protected function lookupViaReader(string $code): ?array
     {
+        $this->readerReached = false;
         $trackUrl = rtrim((string) config('services.cargotrack.base_url'), '/').
             (string) config('services.cargotrack.track_path', '/m/track.asp').
             '?track='.rawurlencode($code).'&action2=process';
         $reader = 'https://r.jina.ai/'.$trackUrl;
 
         try {
-            $response = Http::timeout(25)
+            $response = Http::timeout(12)
+                ->connectTimeout(3)
                 ->withHeaders([
                     'User-Agent' => 'Mozilla/5.0',
                     'Accept' => 'text/plain,text/markdown,text/html',
@@ -118,6 +146,7 @@ class CargoTrackProvider implements TrackingProvider
                 return null;
             }
 
+            $this->readerReached = true;
             $parsed = $this->parseScrapedHtml($response->body(), $code);
             if ($parsed) {
                 $this->lastError = null;
@@ -229,6 +258,11 @@ class CargoTrackProvider implements TrackingProvider
         ];
     }
 
+    protected function lookupCacheKey(string $code): string
+    {
+        return 'cargotrack.lookup.'.sha1(strtoupper(trim($code)));
+    }
+
     protected function scrapeTrack(string $url, string $base, string $code, int $timeout, bool $verify): ?string
     {
         $http = $this->http($timeout, verify: $verify)
@@ -237,7 +271,6 @@ class CargoTrackProvider implements TrackingProvider
                 'Origin' => $base,
             ]);
 
-        // GET con query (como un scrape simple) y POST del form público.
         $get = $http->get($url, [
             'track' => $code,
             'action2' => 'process',
@@ -246,22 +279,7 @@ class CargoTrackProvider implements TrackingProvider
             return $get->body();
         }
 
-        $post = $http->asForm()->post($url, [
-            'track' => $code,
-            'action2' => 'process',
-        ]);
-
-        if (! $post->successful()) {
-            $this->lastError = 'CargoTrack respondió HTTP '.$post->status();
-            Log::warning('CargoTrack lookup HTTP error', [
-                'code' => $code,
-                'status' => $post->status(),
-            ]);
-
-            return null;
-        }
-
-        return $post->body();
+        return null;
     }
 
     protected function looksLikeSslError(string $message): bool
@@ -722,7 +740,7 @@ class CargoTrackProvider implements TrackingProvider
         $options = [
             'allow_redirects' => true,
             'force_ip_resolve' => 'v4',
-            'connect_timeout' => 5,
+            'connect_timeout' => 2,
             'verify' => $verify,
         ];
         if ($jar !== null) {
