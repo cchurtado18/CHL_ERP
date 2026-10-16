@@ -34,6 +34,16 @@ class PublicTrackingController extends Controller
             $error = 'El rastreo de CargoTrack no está activo en este servidor.';
         }
 
+        $cargotrackUrl = rtrim((string) config('services.cargotrack.base_url'), '/').
+            (string) config('services.cargotrack.track_path', '/m/track.asp');
+        $errorText = strtolower((string) $error);
+        $usarNavegador = $error !== null && (
+            str_contains($errorText, 'timed out')
+            || str_contains($errorText, 'timeout')
+            || str_contains($errorText, 'failed to connect')
+            || str_contains($errorText, 'curl error')
+        );
+
         return view('public.tracking', [
             'code' => $code,
             'paquete' => null,
@@ -41,6 +51,8 @@ class PublicTrackingController extends Controller
             'fuente' => $fuente,
             'buscado' => $code !== '',
             'error' => $error,
+            'cargotrackUrl' => $cargotrackUrl,
+            'usarNavegador' => $usarNavegador,
         ]);
     }
 }

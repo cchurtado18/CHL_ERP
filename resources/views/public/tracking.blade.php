@@ -131,13 +131,18 @@
                             'ingresadoLocal' => false,
                         ])
                     </div>
+                @elseif(!empty($usarNavegador))
+                    <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Resultado · CargoTrack</p>
+                    <p class="mt-1 text-sm text-slate-500">Consultando el tracking en gc.cargotrack.net…</p>
+                    <iframe name="cargotrackResult" title="Rastreo CargoTrack" class="mt-4 h-[520px] w-full rounded-xl border border-slate-200 bg-white"></iframe>
+                    <form id="cargotrackScrape" method="POST" action="{{ $cargotrackUrl }}" target="cargotrackResult" class="hidden">
+                        <input type="hidden" name="track" value="{{ $code }}">
+                        <input type="hidden" name="action2" value="process">
+                    </form>
+                    <script>document.getElementById('cargotrackScrape').submit();</script>
                 @else
                     <p class="text-center text-slate-500">No encontramos un paquete con el código <strong>{{ $code }}</strong>.</p>
-                    @if(!empty($error))
-                        <p class="mt-2 text-center text-sm text-rose-600">{{ $error }}</p>
-                    @else
-                        <p class="mt-2 text-center text-sm text-slate-400">CargoTrack no tiene ese código exacto. Copia el tracking o la guía tal como aparece en gc.cargotrack.net.</p>
-                    @endif
+                    <p class="mt-2 text-center text-sm text-slate-400">CargoTrack no tiene ese código exacto. Copia el tracking o la guía tal como aparece en gc.cargotrack.net.</p>
                 @endif
             </div>
         @endif

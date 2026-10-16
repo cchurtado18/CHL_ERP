@@ -53,52 +53,56 @@ class CargoTrackProvider implements TrackingProvider
 
     protected function lookupExact(string $code): ?array
     {
-        $base = rtrim((string) config('services.cargotrack.base_url'), '/');
+        $httpsBase = rtrim((string) config('services.cargotrack.base_url'), '/');
         $path = (string) config('services.cargotrack.track_path', '/m/track.asp');
         $timeout = (int) config('services.cargotrack.timeout', 20);
-        $url = $base.$path;
+        $httpBase = (string) preg_replace('/^https:/i', 'http:', $httpsBase);
 
-        try {
-            // El form de track.asp es POST track + action2=process. Sin GET previo.
-            $response = $this->postTrack($url, $base, $code, $timeout, verify: true);
-            if ($response === null) {
-                return null;
+        // Igual que WordPress: POST público a track.asp, sin login.
+        $attempts = [
+            ['base' => $httpsBase, 'verify' => true],
+            ['base' => $httpsBase, 'verify' => false],
+            ['base' => $httpBase, 'verify' => false],
+        ];
+
+        $lastMessage = null;
+
+        foreach ($attempts as $attempt) {
+            $base = rtrim((string) $attempt['base'], '/');
+            if ($base === '') {
+                continue;
             }
+            $url = $base.$path;
 
-            $parsed = $this->parseTrackHtml($this->toUtf8($response), $code);
-            if ($parsed) {
-                return $parsed;
-            }
-
-            return null;
-        } catch (\Throwable $e) {
-            $message = $e->getMessage();
-            $this->lastError = 'No se pudo consultar CargoTrack: '.$message;
-            Log::error('CargoTrack lookup failed', [
-                'code' => $code,
-                'error' => $message,
-            ]);
-
-            if ($this->looksLikeSslError($message)) {
-                try {
-                    $response = $this->postTrack($url, $base, $code, $timeout, verify: false);
-                    if ($response === null) {
-                        return null;
-                    }
-
-                    $parsed = $this->parseTrackHtml($this->toUtf8($response), $code);
-                    if ($parsed) {
-                        $this->lastError = null;
-
-                        return $parsed;
-                    }
-                } catch (\Throwable $retry) {
-                    $this->lastError = 'No se pudo consultar CargoTrack: '.$retry->getMessage();
+            try {
+                $html = $this->postTrack($url, $base, $code, $timeout, (bool) $attempt['verify']);
+                if ($html === null) {
+                    continue;
                 }
-            }
 
-            return null;
+                $parsed = $this->parseTrackHtml($this->toUtf8($html), $code);
+                if ($parsed) {
+                    $this->lastError = null;
+
+                    return $parsed;
+                }
+
+                return null;
+            } catch (\Throwable $e) {
+                $lastMessage = $e->getMessage();
+                Log::warning('CargoTrack scrape attempt failed', [
+                    'code' => $code,
+                    'url' => $url,
+                    'error' => $lastMessage,
+                ]);
+            }
         }
+
+        if ($lastMessage) {
+            $this->lastError = 'No se pudo consultar CargoTrack: '.$lastMessage;
+        }
+
+        return null;
     }
 
     protected function postTrack(string $url, string $base, string $code, int $timeout, bool $verify): ?string

@@ -60,4 +60,22 @@ class PublicTrackingTest extends TestCase
             ->assertSee('IN TRANSIT')
             ->assertDontSee('No encontramos un paquete');
     }
+
+    public function test_public_tracking_falls_back_to_browser_scrape_on_timeout(): void
+    {
+        $this->app->instance(TrackingProvider::class, new CargoTrackProvider);
+
+        Http::fake(function () {
+            throw new \Illuminate\Http\Client\ConnectionException(
+                'cURL error 28: Failed to connect to gc.cargotrack.net port 443 after 8002 ms: Timeout was reached'
+            );
+        });
+
+        $this->get('/rastreo?tracking=TBA335262352996')
+            ->assertOk()
+            ->assertSee('gc.cargotrack.net')
+            ->assertSee('name="track"', false)
+            ->assertSee('TBA335262352996')
+            ->assertDontSee('No encontramos un paquete');
+    }
 }
