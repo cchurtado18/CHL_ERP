@@ -57,7 +57,7 @@ class CargoTrackProvider implements TrackingProvider
             if ($result) {
                 $this->lastError = null;
                 foreach ($variants as $key) {
-                    Cache::put($this->lookupCacheKey($key), $result, 90);
+                    Cache::put($this->lookupCacheKey($key), $result, 300);
                 }
 
                 return $result;
@@ -121,7 +121,8 @@ class CargoTrackProvider implements TrackingProvider
     }
 
     /**
-     * El droplet no alcanza gc.cargotrack.net; r.jina.ai sí y devuelve el texto de track.asp.
+     * El droplet no alcanza gc.cargotrack.net; leemos track.asp vía r.jina.ai (y un respaldo).
+     * Solo marcamos readerReached si el cuerpo es la página real de rastreo.
      */
     protected function lookupViaReader(string $code): ?array
     {
@@ -129,41 +130,63 @@ class CargoTrackProvider implements TrackingProvider
         $trackUrl = rtrim((string) config('services.cargotrack.base_url'), '/').
             (string) config('services.cargotrack.track_path', '/m/track.asp').
             '?track='.rawurlencode($code).'&action2=process';
-        $reader = 'https://r.jina.ai/'.$trackUrl;
 
-        try {
-            $response = Http::timeout(12)
-                ->connectTimeout(3)
-                ->withHeaders([
-                    'User-Agent' => 'Mozilla/5.0',
-                    'Accept' => 'text/plain,text/markdown,text/html',
-                ])
-                ->get($reader);
+        $lastHttpError = null;
+        foreach ($this->readerUrls($trackUrl) as $index => $reader) {
+            try {
+                $response = Http::timeout($index === 0 ? 12 : 6)
+                    ->connectTimeout(3)
+                    ->withHeaders([
+                        'User-Agent' => 'Mozilla/5.0',
+                        'Accept' => 'text/plain,text/markdown,text/html,*/*',
+                    ])
+                    ->get($reader);
 
-            if (! $response->successful()) {
-                $this->lastError = 'No se pudo leer CargoTrack (HTTP '.$response->status().').';
+                if (! $response->successful()) {
+                    $lastHttpError = 'HTTP '.$response->status();
+                    continue;
+                }
+
+                $body = $response->body();
+                if (stripos($body, 'Searching for') === false) {
+                    continue;
+                }
+
+                $this->readerReached = true;
+                $parsed = $this->parseScrapedHtml($body, $code);
+                if ($parsed) {
+                    $this->lastError = null;
+
+                    return $parsed;
+                }
 
                 return null;
+            } catch (\Throwable $e) {
+                $lastHttpError = $e->getMessage();
+                Log::warning('CargoTrack reader scrape failed', [
+                    'code' => $code,
+                    'reader' => $reader,
+                    'error' => $e->getMessage(),
+                ]);
             }
-
-            $this->readerReached = true;
-            $parsed = $this->parseScrapedHtml($response->body(), $code);
-            if ($parsed) {
-                $this->lastError = null;
-
-                return $parsed;
-            }
-
-            return null;
-        } catch (\Throwable $e) {
-            $this->lastError = 'No se pudo consultar CargoTrack: '.$e->getMessage();
-            Log::warning('CargoTrack reader scrape failed', [
-                'code' => $code,
-                'error' => $e->getMessage(),
-            ]);
-
-            return null;
         }
+
+        if ($lastHttpError) {
+            $this->lastError = 'No se pudo consultar CargoTrack: '.$lastHttpError;
+        }
+
+        return null;
+    }
+
+    /**
+     * @return list<string>
+     */
+    protected function readerUrls(string $trackUrl): array
+    {
+        return [
+            'https://r.jina.ai/'.$trackUrl,
+            'https://api.allorigins.win/raw?url='.rawurlencode($trackUrl),
+        ];
     }
 
     protected function parseTrackPlain(string $text, string $fallbackCode): ?array

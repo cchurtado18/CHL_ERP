@@ -92,6 +92,55 @@ class PublicTrackingTest extends TestCase
             ->assertDontSee('iframe', false);
     }
 
+    public function test_public_tracking_falls_back_to_second_reader_if_jina_fails(): void
+    {
+        $this->app->instance(TrackingProvider::class, new CargoTrackProvider);
+
+        Http::fake(function ($request) {
+            $url = $request->url();
+            if (str_contains($url, 'r.jina.ai')) {
+                return Http::response('busy', 500);
+            }
+            if (str_contains($url, 'allorigins.win')) {
+                return Http::response(
+                    <<<'MD'
+                    Searching for 4203316626129434608106244617510560
+                    IN TRANSIT
+                    Received on 10/14/2026 at 4:37:00 PM
+                    279860
+                    4203316626129434608106244617510560
+                    1 piece(s) with 2.5 lbs
+                    MD,
+                    200
+                );
+            }
+
+            throw new \Illuminate\Http\Client\ConnectionException(
+                'cURL error 28: Failed to connect to gc.cargotrack.net port 443'
+            );
+        });
+
+        $this->get('/rastreo?tracking=4203316626129434608106244617510560')
+            ->assertOk()
+            ->assertSee('279860')
+            ->assertSee('IN TRANSIT')
+            ->assertDontSee('No encontramos un paquete');
+    }
+
+    public function test_public_tracking_retries_in_browser_when_readers_fail(): void
+    {
+        $this->app->instance(TrackingProvider::class, new CargoTrackProvider);
+
+        Http::fake(function () {
+            return Http::response('unavailable', 503);
+        });
+
+        $this->get('/rastreo?tracking=4203316626129434608106244617510560')
+            ->assertOk()
+            ->assertSee('Extrayendo datos de CargoTrack')
+            ->assertSee('trackingExtract', false);
+    }
+
     public function test_parse_extracts_cargotrack_fields(): void
     {
         $html = <<<'HTML'

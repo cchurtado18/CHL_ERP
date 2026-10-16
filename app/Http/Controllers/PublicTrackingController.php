@@ -38,12 +38,10 @@ class PublicTrackingController extends Controller
         $cargotrackUrl = rtrim((string) config('services.cargotrack.base_url'), '/').
             (string) config('services.cargotrack.track_path', '/m/track.asp');
         $errorText = strtolower((string) $error);
-        $usarNavegador = $error !== null && (
-            str_contains($errorText, 'timed out')
-            || str_contains($errorText, 'timeout')
-            || str_contains($errorText, 'failed to connect')
-            || str_contains($errorText, 'curl error')
-        );
+        $usarNavegador = $error !== null
+            && $remoto === null
+            && ! str_contains($errorText, 'no está configurado')
+            && ! str_contains($errorText, 'no está activo');
 
         return view('public.tracking', [
             'code' => $code,
