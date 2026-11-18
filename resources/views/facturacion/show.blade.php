@@ -446,6 +446,8 @@ php artisan optimize:clear</pre>
                         <thead>
                             <tr class="border-b border-slate-200 bg-gradient-to-r from-[#15537c]/12 via-slate-50 to-slate-50">
                                 <th class="px-4 py-3.5 text-xs font-semibold uppercase tracking-wide text-slate-600">Guía</th>
+                                <th class="px-4 py-3.5 text-xs font-semibold uppercase tracking-wide text-slate-600">Peso</th>
+                                <th class="px-4 py-3.5 text-xs font-semibold uppercase tracking-wide text-slate-600">Monto</th>
                                 <th class="px-4 py-3.5 text-xs font-semibold uppercase tracking-wide text-slate-600">Estado</th>
                             </tr>
                         </thead>
@@ -453,6 +455,8 @@ php artisan optimize:clear</pre>
                             @foreach($factura->paquetes as $idx => $p)
                                 <tr class="transition hover:bg-slate-50/80 {{ $idx % 2 === 1 ? 'bg-slate-50/40' : '' }}">
                                     <td class="px-4 py-3 font-semibold text-slate-900">{{ $p->numero_guia ?? $p->id }}</td>
+                                    <td class="px-4 py-3 text-slate-700">{{ \App\Models\Inventario::formatPeso($p->peso_lb) }} lb</td>
+                                    <td class="px-4 py-3 text-slate-700">${{ number_format($p->montoFacturable(), 2) }}</td>
                                     <td class="px-4 py-3 text-slate-700">{{ $p->estado ?? '—' }}</td>
                                 </tr>
                             @endforeach

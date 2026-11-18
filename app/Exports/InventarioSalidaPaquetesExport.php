@@ -85,7 +85,7 @@ class InventarioSalidaPaquetesExport implements FromCollection, WithHeadings, Wi
             $row->tracking_codigo,
             $row->cliente?->nombre_completo,
             $row->servicio?->tipo_servicio,
-            $row->peso_lb,
+            Inventario::formatPeso($row->peso_lb),
             $row->volumen_pie3,
             $row->tarifa_manual,
             $row->monto_calculado,

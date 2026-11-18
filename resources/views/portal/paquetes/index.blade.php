@@ -108,7 +108,7 @@
                         <td class="px-4 py-1.5 text-center"><code class="rounded bg-slate-100 px-1.5 py-0.5 text-sm font-medium">{{ $p->numero_guia ?: '—' }}</code></td>
                         <td class="px-4 py-1.5 text-center font-mono text-sm font-medium text-[#15537c]">{{ $p->tracking_codigo ?: '—' }}</td>
                         <td class="px-4 py-1.5 text-center"><span class="rounded-md bg-slate-100 px-2 py-0.5 text-sm font-medium">{{ $p->servicio->tipo_servicio ?? '—' }}</span></td>
-                        <td class="px-4 py-1.5 text-center font-medium whitespace-nowrap">{{ number_format($p->peso_lb ?? 0, 2) }} lb</td>
+                        <td class="px-4 py-1.5 text-center font-medium whitespace-nowrap">{{ \App\Models\Inventario::formatPeso($p->peso_lb) }} lb</td>
                         <td class="px-4 py-1.5 text-center">
                             <span class="inline-flex items-center rounded-full px-2 py-0.5 text-sm font-semibold {{ $estadoBadge($p->estado) }}">{{ ucfirst(str_replace('_',' ', $p->estado)) }}</span>
                         </td>
@@ -133,7 +133,7 @@
                 <div class="flex items-start justify-between gap-3">
                     <div class="min-w-0 flex-1">
                         <p class="truncate text-lg font-semibold text-black">{{ $p->tracking_codigo ?: $p->numero_guia ?: ('#'.$p->id) }}</p>
-                        <p class="mt-1 text-sm font-medium text-slate-700">{{ $p->servicio->tipo_servicio ?? '—' }} · {{ number_format($p->peso_lb ?? 0, 2) }} lb</p>
+                        <p class="mt-1 text-sm font-medium text-slate-700">{{ $p->servicio->tipo_servicio ?? '—' }} · {{ \App\Models\Inventario::formatPeso($p->peso_lb) }} lb</p>
                     </div>
                     <span class="shrink-0 rounded-full px-3 py-1 text-sm font-semibold {{ $estadoBadge($p->estado) }}">{{ ucfirst(str_replace('_',' ', $p->estado)) }}</span>
                 </div>

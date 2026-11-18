@@ -294,15 +294,13 @@ class FacturacionController extends Controller
                 return back()->withErrors(['paquetes' => 'Uno o más paquetes seleccionados no pertenecen al cliente, ya han sido facturados o ya están entregados.'])->withInput();
             }
 
-            $monto_total = 0;
+            $monto_total = 0.0;
             $cantidad_paquetes = count($paquetes);
             foreach ($paquetes as $p) {
-                $peso = floatval($p->peso_lb ?? 0);
-                $tarifa = floatval($p->tarifa_manual ?? $p->tarifa ?? 1);
-                $monto_total += $peso * $tarifa;
+                $monto_total += $p->montoFacturable();
             }
-            $delivery = floatval($request->delivery ?? 0);
-            $monto_total += $delivery;
+            $delivery = round((float) ($request->delivery ?? 0), 2, PHP_ROUND_HALF_UP);
+            $monto_total = round($monto_total + $delivery, 2, PHP_ROUND_HALF_UP);
 
             \Log::info('Datos para crear factura', [
                 'cliente_id' => $request->cliente_id,
@@ -312,7 +310,9 @@ class FacturacionController extends Controller
                 'cantidad_paquetes' => $cantidad_paquetes,
                 'moneda' => $request->moneda,
                 'tasa_cambio' => $request->tasa_cambio,
-                'monto_local' => $request->monto_local ?? $monto_total,
+                'monto_local' => $request->filled('monto_local')
+                    ? round((float) $request->monto_local, 2, PHP_ROUND_HALF_UP)
+                    : $monto_total,
                 'estado_pago' => $request->estado_pago,
                 'nota' => $request->nota,
                 'delivery' => $delivery,
@@ -328,7 +328,9 @@ class FacturacionController extends Controller
                 'cantidad_paquetes' => $cantidad_paquetes,
                 'moneda' => $request->moneda,
                 'tasa_cambio' => $request->tasa_cambio,
-                'monto_local' => $request->monto_local ?? $monto_total,
+                'monto_local' => $request->filled('monto_local')
+                    ? round((float) $request->monto_local, 2, PHP_ROUND_HALF_UP)
+                    : $monto_total,
                 'estado_pago' => $request->estado_pago,
                 'nota' => $request->nota,
                 'delivery' => $delivery,
@@ -441,7 +443,7 @@ class FacturacionController extends Controller
             return redirect()->route('facturacion.show', $factura->id)
                 ->withErrors(['error' => 'No se puede editar una factura anulada.']);
         }
-        $clientes = Cliente::all();
+        $clientes = Cliente::orderBy('nombre_completo')->get(['id', 'nombre_completo', 'direccion', 'telefono']);
 
         return view('facturacion.edit', compact('factura', 'clientes'));
     }
@@ -636,11 +638,13 @@ class FacturacionController extends Controller
         // Solo agregar paquetes seleccionados explícitamente
         if ($request->has('paquetes') && ! empty($request->input('paquetes'))) {
             foreach ($request->input('paquetes', []) as $i => $id) {
-                $peso = floatval($request->input('paquete_peso_'.$id, 0));
-                $tarifa = floatval($request->input('paquete_tarifa_'.$id, 0));
-                $monto = floatval($request->input('paquete_valor_'.$id, 0));
-                if ($monto == 0 && $peso > 0 && $tarifa > 0) {
-                    $monto = $peso * $tarifa;
+                $peso = (float) $request->input('paquete_peso_'.$id, 0);
+                $tarifa = (float) $request->input('paquete_tarifa_'.$id, 0);
+                $monto = (float) $request->input('paquete_valor_'.$id, 0);
+                if ($monto == 0.0 && $peso > 0 && $tarifa > 0) {
+                    $monto = Inventario::calcularMonto($peso, $tarifa);
+                } else {
+                    $monto = round($monto, 2, PHP_ROUND_HALF_UP);
                 }
                 $paquetes[] = [
                     'numero_guia' => $request->input('paquete_guia_'.$id, ''),
@@ -665,12 +669,12 @@ class FacturacionController extends Controller
         if ($anyDeliveryIncluded) {
             foreach ($itemsDelivery as $itemId => $v) {
                 $raw = $itemsDeliveryMonto[(string) $itemId] ?? null;
-                $delivery += floatval($raw ?? 0);
+                $delivery += round((float) ($raw ?? 0), 2, PHP_ROUND_HALF_UP);
             }
         } else {
-            $delivery = floatval($request->input('delivery', 0));
+            $delivery = round((float) $request->input('delivery', 0), 2, PHP_ROUND_HALF_UP);
         }
-        $factura->delivery = $delivery;
+        $factura->delivery = round($delivery, 2, PHP_ROUND_HALF_UP);
         $factura->tipo_factura = $request->input('tipo_factura', 'paqueteria');
         $factura->fecha_factura = $request->input('fecha_factura');
         $factura->syncNumeroActaConFolio();
@@ -741,19 +745,7 @@ class FacturacionController extends Controller
             ->where('estado', '!=', 'entregado') // Excluir paquetes ya entregados
             ->with('servicio')
             ->get()
-            ->map(function ($inv) {
-                return [
-                    'id' => $inv->id,
-                    'numero_guia' => $inv->numero_guia,
-                    'notas' => $inv->notas,
-                    'tracking_codigo' => $inv->tracking_codigo,
-                    'servicio' => $inv->servicio ? $inv->servicio->tipo_servicio : null,
-                    'tarifa_manual' => $inv->tarifa_manual,
-                    'monto_calculado' => $inv->monto_calculado,
-                    'peso_lb' => $inv->peso_lb,
-                    'estado' => $inv->estado, // Agregar el estado del paquete
-                ];
-            });
+            ->map(fn ($inv) => $this->paqueteParaFactura($inv));
 
         return response()->json($inventarios);
     }
@@ -769,19 +761,7 @@ class FacturacionController extends Controller
             ->where('estado', '!=', 'entregado') // Excluir paquetes ya entregados
             ->with('servicio')
             ->get()
-            ->map(function ($inv) {
-                return [
-                    'id' => $inv->id,
-                    'numero_guia' => $inv->numero_guia,
-                    'notas' => $inv->notas,
-                    'tracking_codigo' => $inv->tracking_codigo,
-                    'servicio' => $inv->servicio ? $inv->servicio->tipo_servicio : null,
-                    'tarifa_manual' => $inv->tarifa_manual,
-                    'monto_calculado' => $inv->monto_calculado,
-                    'peso_lb' => $inv->peso_lb,
-                    'estado' => $inv->estado, // Agregar el estado del paquete
-                ];
-            });
+            ->map(fn ($inv) => $this->paqueteParaFactura($inv));
         $historialCols = ['id', 'fecha_factura', 'monto_total', 'estado_pago'];
         if (Schema::hasColumn('facturacion', 'folio')) {
             $historialCols[] = 'folio';
@@ -954,5 +934,28 @@ class FacturacionController extends Controller
                 'fecha' => now(),
             ]);
         }
+    }
+
+    /**
+     * Paquete listo para facturar: el peso y el monto salen de inventario
+     * (peso hasta 4 decimales, monto redondeado a 2 como en inventario).
+     */
+    private function paqueteParaFactura(Inventario $inv): array
+    {
+        $peso = (float) ($inv->peso_lb ?? 0);
+        $tarifa = (float) ($inv->tarifa_manual ?? 1);
+
+        return [
+            'id' => $inv->id,
+            'numero_guia' => $inv->numero_guia,
+            'notas' => $inv->notas,
+            'tracking_codigo' => $inv->tracking_codigo,
+            'servicio' => $inv->servicio ? $inv->servicio->tipo_servicio : null,
+            'tarifa_manual' => $tarifa,
+            'monto_calculado' => $inv->montoFacturable(),
+            'peso_lb' => $peso,
+            'peso_fmt' => Inventario::formatPeso($peso),
+            'estado' => $inv->estado,
+        ];
     }
 }

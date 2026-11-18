@@ -31,26 +31,65 @@ class Inventario extends Model
     ];
 
     protected $casts = [
-        'peso_lb' => 'decimal:4',
         'tarifa_manual' => 'decimal:2',
         'monto_calculado' => 'decimal:2',
     ];
 
+    /**
+     * Muestra 2 decimales como siempre. Solo deja 3 o 4 si el peso
+     * realmente los tiene (el usuario los escribió).
+     */
     public static function formatPeso(mixed $peso): string
     {
         if ($peso === null || $peso === '') {
-            return '0';
+            return '0.00';
         }
 
-        $formatted = number_format((float) $peso, 4, '.', '');
-        $formatted = rtrim(rtrim($formatted, '0'), '.');
+        $as4 = number_format((float) $peso, 4, '.', '');
+        $frac = substr($as4, strpos($as4, '.') + 1);
 
-        return $formatted === '' ? '0' : $formatted;
+        if (substr($frac, 2, 2) === '00') {
+            return number_format((float) $peso, 2, '.', '');
+        }
+
+        return rtrim($as4, '0');
+    }
+
+    protected function pesoLb(): Attribute
+    {
+        return Attribute::make(
+            get: function ($value) {
+                if ($value === null || $value === '') {
+                    return null;
+                }
+
+                return (float) $value;
+            },
+            set: function ($value) {
+                if ($value === null || $value === '') {
+                    return null;
+                }
+
+                return round((float) $value, 4);
+            },
+        );
     }
 
     public static function calcularMonto(float $peso, float $tarifa): float
     {
         return round($peso * $tarifa, 2, PHP_ROUND_HALF_UP);
+    }
+
+    public function montoFacturable(): float
+    {
+        if ($this->monto_calculado !== null && $this->monto_calculado !== '') {
+            return round((float) $this->monto_calculado, 2, PHP_ROUND_HALF_UP);
+        }
+
+        return self::calcularMonto(
+            (float) ($this->peso_lb ?? 0),
+            (float) ($this->tarifa_manual ?? 1)
+        );
     }
 
     // Relaciones

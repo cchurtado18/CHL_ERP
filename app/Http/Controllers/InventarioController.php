@@ -84,7 +84,7 @@ class InventarioController extends Controller
             'notas' => 'nullable|string',
             'servicio_id' => 'nullable|exists:servicios,id',
         ], [
-            'peso_lb.decimal' => 'El peso puede tener hasta 6 decimales después del punto.',
+            'peso_lb.decimal' => 'El peso se guarda como lo ingreses. Si usas decimales extra, máximo 4.',
             'numero_guia.unique' => 'El número de guía ya está en uso. Por favor, ingresa uno diferente.',
             'numero_guia.min' => 'El número de guía debe tener al menos 6 caracteres.',
             'numero_guia.max' => 'El número de guía no puede exceder 9 caracteres.',
@@ -149,7 +149,7 @@ class InventarioController extends Controller
             'notas' => 'nullable|string',
             'servicio_id' => 'nullable|exists:servicios,id',
         ], [
-            'peso_lb.decimal' => 'El peso puede tener hasta 6 decimales después del punto.',
+            'peso_lb.decimal' => 'El peso se guarda como lo ingreses. Si usas decimales extra, máximo 4.',
             'numero_guia.unique' => 'El número de guía ya está en uso. Por favor, ingresa uno diferente.',
             'numero_guia.min' => 'El número de guía debe tener al menos 6 caracteres.',
             'numero_guia.max' => 'El número de guía no puede exceder 9 caracteres.',

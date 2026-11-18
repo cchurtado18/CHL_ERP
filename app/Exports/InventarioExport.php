@@ -25,7 +25,7 @@ class InventarioExport implements FromCollection, WithMapping, WithStyles, WithT
         return [
             $row->cliente ? $row->cliente->nombre_completo : '',
             $row->servicio ? $row->servicio->tipo_servicio : '',
-            $row->peso_lb,
+            Inventario::formatPeso($row->peso_lb),
             $row->numero_guia, // Warehouse ahora es numero_guia
             $row->estado,
             $row->fecha_ingreso ? date('Y-m-d', strtotime($row->fecha_ingreso)) : '',

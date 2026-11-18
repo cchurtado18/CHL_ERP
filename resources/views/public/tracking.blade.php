@@ -65,7 +65,7 @@
                         </div>
                         <div>
                             <dt class="text-slate-400">Peso</dt>
-                            <dd class="font-semibold">{{ number_format($paquete->peso_lb ?? 0, 2) }} lb</dd>
+                            <dd class="font-semibold">{{ \App\Models\Inventario::formatPeso($paquete->peso_lb) }} lb</dd>
                         </div>
                         <div>
                             <dt class="text-slate-400">Fecha ingreso</dt>

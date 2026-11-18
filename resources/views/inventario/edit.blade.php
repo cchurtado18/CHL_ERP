@@ -100,7 +100,7 @@
                                         Peso (lb) *
                                     </label>
                                     <div class="input-group">
-                                        <input type="number" step="any" min="0" inputmode="decimal" name="peso_lb" class="form-control @error('peso_lb') is-invalid @enderror" value="{{ old('peso_lb', \App\Models\Inventario::formatPeso($paquete->peso_lb)) }}" required placeholder="0.0000">
+                                        <input type="number" step="any" min="0" inputmode="decimal" name="peso_lb" class="form-control @error('peso_lb') is-invalid @enderror" value="{{ old('peso_lb', \App\Models\Inventario::formatPeso($paquete->peso_lb)) }}" required placeholder="0.00">
                                         <span class="input-group-text">lb</span>
                                     </div>
                                     @error('peso_lb')

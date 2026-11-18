@@ -153,6 +153,27 @@ $(document).ready(function() {
         width: '100%'
     });
     let paquetesSeleccionados = [];
+    function roundMoney(n) {
+        return Math.round((Number(n) + Number.EPSILON) * 100) / 100;
+    }
+    function formatPeso(n) {
+        var x = Number(n);
+        if (!Number.isFinite(x)) return '0.00';
+        var as4 = x.toFixed(4);
+        var frac = as4.split('.')[1] || '0000';
+        if (frac.slice(2) === '00') {
+            return x.toFixed(2);
+        }
+        return String(parseFloat(as4));
+    }
+    function montoPaquete(p) {
+        var peso = parseFloat(p.peso_lb ?? 0) || 0;
+        var tarifa = parseFloat(p.tarifa_manual ?? p.tarifa ?? 1) || 0;
+        if (p.monto_calculado !== null && p.monto_calculado !== undefined && p.monto_calculado !== '') {
+            return roundMoney(parseFloat(p.monto_calculado));
+        }
+        return roundMoney(peso * tarifa);
+    }
     function mostrarSpinner(contenedor) {
         $(contenedor).html('<div class="text-center py-3"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div></div>');
     }
@@ -211,16 +232,17 @@ $(document).ready(function() {
                         </thead>
                         <tbody>`;
                     resp.paquetes.forEach(p => {
-                        const peso = parseFloat(p.peso_lb ?? 0);
-                        const tarifa = parseFloat(p.tarifa_manual ?? p.tarifa ?? 1);
-                        const monto = peso * tarifa;
-                        tabla += `<tr>
+                        const peso = parseFloat(p.peso_lb ?? 0) || 0;
+                        const tarifa = parseFloat(p.tarifa_manual ?? p.tarifa ?? 1) || 0;
+                        const monto = montoPaquete(p);
+                        const pesoFmt = p.peso_fmt || formatPeso(peso);
+                        tabla += `<tr data-notas="${p.notas || ''}" data-peso="${peso}" data-tarifa="${tarifa}" data-monto="${monto}">
                             <td><input type="checkbox" class="paquete-checkbox" value="${p.id}"></td>
                             <td>${p.numero_guia ?? '-'}</td>
                             <td>${p.notas ?? '-'}</td>
                             <td>${p.tracking_codigo ?? '-'}</td>
                             <td>${p.servicio ?? '-'}</td>
-                            <td>${p.peso_lb ?? '-'}</td>
+                            <td>${pesoFmt}</td>
                             <td>$${tarifa.toFixed(2)}</td>
                             <td>$${monto.toFixed(2)}</td>
                         </tr>`;
@@ -259,14 +281,18 @@ $(document).ready(function() {
         let inputs = '';
         paquetesSeleccionados.forEach(id => {
             var fila = $(".paquete-checkbox[value='"+id+"']").closest('tr');
+            var notas = fila.attr('data-notas') || fila.find('td').eq(2).text().trim();
+            var peso = fila.attr('data-peso') || '0';
+            var tarifa = fila.attr('data-tarifa') || '0';
+            var monto = fila.attr('data-monto') || '0';
             inputs += `<input type="hidden" name="paquetes[]" value="${id}">`;
             inputs += `<input type="hidden" name="paquete_guia_${id}" value="${fila.find('td').eq(1).text().trim()}">`;
-            inputs += `<input type="hidden" name="paquete_descripcion_${id}" value="${fila.find('td').eq(2).text().trim()}">`;
+            inputs += `<input type="hidden" name="paquete_descripcion_${id}" value="${notas}">`;
             inputs += `<input type="hidden" name="paquete_tracking_${id}" value="${fila.find('td').eq(3).text().trim()}">`;
             inputs += `<input type="hidden" name="paquete_servicio_${id}" value="${fila.find('td').eq(4).text().trim()}">`;
-            inputs += `<input type="hidden" name="paquete_peso_${id}" value="${fila.find('td').eq(5).text().trim()}">`;
-            inputs += `<input type="hidden" name="paquete_tarifa_${id}" value="${parseFloat(fila.find('td').eq(6).text().replace('$','')) || 0}">`;
-            inputs += `<input type="hidden" name="paquete_valor_${id}" value="${parseFloat(fila.find('td').eq(7).text().replace('$','')) || 0}">`;
+            inputs += `<input type="hidden" name="paquete_peso_${id}" value="${peso}">`;
+            inputs += `<input type="hidden" name="paquete_tarifa_${id}" value="${tarifa}">`;
+            inputs += `<input type="hidden" name="paquete_valor_${id}" value="${monto}">`;
         });
         $('#inputs_paquetes').html(inputs);
         // Habilita o deshabilita el botón guardar
@@ -277,11 +303,11 @@ $(document).ready(function() {
     function actualizarMontosFactura() {
         let total = 0;
         $('.paquete-checkbox:checked').each(function() {
-            var fila = $(this).closest('tr');
-            total += parseFloat(fila.find('td').eq(6).text().replace('$','')) || 0;
+            total += parseFloat($(this).closest('tr').attr('data-monto')) || 0;
         });
+        total = roundMoney(total);
         $('#monto_total').val(total.toFixed(2));
-        $('#monto_local').val(total.toFixed(2)); // Si tienes lógica de moneda local, cámbiala aquí
+        $('#monto_local').val(total.toFixed(2));
     }
 
     // PDF Preview: debounce + abort (misma ruta y datos que antes)

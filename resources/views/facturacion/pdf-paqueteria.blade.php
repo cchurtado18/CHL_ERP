@@ -7,13 +7,27 @@
     $logoCh = public_path('CH_Logistics_Logo.png');
     $cliente = $factura->cliente ?? null;
 
+    $lineMoney = function ($p) {
+        if (is_object($p) && method_exists($p, 'montoFacturable')) {
+            return $p->montoFacturable();
+        }
+        $monto = (float) (is_object($p) ? ($p->monto_calculado ?? 0) : ($p['monto_calculado'] ?? 0));
+        if ($monto != 0.0) {
+            return round($monto, 2, PHP_ROUND_HALF_UP);
+        }
+        $pesoLinea = (float) (is_object($p) ? ($p->peso_lb ?? 0) : ($p['peso_lb'] ?? 0));
+        $tarifaLinea = (float) (is_object($p) ? ($p->tarifa_manual ?? ($p->tarifa ?? 0)) : ($p['tarifa_manual'] ?? ($p['tarifa'] ?? 0)));
+
+        return \App\Models\Inventario::calcularMonto($pesoLinea, $tarifaLinea);
+    };
+
     $paquetes = collect($factura->paquetes ?? []);
     $subtotalCalc = 0.0;
     $pesoTotal = 0.0;
     $lbsAereas = 0.0;
     $lbsMaritimas = 0.0;
     foreach ($paquetes as $p) {
-        $subtotalCalc += (float) (is_object($p) ? ($p->monto_calculado ?? 0) : ($p['monto_calculado'] ?? 0));
+        $subtotalCalc += $lineMoney($p);
         $peso = (float) (is_object($p) ? ($p->peso_lb ?? 0) : ($p['peso_lb'] ?? 0));
         $pesoTotal += $peso;
         $srvRaw = is_object($p) ? ($p->servicio ?? null) : ($p['servicio'] ?? null);
@@ -26,8 +40,9 @@
             $lbsMaritimas += $peso;
         }
     }
-    $delivery = (float) ($factura->delivery ?? 0);
-    $grandTotal = $subtotalCalc + $delivery;
+    $subtotalCalc = round($subtotalCalc, 2, PHP_ROUND_HALF_UP);
+    $delivery = round((float) ($factura->delivery ?? 0), 2, PHP_ROUND_HALF_UP);
+    $grandTotal = round($subtotalCalc + $delivery, 2, PHP_ROUND_HALF_UP);
 
     $telCliente = trim((string) ($cliente->telefono ?? ''));
     $dirCliente = trim((string) ($cliente->direccion ?? ''));
@@ -234,14 +249,14 @@
                     $srv = $srvRaw ? (is_object($srvRaw) ? ($srvRaw->tipo_servicio ?? '-') : $srvRaw) : 'Maritimo';
                     $peso = (float) (is_object($paquete) ? ($paquete->peso_lb ?? 0) : ($paquete['peso_lb'] ?? 0));
                     $unit = (float) (is_object($paquete) ? ($paquete->tarifa_manual ?? ($paquete->tarifa ?? 0)) : ($paquete['tarifa_manual'] ?? ($paquete['tarifa'] ?? 0)));
-                    $valor = (float) (is_object($paquete) ? ($paquete->monto_calculado ?? 0) : ($paquete['monto_calculado'] ?? 0));
+                    $valor = $lineMoney($paquete);
                 @endphp
                 <tr>
                     <td class="col-num">{{ $guia }}</td>
                     <td>{{ $desc }}</td>
                     <td class="col-num tracking-col">{{ $trk }}</td>
                     <td class="col-num">{{ ucfirst((string) $srv) }}</td>
-                    <td class="c">{{ rtrim(rtrim(number_format($peso, 2, '.', ''), '0'), '.') }}</td>
+                    <td class="c">{{ \App\Models\Inventario::formatPeso($peso) }}</td>
                     <td class="r">${{ number_format($unit, 2) }}</td>
                     <td class="r">${{ number_format($valor, 2) }}</td>
                 </tr>
@@ -255,9 +270,9 @@
 
         <div class="totals-wrap">
             <div class="line">
-                Lbs Aéreas: <span class="sub">{{ rtrim(rtrim(number_format($lbsAereas, 2, '.', ''), '0'), '.') }}</span>
+                Lbs Aéreas: <span class="sub">{{ \App\Models\Inventario::formatPeso($lbsAereas) }}</span>
                 &nbsp;&nbsp;|&nbsp;&nbsp;
-                Lbs Marítimas: <span class="sub">{{ rtrim(rtrim(number_format($lbsMaritimas, 2, '.', ''), '0'), '.') }}</span>
+                Lbs Marítimas: <span class="sub">{{ \App\Models\Inventario::formatPeso($lbsMaritimas) }}</span>
             </div>
             <div class="line">Subtotal: <span class="sub">${{ number_format($subtotalCalc, 2) }}</span></div>
             @if($delivery > 0)

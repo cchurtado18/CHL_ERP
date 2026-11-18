@@ -52,7 +52,7 @@
                         </a>
                     </td>
                     <td class="px-4 py-2 capitalize">{{ $p->servicio->tipo_servicio ?? '—' }}</td>
-                    <td class="px-4 py-2">{{ number_format($p->peso_lb ?? 0, 2) }} lb</td>
+                    <td class="px-4 py-2">{{ \App\Models\Inventario::formatPeso($p->peso_lb) }} lb</td>
                     <td class="px-4 py-2">${{ number_format($p->monto_calculado ?? 0, 2) }}</td>
                 </tr>
             @endforeach
