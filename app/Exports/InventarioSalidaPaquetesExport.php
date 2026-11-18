@@ -7,12 +7,16 @@ use App\Models\InventarioSalida;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Events\AfterSheet;
 
-class InventarioSalidaPaquetesExport implements FromCollection, WithHeadings, WithMapping
+class InventarioSalidaPaquetesExport implements FromCollection, WithHeadings, WithMapping, WithEvents
 {
     private ?InventarioSalida $salida = null;
+
+    private ?Collection $paquetes = null;
 
     public function __construct(private readonly int $inventarioSalidaId)
     {
@@ -21,15 +25,19 @@ class InventarioSalidaPaquetesExport implements FromCollection, WithHeadings, Wi
 
     public function collection(): Collection
     {
+        if ($this->paquetes !== null) {
+            return $this->paquetes;
+        }
+
         if (! $this->salida) {
-            return collect();
+            return $this->paquetes = collect();
         }
 
         $ids = DB::table('inventario_salida_paquete')
             ->where('inventario_salida_id', $this->salida->id)
             ->pluck('inventario_id');
 
-        return Inventario::query()
+        return $this->paquetes = Inventario::query()
             ->whereIn('id', $ids)
             ->with(['cliente', 'servicio', 'factura'])
             ->orderByDesc('fecha_ingreso')
@@ -86,6 +94,26 @@ class InventarioSalidaPaquetesExport implements FromCollection, WithHeadings, Wi
             $row->factura?->etiquetaFolio(),
             $row->factura_id,
             $row->notas,
+        ];
+    }
+
+    public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => function (AfterSheet $event) {
+                $sheet = $event->sheet->getDelegate();
+                $paquetes = $this->collection();
+                $row = $sheet->getHighestRow() + 2;
+
+                $sheet->setCellValue('A'.$row, 'Cantidad de paquetes');
+                $sheet->setCellValue('B'.$row, $paquetes->count());
+                $sheet->getStyle('A'.$row.':B'.$row)->getFont()->setBold(true);
+
+                $row++;
+                $sheet->setCellValue('A'.$row, 'Total peso (lb)');
+                $sheet->setCellValue('B'.$row, (float) $paquetes->sum(fn ($p) => (float) ($p->peso_lb ?? 0)));
+                $sheet->getStyle('A'.$row.':B'.$row)->getFont()->setBold(true);
+            },
         ];
     }
 }

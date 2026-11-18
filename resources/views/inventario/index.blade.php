@@ -142,7 +142,7 @@
             <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                     <h2 class="text-lg font-semibold text-[#15537c]"><i class="fas fa-dolly mr-2"></i>Salida entre sucursales</h2>
-                    <p class="mt-1 text-sm text-slate-700">Active este modo, marque los paquetes que salen y describa el envío. Al guardar queda registrado en el sistema para auditoría.</p>
+                    <p class="mt-1 text-sm text-slate-700">Active este modo, marque los paquetes que salen y describa el envío. Puede cambiar de página: la selección se mantiene hasta que guarde o cancele.</p>
                 </div>
             </div>
             <div>
@@ -201,7 +201,7 @@
                             <div class="break-words font-medium leading-snug text-black" title="{{ $item->cliente->nombre_completo ?? 'N/A' }}">{{ $item->cliente->nombre_completo ?? 'N/A' }}</div>
                         </td>
                         <td class="px-4 py-1.5 text-center"><span class="rounded-md bg-slate-100 px-2 py-0.5 text-sm font-medium text-black">{{ $item->servicio->tipo_servicio ?? 'N/A' }}</span></td>
-                        <td class="px-4 py-1.5 text-center font-medium text-black whitespace-nowrap">{{ number_format($item->peso_lb, 2) }} lb</td>
+                        <td class="px-4 py-1.5 text-center font-medium text-black whitespace-nowrap">{{ \App\Models\Inventario::formatPeso($item->peso_lb) }} lb</td>
                         <td class="px-4 py-1.5 text-center"><code class="rounded bg-slate-100 px-1.5 py-0.5 text-sm font-medium text-black">{{ $item->numero_guia }}</code></td>
                         <td class="px-4 py-1.5 text-center">
                             @if(!empty($item->tracking_codigo))
@@ -265,7 +265,7 @@
                 <div class="flex items-start justify-between gap-3">
                     <div class="min-w-0 flex-1">
                         <p class="truncate text-lg font-semibold text-black">{{ $item->cliente->nombre_completo ?? 'N/A' }}</p>
-                        <p class="mt-1 text-sm font-medium text-slate-700">{{ $item->servicio->tipo_servicio ?? 'N/A' }} · {{ number_format($item->peso_lb, 2) }} lb</p>
+                        <p class="mt-1 text-sm font-medium text-slate-700">{{ $item->servicio->tipo_servicio ?? 'N/A' }} · {{ \App\Models\Inventario::formatPeso($item->peso_lb) }} lb</p>
                     </div>
                     @php $estadoBadge = $item->estado === 'recibido' ? 'bg-amber-200 text-amber-900' : ($item->estado === 'entregado' ? 'bg-emerald-200 text-emerald-900' : 'bg-slate-200 text-slate-900'); @endphp
                     <div class="flex shrink-0 flex-col items-end gap-1">
@@ -384,6 +384,7 @@ function closeDeleteModal() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    var STORAGE_KEY = 'chl.inventario.salida';
     var panel = document.getElementById('panelModoSalida');
     var toggleBtn = document.getElementById('btnToggleModoSalida');
     var toggleLabel = document.getElementById('btnToggleModoSalidaLabel');
@@ -391,54 +392,144 @@ document.addEventListener('DOMContentLoaded', function() {
     var selectAll = document.getElementById('selectAllPaquetes');
     var salidaCols = Array.prototype.slice.call(document.querySelectorAll('.salida-sel-col'));
     var contador = document.getElementById('salidaContadorSel');
+    var oldIds = @json(collect(old('paquetes', []))->map(fn ($v) => (string) $v)->values());
 
     function paqueteChecks() {
         return Array.prototype.slice.call(document.querySelectorAll('.paquete-select'));
     }
 
-    function countSeleccionUnicos() {
-        var vistos = {};
-        var n = 0;
+    function defaultState() {
+        return { activo: false, ids: [], descripcion: '', origen: '', destino: '' };
+    }
+
+    function loadState() {
+        try {
+            var parsed = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || 'null');
+            return parsed && typeof parsed === 'object' ? Object.assign(defaultState(), parsed) : defaultState();
+        } catch (e) {
+            return defaultState();
+        }
+    }
+
+    function saveState(partial) {
+        var next = Object.assign(loadState(), partial || {});
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+        return next;
+    }
+
+    function selectedSet() {
+        return new Set((loadState().ids || []).map(String));
+    }
+
+    function uniquePageIds() {
+        var ids = [];
+        var seen = {};
         paqueteChecks().forEach(function(c) {
-            if (c.checked && !vistos[c.value]) {
-                vistos[c.value] = true;
-                n++;
+            if (!seen[c.value]) {
+                seen[c.value] = true;
+                ids.push(String(c.value));
             }
         });
-        return n;
+        return ids;
+    }
+
+    function persistFormFields() {
+        var ta = document.getElementById('salida_descripcion');
+        var o = document.getElementById('salida_origen');
+        var d = document.getElementById('salida_destino');
+        saveState({
+            descripcion: ta ? ta.value : '',
+            origen: o ? o.value : '',
+            destino: d ? d.value : ''
+        });
+    }
+
+    function persistCurrentPageChecks() {
+        var ids = selectedSet();
+        var seen = {};
+        paqueteChecks().forEach(function(c) {
+            var id = String(c.value);
+            if (seen[id]) return;
+            seen[id] = true;
+            if (c.checked) ids.add(id);
+            else ids.delete(id);
+        });
+        saveState({ ids: Array.from(ids), activo: true });
+    }
+
+    function restoreChecks() {
+        var ids = selectedSet();
+        paqueteChecks().forEach(function(c) {
+            c.checked = ids.has(String(c.value));
+        });
+    }
+
+    function restoreFormFields(state) {
+        var ta = document.getElementById('salida_descripcion');
+        var o = document.getElementById('salida_origen');
+        var d = document.getElementById('salida_destino');
+        if (ta && !ta.value) ta.value = state.descripcion || '';
+        if (o && !o.value) o.value = state.origen || '';
+        if (d && !d.value) d.value = state.destino || '';
+    }
+
+    function injectHiddenIds() {
+        if (!formSalida) return;
+        formSalida.querySelectorAll('input.salida-id-persist').forEach(function(el) { el.remove(); });
+        var onPageChecked = {};
+        paqueteChecks().forEach(function(c) {
+            if (c.checked) onPageChecked[String(c.value)] = true;
+        });
+        selectedSet().forEach(function(id) {
+            if (onPageChecked[id]) return;
+            var input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'paquetes[]';
+            input.value = id;
+            input.className = 'salida-id-persist';
+            formSalida.appendChild(input);
+        });
+    }
+
+    function countSeleccionUnicos() {
+        return selectedSet().size;
     }
 
     function syncMismoPaquete(changed) {
         var val = changed.value;
         var on = changed.checked;
         paqueteChecks().forEach(function(c) {
-            if (c.value === val) {
-                c.checked = on;
-            }
+            if (c.value === val) c.checked = on;
         });
     }
 
-    function actualizarContador() {
-        if (contador) {
-            var n = countSeleccionUnicos();
-            contador.textContent = n + ' paquete' + (n === 1 ? '' : 's') + ' seleccionado' + (n === 1 ? '' : 's');
-        }
+    function syncSelectAll() {
+        if (!selectAll) return;
+        var ids = uniquePageIds();
+        var sel = selectedSet();
+        selectAll.checked = ids.length > 0 && ids.every(function(id) { return sel.has(id); });
     }
 
-    function setModoSalida(activo) {
+    function actualizarContador() {
+        if (!contador) return;
+        var n = countSeleccionUnicos();
+        contador.textContent = n + ' paquete' + (n === 1 ? '' : 's') + ' seleccionado' + (n === 1 ? '' : 's');
+        syncSelectAll();
+    }
+
+    function setModoSalida(activo, opts) {
+        opts = opts || {};
         if (!panel || !toggleBtn) return;
         salidaCols.forEach(function(el) {
-            if (activo) {
-                el.classList.remove('hidden');
-            } else {
-                el.classList.add('hidden');
-            }
+            if (activo) el.classList.remove('hidden');
+            else el.classList.add('hidden');
         });
         if (activo) {
             panel.classList.remove('hidden');
             toggleBtn.setAttribute('aria-pressed', 'true');
             toggleBtn.classList.add('ring-2', 'ring-[#15537c]', 'ring-offset-2');
             if (toggleLabel) toggleLabel.textContent = 'Cancelar modo salida';
+            saveState({ activo: true });
         } else {
             panel.classList.add('hidden');
             toggleBtn.setAttribute('aria-pressed', 'false');
@@ -446,7 +537,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (toggleLabel) toggleLabel.textContent = 'Registrar salida entre sucursales';
             paqueteChecks().forEach(function(c) { c.checked = false; });
             if (selectAll) selectAll.checked = false;
-            if (formSalida) {
+            if (!opts.keepStorage) {
+                sessionStorage.removeItem(STORAGE_KEY);
                 var ta = document.getElementById('salida_descripcion');
                 var o = document.getElementById('salida_origen');
                 var d = document.getElementById('salida_destino');
@@ -469,6 +561,7 @@ document.addEventListener('DOMContentLoaded', function() {
         selectAll.addEventListener('change', function() {
             var on = selectAll.checked;
             paqueteChecks().forEach(function(c) { c.checked = on; });
+            persistCurrentPageChecks();
             actualizarContador();
         });
     }
@@ -476,29 +569,51 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('change', function(e) {
         if (!e.target || !e.target.classList || !e.target.classList.contains('paquete-select')) return;
         syncMismoPaquete(e.target);
-        if (selectAll) {
-            var checks = paqueteChecks();
-            var grupos = {};
-            checks.forEach(function(c) { grupos[c.value] = grupos[c.value] || []; grupos[c.value].push(c); });
-            selectAll.checked = checks.length > 0 && Object.keys(grupos).every(function(k) {
-                return grupos[k][0].checked;
-            });
-        }
+        persistCurrentPageChecks();
         actualizarContador();
+    });
+
+    ['salida_descripcion', 'salida_origen', 'salida_destino'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('input', persistFormFields);
+    });
+
+    window.addEventListener('pagehide', function() {
+        if (toggleBtn && toggleBtn.getAttribute('aria-pressed') === 'true') {
+            persistFormFields();
+            persistCurrentPageChecks();
+            saveState({ activo: true });
+        }
     });
 
     if (formSalida) {
         formSalida.addEventListener('submit', function(e) {
+            persistCurrentPageChecks();
+            injectHiddenIds();
             if (countSeleccionUnicos() === 0) {
                 e.preventDefault();
                 alert('Seleccione al menos un paquete para registrar la salida.');
+                return;
             }
+            sessionStorage.removeItem(STORAGE_KEY);
         });
     }
 
-    @if($errors->any())
-    setModoSalida(true);
-    @endif
+    var state = loadState();
+    if (oldIds.length) {
+        var merged = selectedSet();
+        oldIds.forEach(function(id) { merged.add(String(id)); });
+        state = saveState({ activo: true, ids: Array.from(merged) });
+    }
+
+    if (state.activo || oldIds.length) {
+        restoreFormFields(state);
+        setModoSalida(true);
+        restoreChecks();
+        persistCurrentPageChecks();
+        actualizarContador();
+    }
 });
 </script>
 @endpush

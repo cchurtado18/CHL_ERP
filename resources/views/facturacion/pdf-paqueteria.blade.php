@@ -169,8 +169,8 @@
                         </div>
                     @endif
                     <div class="addr-us">
-                        <div>8307 NW 68TH ST Miami FL 33166</div>
-                        <div class="ph">www.enviosch.com</div>
+                        <div>6619 NW 84TH AVE Miami FL 33166</div>
+                        <div class="ph">www.chlogisticsni.com</div>
                     </div>
                 </td>
                 <td class="header-right">
@@ -180,7 +180,7 @@
                             <span class="doc-num">{{ $numeroNota }}</span>
                         </div>
                         <div class="addr-ni">
-                            <div>Km 11 carretera Masaya, de la entrada al Colegio Pureza, 100 mts al Este.</div>
+                            <div>Reparto San Juan, costado norte del parque Plaza La Biblia, media cuadra al lago.</div>
                             <div class="ph">+505 8928 8565</div>
                         </div>
                     </div>

@@ -42,9 +42,13 @@
         </dl>
     </div>
 
+    @php
+        $cantidadPaquetes = $salida->paquetes->count();
+        $pesoTotal = $salida->paquetes->sum(fn ($p) => (float) ($p->peso_lb ?? 0));
+    @endphp
     <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <div class="border-b border-slate-100 bg-slate-50 px-4 py-3">
-            <h2 class="text-lg font-semibold text-slate-800">Paquetes incluidos ({{ $salida->paquetes->count() }})</h2>
+            <h2 class="text-lg font-semibold text-slate-800">Paquetes incluidos ({{ $cantidadPaquetes }})</h2>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full min-w-[900px] border-collapse text-left text-sm text-black">
@@ -66,7 +70,7 @@
                         <td class="px-3 py-2 font-mono text-xs">{{ $p->tracking_codigo ?: '—' }}</td>
                         <td class="px-3 py-2">{{ $p->cliente?->nombre_completo ?? '—' }}</td>
                         <td class="px-3 py-2">{{ $p->servicio?->tipo_servicio ?? '—' }}</td>
-                        <td class="px-3 py-2 text-center">{{ number_format((float) $p->peso_lb, 2) }} lb</td>
+                        <td class="px-3 py-2 text-center">{{ \App\Models\Inventario::formatPeso($p->peso_lb) }} lb</td>
                         <td class="px-3 py-2 text-center">{{ $p->estado }}</td>
                         <td class="px-3 py-2 text-right">
                             <a href="{{ route('inventario.show', $p->id) }}" class="text-[#15537c] font-medium hover:underline">Ver paquete</a>
@@ -74,6 +78,13 @@
                     </tr>
                     @endforeach
                 </tbody>
+                <tfoot>
+                    <tr class="border-t-2 border-[#15537c] bg-[#15537c]/10">
+                        <td colspan="4" class="px-3 py-3 text-right text-sm font-bold uppercase tracking-wide text-[#15537c]">Totales de esta salida</td>
+                        <td class="px-3 py-3 text-center text-base font-bold text-slate-900">{{ \App\Models\Inventario::formatPeso($pesoTotal) }} lb</td>
+                        <td colspan="2" class="px-3 py-3 text-sm font-bold text-slate-800">{{ $cantidadPaquetes }} {{ $cantidadPaquetes === 1 ? 'paquete' : 'paquetes' }}</td>
+                    </tr>
+                </tfoot>
             </table>
         </div>
     </div>

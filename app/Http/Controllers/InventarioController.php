@@ -16,7 +16,7 @@ class InventarioController extends Controller
     public function index(Request $request)
     {
         $query = Inventario::with(['cliente', 'servicio']);
-        $clientes = \App\Models\Cliente::orderBy('nombre_completo')->get();
+        $clientes = Cliente::orderBy('nombre_completo')->get(['id', 'nombre_completo']);
         $servicios = \App\Models\Servicio::orderBy('tipo_servicio')->get();
 
         $busqueda = $request->input('busqueda');
@@ -66,7 +66,7 @@ class InventarioController extends Controller
 
     public function create()
     {
-        $clientes = Cliente::all();
+        $clientes = Cliente::orderBy('nombre_completo')->get(['id', 'nombre_completo']);
         $servicios = Servicio::all();
 
         return view('inventario.create', compact('clientes', 'servicios'));
@@ -76,14 +76,15 @@ class InventarioController extends Controller
     {
         $request->validate([
             'cliente_id' => 'required|exists:clientes,id',
-            'peso_lb' => 'nullable|numeric',
+            'peso_lb' => 'nullable|numeric|min:0|decimal:0,6',
             'volumen_pie3' => 'nullable|numeric',
-            'tarifa_manual' => 'nullable|numeric',
+            'tarifa_manual' => 'nullable|numeric|min:0',
             'estado' => 'required|string|max:50',
             'numero_guia' => 'required|string|min:6|max:9|unique:inventario,numero_guia',
             'notas' => 'nullable|string',
             'servicio_id' => 'nullable|exists:servicios,id',
         ], [
+            'peso_lb.decimal' => 'El peso puede tener hasta 6 decimales después del punto.',
             'numero_guia.unique' => 'El número de guía ya está en uso. Por favor, ingresa uno diferente.',
             'numero_guia.min' => 'El número de guía debe tener al menos 6 caracteres.',
             'numero_guia.max' => 'El número de guía no puede exceder 9 caracteres.',
@@ -100,33 +101,8 @@ class InventarioController extends Controller
         $data = $request->all();
         $data['fecha_ingreso'] = now();
 
-        // Cálculo automático del monto
-        $peso = floatval($data['peso_lb'] ?? 0);
-        $volumen = floatval($data['volumen_pie3'] ?? 0);
-        $tarifa = null;
-
-        // Si hay tarifa manual, usarla
-        if (isset($data['tarifa_manual']) && $data['tarifa_manual'] !== null && $data['tarifa_manual'] !== '') {
-            $tarifa = floatval($data['tarifa_manual']);
-        }
-        // Si no hay tarifa manual, buscar tarifa específica del cliente y servicio
-        elseif (isset($data['cliente_id'], $data['servicio_id'])) {
-            $tarifaCliente = \App\Models\TarifaCliente::where('cliente_id', $data['cliente_id'])
-                ->where('servicio_id', $data['servicio_id'])
-                ->first();
-
-            if ($tarifaCliente) {
-                $tarifa = floatval($tarifaCliente->tarifa);
-                // Guardar la tarifa automática en el campo tarifa_manual para referencia
-                $data['tarifa_manual'] = $tarifa;
-            } else {
-                $tarifa = 1.00; // Tarifa por defecto
-            }
-        } else {
-            $tarifa = 1.00; // Tarifa por defecto
-        }
-
-        $data['monto_calculado'] = $peso * $tarifa;
+        $data['peso_lb'] = round((float) ($data['peso_lb'] ?? 0), 4);
+        $data['monto_calculado'] = $this->montoDesdePesoYTarifa($data);
 
         $inventario = Inventario::create($data);
 
@@ -148,7 +124,7 @@ class InventarioController extends Controller
     public function edit($id)
     {
         $inventario = Inventario::findOrFail($id);
-        $clientes = Cliente::all();
+        $clientes = Cliente::orderBy('nombre_completo')->get(['id', 'nombre_completo']);
         $servicios = Servicio::all();
 
         return view('inventario.edit', [
@@ -165,14 +141,15 @@ class InventarioController extends Controller
 
         $request->validate([
             'cliente_id' => 'required|exists:clientes,id',
-            'peso_lb' => 'nullable|numeric',
+            'peso_lb' => 'nullable|numeric|min:0|decimal:0,6',
             'volumen_pie3' => 'nullable|numeric',
-            'tarifa_manual' => 'nullable|numeric',
+            'tarifa_manual' => 'nullable|numeric|min:0',
             'estado' => 'required|string|max:50',
             'numero_guia' => 'required|string|min:6|max:9|unique:inventario,numero_guia,'.$inventario->id,
             'notas' => 'nullable|string',
             'servicio_id' => 'nullable|exists:servicios,id',
         ], [
+            'peso_lb.decimal' => 'El peso puede tener hasta 6 decimales después del punto.',
             'numero_guia.unique' => 'El número de guía ya está en uso. Por favor, ingresa uno diferente.',
             'numero_guia.min' => 'El número de guía debe tener al menos 6 caracteres.',
             'numero_guia.max' => 'El número de guía no puede exceder 9 caracteres.',
@@ -188,33 +165,8 @@ class InventarioController extends Controller
 
         $data = $request->all();
 
-        // Recalcular monto
-        $peso = floatval($data['peso_lb'] ?? 0);
-        $volumen = floatval($data['volumen_pie3'] ?? 0);
-        $tarifa = null;
-
-        // Si hay tarifa manual, usarla
-        if (isset($data['tarifa_manual']) && $data['tarifa_manual'] !== null && $data['tarifa_manual'] !== '') {
-            $tarifa = floatval($data['tarifa_manual']);
-        }
-        // Si no hay tarifa manual, buscar tarifa específica del cliente y servicio
-        elseif (isset($data['cliente_id'], $data['servicio_id'])) {
-            $tarifaCliente = \App\Models\TarifaCliente::where('cliente_id', $data['cliente_id'])
-                ->where('servicio_id', $data['servicio_id'])
-                ->first();
-
-            if ($tarifaCliente) {
-                $tarifa = floatval($tarifaCliente->tarifa);
-                // Guardar la tarifa automática en el campo tarifa_manual para referencia
-                $data['tarifa_manual'] = $tarifa;
-            } else {
-                $tarifa = 1.00; // Tarifa por defecto
-            }
-        } else {
-            $tarifa = 1.00; // Tarifa por defecto
-        }
-
-        $data['monto_calculado'] = $peso * $tarifa;
+        $data['peso_lb'] = round((float) ($data['peso_lb'] ?? 0), 4);
+        $data['monto_calculado'] = $this->montoDesdePesoYTarifa($data);
 
         $inventario->update($data);
 
@@ -288,6 +240,35 @@ class InventarioController extends Controller
             'exists' => $existe,
             'message' => $existe ? 'El número de guía ya está en uso. Por favor, ingresa uno diferente.' : '',
         ]);
+    }
+
+    /**
+     * Monto = peso × tarifa, redondeado a 2 decimales (dinero).
+     * El peso puede llevar hasta 4 decimales; no se trunca antes de multiplicar.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function montoDesdePesoYTarifa(array &$data): float
+    {
+        $peso = (float) ($data['peso_lb'] ?? 0);
+        $tarifa = null;
+
+        if (isset($data['tarifa_manual']) && $data['tarifa_manual'] !== null && $data['tarifa_manual'] !== '') {
+            $tarifa = (float) $data['tarifa_manual'];
+        } elseif (isset($data['cliente_id'], $data['servicio_id'])) {
+            $tarifaCliente = \App\Models\TarifaCliente::where('cliente_id', $data['cliente_id'])
+                ->where('servicio_id', $data['servicio_id'])
+                ->first();
+
+            if ($tarifaCliente) {
+                $tarifa = (float) $tarifaCliente->tarifa;
+                $data['tarifa_manual'] = $tarifa;
+            }
+        }
+
+        $tarifa = $tarifa ?? 1.00;
+
+        return Inventario::calcularMonto($peso, $tarifa);
     }
 
     private function notificarEdicionAgente(Inventario $inventario, User $agente): void

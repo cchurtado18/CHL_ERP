@@ -30,6 +30,29 @@ class Inventario extends Model
         'tracking_codigo',
     ];
 
+    protected $casts = [
+        'peso_lb' => 'decimal:4',
+        'tarifa_manual' => 'decimal:2',
+        'monto_calculado' => 'decimal:2',
+    ];
+
+    public static function formatPeso(mixed $peso): string
+    {
+        if ($peso === null || $peso === '') {
+            return '0';
+        }
+
+        $formatted = number_format((float) $peso, 4, '.', '');
+        $formatted = rtrim(rtrim($formatted, '0'), '.');
+
+        return $formatted === '' ? '0' : $formatted;
+    }
+
+    public static function calcularMonto(float $peso, float $tarifa): float
+    {
+        return round($peso * $tarifa, 2, PHP_ROUND_HALF_UP);
+    }
+
     // Relaciones
     public function cliente()
     {

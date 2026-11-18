@@ -51,7 +51,7 @@
                             <label for="peso_lb" class="mb-1.5 block text-sm font-medium text-slate-600">Peso (lb) <span class="text-red-500">*</span></label>
                             <div class="flex rounded-lg border border-slate-300 focus-within:ring-1 focus-within:ring-[#15537c] focus-within:border-[#15537c]">
                                 <span class="flex items-center rounded-l-lg border-r border-slate-300 bg-slate-50 px-3 text-slate-600">lb</span>
-                                <input type="number" step="0.01" name="peso_lb" id="peso_lb" value="{{ old('peso_lb') }}" required placeholder="0.00" class="min-w-0 flex-1 rounded-r-lg border-0 px-4 py-2.5 text-base">
+                                <input type="number" step="any" min="0" inputmode="decimal" name="peso_lb" id="peso_lb" value="{{ old('peso_lb') }}" required placeholder="0.0000" class="min-w-0 flex-1 rounded-r-lg border-0 px-4 py-2.5 text-base">
                             </div>
                             @error('peso_lb')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                         </div>
@@ -200,8 +200,9 @@
     window.calculateMonto = function() {
         if (!pesoInput || !montoInput) return;
         var peso = parseFloat(pesoInput.value) || 0;
-        var rate = parseFloat(tarifaManualInput && tarifaManualInput.value ? tarifaManualInput.value : 0) || 1;
-        montoInput.value = (peso * rate).toFixed(2);
+        var rawRate = tarifaManualInput && tarifaManualInput.value !== '' ? parseFloat(tarifaManualInput.value) : NaN;
+        var rate = Number.isFinite(rawRate) ? rawRate : 1;
+        montoInput.value = (Math.round((peso * rate) * 100) / 100).toFixed(2);
     };
 
     window.obtenerTarifaCliente = function() {

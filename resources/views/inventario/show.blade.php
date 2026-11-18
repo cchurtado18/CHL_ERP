@@ -38,7 +38,7 @@
             </div>
             <div>
                 <p class="text-sm font-medium text-slate-500"><i class="fas fa-weight-hanging mr-1.5 text-[#15537c]"></i>Peso (lb)</p>
-                <p class="mt-0.5 text-slate-800">{{ number_format($paquete->peso_lb, 2) }}</p>
+                <p class="mt-0.5 text-slate-800">{{ \App\Models\Inventario::formatPeso($paquete->peso_lb) }}</p>
             </div>
             <div>
                 <p class="text-sm font-medium text-slate-500"><i class="fas fa-cube mr-1.5 text-[#15537c]"></i>Volumen (ft³)</p>

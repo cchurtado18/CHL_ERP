@@ -100,7 +100,7 @@
                                         Peso (lb) *
                                     </label>
                                     <div class="input-group">
-                                        <input type="number" step="0.01" name="peso_lb" class="form-control @error('peso_lb') is-invalid @enderror" value="{{ $paquete->peso_lb }}" required placeholder="0.00">
+                                        <input type="number" step="any" min="0" inputmode="decimal" name="peso_lb" class="form-control @error('peso_lb') is-invalid @enderror" value="{{ old('peso_lb', \App\Models\Inventario::formatPeso($paquete->peso_lb)) }}" required placeholder="0.0000">
                                         <span class="input-group-text">lb</span>
                                     </div>
                                     @error('peso_lb')
@@ -326,16 +326,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function calculateMonto() {
         const peso = parseFloat(pesoInput.value) || 0;
-        let rate = 0;
-        if (tarifaManualInput.value) {
-            rate = parseFloat(tarifaManualInput.value) || 0;
-        } else if (clienteSelect.value && servicioSelect.value) {
-            rate = parseFloat(tarifaManualInput.value) || 0;
-        } else {
-            rate = 1.00;
-        }
-        const monto = peso * rate;
-        montoInput.value = monto.toFixed(2);
+        const rawRate = tarifaManualInput.value !== '' ? parseFloat(tarifaManualInput.value) : NaN;
+        const rate = Number.isFinite(rawRate) ? rawRate : 1;
+        montoInput.value = (Math.round((peso * rate) * 100) / 100).toFixed(2);
     }
 
     pesoInput.addEventListener('input', calculateMonto);
