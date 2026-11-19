@@ -82,6 +82,9 @@
                     <a href="{{ route('contabilidad.cxc.index') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
                         <i class="fas fa-file-invoice-dollar text-[#15537c]"></i> CxC
                     </a>
+                    <a href="{{ route('contabilidad.cxc.estados-cuenta') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                        <i class="fas fa-user-tag text-[#15537c]"></i> Estado de cuenta
+                    </a>
                 </div>
             </div>
         </div>

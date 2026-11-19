@@ -21,6 +21,9 @@
             </div>
             <div class="flex flex-wrap gap-2">
                 <a href="{{ route('contabilidad.cxc.index') }}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/10 px-4 py-2.5 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/20"><i class="fas fa-arrow-left"></i> Lista CxC</a>
+                @if($cxc->cliente_id || $cxc->factura?->cliente_id)
+                    <a href="{{ route('contabilidad.cxc.estado-cuenta', $cxc->cliente_id ?: $cxc->factura->cliente_id) }}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/10 px-4 py-2.5 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/20"><i class="fas fa-user-tag"></i> Estado de cuenta</a>
+                @endif
                 <a href="{{ route('facturacion.show', $cxc->factura_id) }}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-white/30 bg-white px-4 py-2.5 text-sm font-semibold text-[#15537c] transition hover:bg-slate-50"><i class="fas fa-file-invoice"></i> Ver factura</a>
             </div>
         </div>

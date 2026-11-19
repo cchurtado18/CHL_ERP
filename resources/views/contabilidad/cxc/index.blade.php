@@ -9,8 +9,15 @@
 @endphp
 <div class="mx-auto w-full max-w-[1400px] space-y-8">
     <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <h1 class="text-2xl font-bold text-slate-800">Cuentas por cobrar</h1>
-        <p class="mt-1 text-base text-slate-600">Control de saldos pendientes por factura.</p>
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-slate-800">Cuentas por cobrar</h1>
+                <p class="mt-1 text-base text-slate-600">Control de saldos pendientes por factura.</p>
+            </div>
+            <a href="{{ route('contabilidad.cxc.estados-cuenta') }}" class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#15537c] px-5 py-2.5 text-base font-semibold text-white shadow-sm hover:bg-[#0f3d5c]">
+                <i class="fas fa-user-tag"></i> Estado de cuenta por cliente
+            </a>
+        </div>
         <form class="mt-5 flex flex-wrap items-end gap-4" method="GET" action="{{ route('contabilidad.cxc.index') }}">
             <div class="min-w-[200px] flex-1">
                 <label class="mb-1.5 block text-sm font-medium text-slate-600">Cliente</label>
@@ -70,7 +77,11 @@
                                     $esCliente = ! empty($clienteNombre);
                                 @endphp
                                 <div class="space-y-1">
-                                    <div class="font-medium text-black">{{ $nombreMostrado }}</div>
+                                    @if(! empty($cxc->cliente_id) || $cxc->factura?->cliente_id)
+                                        <a href="{{ route('contabilidad.cxc.estado-cuenta', $cxc->cliente_id ?: $cxc->factura->cliente_id) }}" class="font-medium text-[#15537c] hover:underline">{{ $nombreMostrado }}</a>
+                                    @else
+                                        <div class="font-medium text-black">{{ $nombreMostrado }}</div>
+                                    @endif
                                     <span class="inline-flex items-center rounded-full px-2 py-0.5 text-sm font-semibold {{ $esCliente ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900' }}">
                                         {{ $esCliente ? 'Cliente empresa' : 'Remitente encomienda' }}
                                     </span>

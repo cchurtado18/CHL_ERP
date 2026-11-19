@@ -157,7 +157,10 @@
                             @else
                             <form method="POST" action="{{ route('facturacion.cambiar-estado', $factura->id) }}" class="inline">
                                 @csrf
-                                <select name="estado_pago" class="rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm focus:border-[#15537c] focus:ring-1 focus:ring-[#15537c]" onchange="this.form.submit()" {{ $factura->estado_pago === 'entregado_pagado' ? 'disabled' : '' }}>
+                                @php
+                                    $estadoCerrado = $factura->estado_pago === 'entregado_pagado' && ! (auth()->user()?->esAdmin());
+                                @endphp
+                                <select name="estado_pago" class="rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm focus:border-[#15537c] focus:ring-1 focus:ring-[#15537c] {{ $estadoCerrado ? 'cursor-not-allowed bg-slate-100 text-slate-500' : '' }}" onchange="this.form.submit()" @disabled($estadoCerrado) title="{{ $estadoCerrado ? 'Solo el administrador puede cambiar una factura entregada y pagada' : '' }}">
                                     <option value="entregado_pagado" {{ $factura->estado_pago=='entregado_pagado'?'selected':'' }}>Ent. y Pagado</option>
                                     <option value="entregado_sin_pagar" {{ $factura->estado_pago=='entregado_sin_pagar'?'selected':'' }}>Ent. sin Pagar</option>
                                     <option value="pagado_sin_entregar" {{ $factura->estado_pago=='pagado_sin_entregar'?'selected':'' }}>Pagado sin Ent.</option>

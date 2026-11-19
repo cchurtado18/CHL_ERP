@@ -85,8 +85,11 @@
                                 @error('moneda') <div class="text-danger">{{ $message }}</div> @enderror
                             </div>
                             <div class="mb-3">
+                                @php
+                                    $estadoCerrado = $factura->estado_pago === 'entregado_pagado' && ! (auth()->user()?->esAdmin());
+                                @endphp
                                 <label for="estado_pago" class="form-label fw-semibold">Estado de Pago</label>
-                                <select name="estado_pago" class="form-select">
+                                <select name="estado_pago" class="form-select" @disabled($estadoCerrado)>
                                     <option value="pendiente" {{ old('estado_pago', $factura->estado_pago) == 'pendiente' ? 'selected' : '' }}>Pendiente</option>
                                     <option value="parcial" {{ old('estado_pago', $factura->estado_pago) == 'parcial' ? 'selected' : '' }}>Parcial</option>
                                     <option value="pagado" {{ old('estado_pago', $factura->estado_pago) == 'pagado' ? 'selected' : '' }}>Pagado</option>
@@ -95,6 +98,10 @@
                                     <option value="pagado_sin_entregar" {{ old('estado_pago', $factura->estado_pago) == 'pagado_sin_entregar' ? 'selected' : '' }}>Pagado sin Entregar</option>
                                     <option value="facturado_npne" {{ old('estado_pago', $factura->estado_pago) == 'facturado_npne' ? 'selected' : '' }}>Facturado NPNE</option>
                                 </select>
+                                @if($estadoCerrado)
+                                    <input type="hidden" name="estado_pago" value="entregado_pagado">
+                                    <p class="mt-1 text-sm text-slate-500">Solo el administrador puede cambiar una factura entregada y pagada.</p>
+                                @endif
                                 @error('estado_pago') <div class="text-danger">{{ $message }}</div> @enderror
                             </div>
                             <div class="mb-3">

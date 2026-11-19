@@ -24,6 +24,21 @@ use Illuminate\Validation\Rule;
 class FacturacionController extends Controller
 {
     /**
+     * Entregado y pagado queda cerrado para el equipo; solo el admin puede reabrir o cambiarlo.
+     */
+    private function bloquearCambioEstadoEntregadoPagado(Facturacion $factura, mixed $nuevoEstado): bool
+    {
+        if ($factura->estado_pago !== 'entregado_pagado') {
+            return false;
+        }
+        if ((string) $nuevoEstado === 'entregado_pagado') {
+            return false;
+        }
+
+        return ! (Auth::user() && Auth::user()->esAdmin());
+    }
+
+    /**
      * La Nota de cobro la asigna el folio del sistema; se ignora cualquier valor del formulario.
      */
     private function normalizeNumeroActaInput(Request $request): void
@@ -479,6 +494,10 @@ class FacturacionController extends Controller
             'numero_acta.unique' => 'El número de acta ya ha sido utilizado en otra factura. Por favor, ingresa un número diferente.',
         ]);
 
+        if ($this->bloquearCambioEstadoEntregadoPagado($factura, $request->estado_pago)) {
+            return back()->withErrors(['estado_pago' => 'Solo el administrador puede cambiar el estado de una factura entregada y pagada.'])->withInput();
+        }
+
         $factura->update([
             'cliente_id' => $request->cliente_id,
             'fecha_factura' => $request->fecha_factura,
@@ -790,6 +809,9 @@ class FacturacionController extends Controller
         $request->validate([
             'estado_pago' => 'required|in:pendiente,parcial,pagado,entregado_pagado,entregado_sin_pagar,pagado_sin_entregar,facturado_npne',
         ]);
+        if ($this->bloquearCambioEstadoEntregadoPagado($factura, $request->estado_pago)) {
+            return redirect()->route('facturacion.index')->withErrors(['error' => 'Solo el administrador puede cambiar el estado de una factura entregada y pagada.']);
+        }
         $factura->estado_pago = $request->estado_pago;
 
         if (Schema::hasColumn('facturacion', 'contabilidad_pendiente')) {

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Cliente;
 use App\Models\ContaCobro;
 use App\Models\ContaCuenta;
 use App\Models\ContaCxc;
@@ -31,6 +32,78 @@ class ContabilidadCxcController extends Controller
         $items = $q->orderByDesc('fecha_emision')->orderByDesc('factura_id')->paginate(20)->appends($request->query());
 
         return view('contabilidad.cxc.index', compact('items'));
+    }
+
+    public function estadosCuenta(Request $request)
+    {
+        $this->syncFacturasToCxc();
+
+        $q = $this->cxcPendientesQuery()
+            ->whereNotNull('cliente_id')
+            ->whereHas('cliente', function ($c) use ($request) {
+                if ($request->filled('cliente')) {
+                    $needle = '%'.addcslashes(trim((string) $request->input('cliente')), '%_\\').'%';
+                    $c->where('nombre_completo', 'like', $needle);
+                }
+            });
+
+        $resumen = (clone $q)->toBase()
+            ->selectRaw('COUNT(DISTINCT cliente_id) as clientes, COUNT(*) as facturas, COALESCE(SUM(saldo_actual), 0) as total_debe')
+            ->first();
+
+        $items = $q->select('cliente_id')
+            ->selectRaw('COUNT(*) as facturas_pendientes')
+            ->selectRaw('COALESCE(SUM(saldo_actual), 0) as total_debe')
+            ->selectRaw('COALESCE(SUM(monto_original), 0) as total_original')
+            ->groupBy('cliente_id')
+            ->orderByDesc('total_debe')
+            ->with('cliente')
+            ->paginate(20)
+            ->appends($request->query());
+
+        $sinCliente = $this->cxcPendientesQuery()->whereNull('cliente_id')->get(['id', 'saldo_actual']);
+
+        return view('contabilidad.cxc.estados-cuenta', [
+            'items' => $items,
+            'clientesConSaldo' => (int) ($resumen->clientes ?? 0),
+            'facturasPendientes' => (int) ($resumen->facturas ?? 0),
+            'totalCartera' => round((float) ($resumen->total_debe ?? 0), 2),
+            'sinClienteCount' => $sinCliente->count(),
+            'sinClienteTotal' => round((float) $sinCliente->sum('saldo_actual'), 2),
+        ]);
+    }
+
+    public function estadoCuenta(Cliente $cliente)
+    {
+        $this->syncFacturasToCxc();
+
+        $pendientes = $this->cxcPendientesQuery()
+            ->with(['factura'])
+            ->where('cliente_id', $cliente->id)
+            ->orderBy('fecha_emision')
+            ->orderBy('factura_id')
+            ->get();
+
+        $totalOriginal = round((float) $pendientes->sum(fn ($c) => (float) $c->monto_original), 2);
+        $totalDebe = round((float) $pendientes->sum(fn ($c) => (float) $c->saldo_actual), 2);
+        $totalCobrado = round((float) $pendientes->sum(fn ($c) => max(0, (float) $c->monto_original - (float) $c->saldo_actual)), 2);
+
+        return view('contabilidad.cxc.estado-cuenta', compact(
+            'cliente',
+            'pendientes',
+            'totalOriginal',
+            'totalDebe',
+            'totalCobrado'
+        ));
+    }
+
+    private function cxcPendientesQuery()
+    {
+        return ContaCxc::query()
+            ->where('saldo_actual', '>', 0)
+            ->whereHas('factura', function ($q) {
+                $q->when(Schema::hasColumn('facturacion', 'anulada'), fn ($f) => $f->noAnulada());
+            });
     }
 
     private function syncFacturasToCxc(): void

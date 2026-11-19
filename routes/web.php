@@ -290,7 +290,9 @@ Route::middleware(['auth', 'permiso:contabilidad'])->prefix('contabilidad')->gro
     Route::post('/asientos', [ContabilidadAsientoController::class, 'store'])->name('contabilidad.asientos.store');
 
     Route::get('/cxc', [ContabilidadCxcController::class, 'index'])->name('contabilidad.cxc.index');
-    Route::get('/cxc/{facturaId}', [ContabilidadCxcController::class, 'show'])->name('contabilidad.cxc.show');
+    Route::get('/cxc/clientes', [ContabilidadCxcController::class, 'estadosCuenta'])->name('contabilidad.cxc.estados-cuenta');
+    Route::get('/cxc/clientes/{cliente}', [ContabilidadCxcController::class, 'estadoCuenta'])->whereNumber('cliente')->name('contabilidad.cxc.estado-cuenta');
+    Route::get('/cxc/{facturaId}', [ContabilidadCxcController::class, 'show'])->whereNumber('facturaId')->name('contabilidad.cxc.show');
 
     Route::get('/periodos', [ContabilidadPeriodoController::class, 'index'])->name('contabilidad.periodos.index');
     Route::patch('/periodos/{id}/toggle', [ContabilidadPeriodoController::class, 'toggleEstado'])->name('contabilidad.periodos.toggle');
