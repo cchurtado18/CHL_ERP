@@ -16,7 +16,7 @@ class PublicTrackingTest extends TestCase
 
         $this->get('/rastreo?tracking=NOEXISTE999')
             ->assertOk()
-            ->assertSee('No encontramos un paquete');
+            ->assertSee('No encontramos ese código');
     }
 
     public function test_public_tracking_sends_code_to_cargotrack_and_shows_result(): void
@@ -52,8 +52,8 @@ class PublicTrackingTest extends TestCase
         $this->get('/rastreo?tracking=tba3352623529960')
             ->assertOk()
             ->assertSee('276462')
-            ->assertSee('IN TRANSIT')
-            ->assertDontSee('No encontramos un paquete');
+            ->assertSee('Estado actual')->assertSee('En tránsito')
+            ->assertDontSee('No encontramos ese código');
     }
 
     public function test_public_tracking_uses_reader_when_cargotrack_times_out(): void
@@ -86,9 +86,9 @@ class PublicTrackingTest extends TestCase
         $this->get('/rastreo?tracking=4203316626129434608106244617510560')
             ->assertOk()
             ->assertSee('279860')
-            ->assertSee('IN TRANSIT')
+            ->assertSee('Estado actual')->assertSee('En tránsito')
             ->assertSee('2.50 lb')
-            ->assertDontSee('No encontramos un paquete')
+            ->assertDontSee('No encontramos ese código')
             ->assertDontSee('iframe', false);
     }
 
@@ -123,8 +123,8 @@ class PublicTrackingTest extends TestCase
         $this->get('/rastreo?tracking=4203316626129434608106244617510560')
             ->assertOk()
             ->assertSee('279860')
-            ->assertSee('IN TRANSIT')
-            ->assertDontSee('No encontramos un paquete');
+            ->assertSee('Estado actual')->assertSee('En tránsito')
+            ->assertDontSee('No encontramos ese código');
     }
 
     public function test_public_tracking_retries_in_browser_when_readers_fail(): void
@@ -137,7 +137,7 @@ class PublicTrackingTest extends TestCase
 
         $this->get('/rastreo?tracking=4203316626129434608106244617510560')
             ->assertOk()
-            ->assertSee('Extrayendo datos de CargoTrack')
+            ->assertSee('Buscando tu paquete')
             ->assertSee('trackingExtract', false);
     }
 
