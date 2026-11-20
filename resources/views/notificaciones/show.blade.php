@@ -67,7 +67,7 @@
             </div>
             <div>
                 <p class="text-sm font-medium text-slate-500"><i class="fas fa-user mr-1.5 text-[#15537c]"></i>Destinatario</p>
-                <p class="mt-0.5 font-semibold text-slate-800">{{ $notificacion->usuario->name ?? 'Usuario no encontrado' }}</p>
+                <p class="mt-0.5 font-semibold text-slate-800">{{ $notificacion->usuario->nombre ?? 'Usuario no encontrado' }}</p>
                 <p class="text-sm text-slate-500">{{ $notificacion->usuario->email ?? '' }}</p>
             </div>
         </div>

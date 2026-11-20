@@ -28,9 +28,7 @@ class AuthController extends Controller
         ]);
 
         // Solo cuentas activas pueden autenticarse.
-        $credentials['estado'] = true;
-
-        if (Auth::attempt($credentials, $request->filled('remember'))) {
+        if (Auth::attempt($credentials + ['estado' => true], $request->filled('remember'))) {
             $request->session()->regenerate();
             $user = Auth::user();
 
@@ -39,13 +37,9 @@ class AuthController extends Controller
             return redirect()->to($user->homePath());
         }
 
-        // Si el usuario existe pero está inactivo, mensaje explícito (sin revelar de más).
-        $inactive = \App\Models\User::query()
-            ->where('email', $credentials['email'])
-            ->where('estado', false)
-            ->exists();
-
-        if ($inactive) {
+        // Solo avisar de cuenta desactivada si la contraseña es correcta,
+        // para no revelar qué correos existen.
+        if (Auth::validate($credentials + ['estado' => false])) {
             return back()->withErrors([
                 'email' => 'Tu cuenta está desactivada. Contacta al administrador.',
             ])->onlyInput('email');

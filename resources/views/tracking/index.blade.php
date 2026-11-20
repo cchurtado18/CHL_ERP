@@ -131,7 +131,7 @@
                             {{ $tracking->recordatorio_fecha ? \Carbon\Carbon::parse($tracking->recordatorio_fecha)->format('d/m/Y H:i') : '—' }}
                         </td>
                         <td class="px-4 py-1.5 text-center">
-                            <span class="text-slate-800">{{ $tracking->creador->name ?? ($tracking->creado_por ? 'ID: ' . $tracking->creado_por : '—') }}</span>
+                            <span class="text-slate-800">{{ $tracking->creador->nombre ?? ($tracking->creado_por ? 'ID: ' . $tracking->creado_por : '—') }}</span>
                         </td>
                         <td class="px-4 py-1.5 text-right">
                             <div class="inline-flex items-center justify-end gap-2">

@@ -93,6 +93,24 @@
                 <p class="text-sm font-medium text-slate-500"><i class="fas fa-sticky-note mr-1.5 text-[#15537c]"></i>Notas</p>
                 <p class="mt-0.5 text-slate-800">{{ $paquete->notas ?? 'Sin observaciones' }}</p>
             </div>
+            <div>
+                <p class="text-sm font-medium text-slate-500"><i class="fas fa-truck mr-1.5 text-[#15537c]"></i>Proveedor / factura CxP</p>
+                <p class="mt-0.5 text-slate-800">
+                    @if($paquete->factura_proveedor_codigo || $paquete->proveedor)
+                        {{ $paquete->proveedor->nombre ?? 'Proveedor' }}
+                        @if($paquete->factura_proveedor_codigo)
+                            · {{ $paquete->factura_proveedor_codigo }}
+                        @endif
+                        @if($paquete->estaCanceladoProveedor())
+                            <span class="ml-1 inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">Cancelado al proveedor</span>
+                        @elseif($paquete->cxp_id)
+                            <span class="ml-1 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">Pendiente de pago</span>
+                        @endif
+                    @else
+                        <span class="text-slate-500">Sin factura de proveedor</span>
+                    @endif
+                </p>
+            </div>
             <div class="sm:col-span-2 lg:col-span-3">
                 <p class="text-sm font-medium text-slate-500"><i class="fas fa-file-invoice-dollar mr-1.5 text-[#15537c]"></i>Factura asociada</p>
                 <p class="mt-0.5">

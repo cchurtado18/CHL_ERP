@@ -42,7 +42,9 @@
                 <div>
                     <label class="mb-1.5 block text-sm font-medium text-slate-600">Rol</label>
                     <select name="rol" id="rolSelect" class="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-base focus:border-[#15537c] focus:ring-1 focus:ring-[#15537c] @error('rol') border-rose-400 @enderror">
+                        @if (auth()->user()->esAdmin())
                         <option value="admin" {{ old('rol') == 'admin' ? 'selected' : '' }}>Administrador (acceso total)</option>
+                        @endif
                         <option value="agente" {{ old('rol', 'agente') == 'agente' ? 'selected' : '' }}>Agente</option>
                         <option value="auditor" {{ old('rol') == 'auditor' ? 'selected' : '' }}>Auditor</option>
                         <option value="basico" {{ old('rol') == 'basico' ? 'selected' : '' }}>Básico</option>

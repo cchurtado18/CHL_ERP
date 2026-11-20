@@ -22,6 +22,15 @@ class Cliente extends Model
         'updated_by',
     ];
 
+    protected $hidden = [
+        'cargotrack_password',
+    ];
+
+    protected $casts = [
+        'cargotrack_password' => 'encrypted',
+        'cargotrack_sync_enabled' => 'boolean',
+    ];
+
     // Relaciones
     public function creador()
     {

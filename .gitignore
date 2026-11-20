@@ -22,3 +22,7 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Exportaciones con datos personales
+/users_export.json
+*_export.json
