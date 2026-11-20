@@ -305,10 +305,6 @@
                                 Paquetes
                             </li>
                             <li class="pill inline-flex items-center gap-2 rounded-full px-3.5 py-1.5">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h7M9 17h5"/></svg>
-                                Facturas en PDF
-                            </li>
-                            <li class="pill inline-flex items-center gap-2 rounded-full px-3.5 py-1.5">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
                                 Rastreo en línea
                             </li>
@@ -495,7 +491,7 @@
 
                             <div class="mt-5 rounded-xl bg-[var(--amber-soft)] px-4 py-3.5 text-[13px] leading-relaxed text-[#7a4a07]">
                                 <p class="font-bold">¿Tu paquete aún no aparece?</p>
-                                <p class="mt-1">Solemos tardar un día en ingresarlo. Si después de unos días sigue sin verse, contáctanos para revisarlo en bodega.</p>
+                                <p class="mt-1">Si después de un día sigue sin verse, contáctanos.</p>
                             </div>
                         </div>
                     </section>
