@@ -107,9 +107,6 @@
                 </li>
             @endforeach
         </ol>
-        @unless($ingresadoLocal)
-            <p class="mt-3 text-center text-xs text-slate-400">“Listo” se marca cuando el paquete se ingresa en CH Logistics.</p>
-        @endunless
     </div>
 
     {{-- Historial cronológico --}}
