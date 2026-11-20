@@ -17,11 +17,9 @@ class ContaCuentaSeeder extends Seeder
             ['codigo' => '1.1.06', 'nombre' => 'Zelle', 'tipo' => 'activo', 'subtipo' => 'banco', 'acepta_movimiento' => true],
             ['codigo' => '1.1.03', 'nombre' => 'Cuentas por Cobrar Clientes', 'tipo' => 'activo', 'subtipo' => 'cxc', 'acepta_movimiento' => true],
             ['codigo' => '2.1.01', 'nombre' => 'Impuestos por Pagar', 'tipo' => 'pasivo', 'subtipo' => 'impuesto', 'acepta_movimiento' => true],
-            ['codigo' => '2.1.02', 'nombre' => 'Cuentas por Pagar Proveedores', 'tipo' => 'pasivo', 'subtipo' => 'cxp', 'acepta_movimiento' => true],
             ['codigo' => '3.1.01', 'nombre' => 'Capital', 'tipo' => 'patrimonio', 'subtipo' => 'capital', 'acepta_movimiento' => true],
             ['codigo' => '4.1.01', 'nombre' => 'Ingresos por Servicios', 'tipo' => 'ingreso', 'subtipo' => 'servicios', 'acepta_movimiento' => true],
             ['codigo' => '5.1.01', 'nombre' => 'Gastos Operativos', 'tipo' => 'gasto', 'subtipo' => 'opex', 'acepta_movimiento' => true],
-            ['codigo' => '5.2.01', 'nombre' => 'Costo de flete de proveedores', 'tipo' => 'costo', 'subtipo' => 'flete', 'acepta_movimiento' => true],
             ['codigo' => '5.1.02', 'nombre' => 'Pérdida Cambiaria', 'tipo' => 'gasto', 'subtipo' => 'fx', 'acepta_movimiento' => true],
             ['codigo' => '4.1.02', 'nombre' => 'Ganancia Cambiaria', 'tipo' => 'ingreso', 'subtipo' => 'fx', 'acepta_movimiento' => true],
         ];

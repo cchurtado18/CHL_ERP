@@ -7,7 +7,6 @@ use App\Models\ContaCuenta;
 use App\Models\ContaCxc;
 use App\Models\Facturacion;
 use App\Services\Contabilidad\ContabilidadAsientoService;
-use App\Services\Contabilidad\ContabilidadVoucherService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,15 +16,12 @@ use RuntimeException;
 
 class ContabilidadCobroController extends Controller
 {
-    public function __construct(
-        private readonly ContabilidadAsientoService $asientoService,
-        private readonly ContabilidadVoucherService $voucherService,
-    ) {}
+    public function __construct(private readonly ContabilidadAsientoService $asientoService) {}
 
     public function index()
     {
         $cobros = ContaCobro::query()
-            ->with(['factura.cliente', 'factura.encomienda.remitente', 'cuentaBancoCaja', 'voucher'])
+            ->with(['factura.cliente', 'factura.encomienda.remitente', 'cuentaBancoCaja'])
             ->orderByDesc('fecha_pago')
             ->paginate(20);
 
@@ -59,7 +55,7 @@ class ContabilidadCobroController extends Controller
     public function show(int $id)
     {
         $cobro = ContaCobro::query()
-            ->with(['factura.cliente', 'factura.encomienda.remitente', 'cuentaBancoCaja', 'creador', 'voucher'])
+            ->with(['factura.cliente', 'factura.encomienda.remitente', 'cuentaBancoCaja', 'creador'])
             ->findOrFail($id);
 
         return view('contabilidad.cobros.show', compact('cobro'));
@@ -79,7 +75,7 @@ class ContabilidadCobroController extends Controller
             'comision' => 'nullable|numeric|min:0',
         ]);
 
-        $factura = Facturacion::query()->with(['cliente', 'encomienda.remitente'])->findOrFail($data['factura_id']);
+        $factura = Facturacion::findOrFail($data['factura_id']);
         if (Schema::hasColumn('facturacion', 'anulada') && $factura->anulada) {
             return back()->withErrors(['factura_id' => 'La factura seleccionada está anulada.'])->withInput();
         }
@@ -92,7 +88,7 @@ class ContabilidadCobroController extends Controller
         $comision = isset($data['comision']) ? (float) $data['comision'] : null;
 
         try {
-            $cobro = DB::transaction(function () use ($factura, $data, $fechaPago, $monto, $referencia, $comision) {
+            DB::transaction(function () use ($factura, $data, $fechaPago, $monto, $referencia, $comision) {
                 $cxc = ContaCxc::query()->where('factura_id', $factura->id)->lockForUpdate()->first();
                 if (! $cxc) {
                     throw new RuntimeException('La factura no tiene registro en CxC.');
@@ -182,43 +178,12 @@ class ContabilidadCobroController extends Controller
                 if (Schema::hasColumn('facturacion', 'contabilidad_pendiente') && $nuevoSaldo <= 0.00001) {
                     Facturacion::query()->whereKey($factura->id)->update(['contabilidad_pendiente' => false]);
                 }
-
-                if (Schema::hasTable('conta_vouchers')) {
-                    $nombreCliente = $factura->cliente?->nombre_completo
-                        ?? $factura->encomienda?->remitente?->nombre_completo
-                        ?? 'Cliente';
-                    $voucher = $this->voucherService->emitir([
-                        'tipo' => 'ingreso',
-                        'fecha' => $fechaPago,
-                        'monto' => $monto,
-                        'moneda' => $cobro->moneda,
-                        'tercero_tipo' => 'cliente',
-                        'tercero_id' => $factura->cliente_id,
-                        'tercero_nombre' => $nombreCliente,
-                        'concepto' => 'Cobro factura folio '.$factura->etiquetaFolio(),
-                        'metodo' => $cobro->metodo,
-                        'cuenta_banco_caja_id' => $cobro->cuenta_banco_caja_id,
-                        'referencia_tipo' => 'cobro',
-                        'referencia_id' => $cobro->id,
-                        'referencia' => $referencia,
-                    ]);
-                    if (Schema::hasColumn('conta_cobros', 'voucher_id')) {
-                        $cobro->update(['voucher_id' => $voucher->id]);
-                    }
-                }
-
-                return $cobro->fresh('voucher');
             });
         } catch (RuntimeException $e) {
             return back()->withErrors(['monto' => $e->getMessage()])->withInput();
         }
 
-        $msg = 'Cobro registrado y contabilizado correctamente.';
-        if ($cobro->voucher?->folio) {
-            $msg .= ' Voucher '.$cobro->voucher->folio.'.';
-        }
-
-        return redirect()->route('contabilidad.cobros.show', $cobro->id)->with('success', $msg);
+        return redirect()->route('contabilidad.cobros.index')->with('success', 'Cobro registrado y contabilizado correctamente.');
     }
 
     private function syncFacturasToCxc(): void

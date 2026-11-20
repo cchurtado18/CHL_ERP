@@ -18,10 +18,6 @@ class Inventario extends Model
         'cliente_id',
         'servicio_id',
         'factura_id',
-        'proveedor_id',
-        'factura_proveedor_codigo',
-        'cxp_id',
-        'proveedor_pagado_at',
         'peso_lb',
         'tarifa_manual',
         'monto_calculado',
@@ -37,7 +33,6 @@ class Inventario extends Model
     protected $casts = [
         'tarifa_manual' => 'decimal:2',
         'monto_calculado' => 'decimal:2',
-        'proveedor_pagado_at' => 'datetime',
     ];
 
     /**
@@ -106,21 +101,6 @@ class Inventario extends Model
     public function factura()
     {
         return $this->belongsTo(Facturacion::class);
-    }
-
-    public function proveedor()
-    {
-        return $this->belongsTo(Proveedor::class, 'proveedor_id');
-    }
-
-    public function cxp()
-    {
-        return $this->belongsTo(ContaCxp::class, 'cxp_id');
-    }
-
-    public function estaCanceladoProveedor(): bool
-    {
-        return $this->proveedor_pagado_at !== null;
     }
 
     public function servicio()

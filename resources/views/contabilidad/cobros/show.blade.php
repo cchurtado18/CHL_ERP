@@ -5,16 +5,6 @@
 
 @section('content')
 <div class="mx-auto w-full max-w-[1400px] space-y-8 pb-10">
-    @if(session('success'))
-        <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-base text-emerald-800" role="alert">
-            <span class="font-medium">{{ session('success') }}</span>
-        </div>
-    @endif
-    @if($errors->any())
-        <div class="rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-base text-red-800">
-            <ul class="list-disc space-y-1 pl-5">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
-        </div>
-    @endif
     <div class="overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-[#15537c] to-[#0f3d5c] p-6 text-white shadow-md sm:p-8">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
@@ -22,12 +12,7 @@
                 <h1 class="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">Cobro #{{ $cobro->id }}</h1>
                 <p class="mt-2 text-sm text-white/85">Detalle del pago registrado.</p>
             </div>
-            <div class="flex flex-wrap gap-2">
-                @if($cobro->voucher_id)
-                    <a href="{{ route('contabilidad.cobros.voucher', $cobro->id) }}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/10 px-4 py-2.5 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/20"><i class="fas fa-file-pdf"></i> Voucher PDF</a>
-                @endif
-                <a href="{{ route('contabilidad.cobros.index') }}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/10 px-4 py-2.5 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/20"><i class="fas fa-arrow-left"></i> Volver a lista</a>
-            </div>
+            <a href="{{ route('contabilidad.cobros.index') }}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/10 px-4 py-2.5 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/20"><i class="fas fa-arrow-left"></i> Volver a lista</a>
         </div>
     </div>
 
@@ -72,16 +57,6 @@
             <div>
                 <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Registrado por</dt>
                 <dd class="mt-1 text-base font-bold text-slate-900">{{ $cobro->creador->nombre ?? $cobro->creador->email ?? '—' }}</dd>
-            </div>
-            <div>
-                <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Voucher</dt>
-                <dd class="mt-1 text-base font-bold text-slate-900">
-                    @if($cobro->voucher)
-                        <a href="{{ route('contabilidad.cobros.voucher', $cobro->id) }}" class="text-[#15537c] hover:underline">{{ $cobro->voucher->folio }}</a>
-                    @else
-                        —
-                    @endif
-                </dd>
             </div>
         </dl>
     </div>

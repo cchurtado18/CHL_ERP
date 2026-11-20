@@ -21,7 +21,6 @@ class ContaCobro extends Model
         'cuenta_banco_caja_id',
         'referencia',
         'comision',
-        'voucher_id',
         'created_by',
     ];
 
@@ -45,10 +44,5 @@ class ContaCobro extends Model
     public function creador()
     {
         return $this->belongsTo(User::class, 'created_by');
-    }
-
-    public function voucher()
-    {
-        return $this->belongsTo(ContaVoucher::class, 'voucher_id');
     }
 }

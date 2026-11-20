@@ -10,15 +10,12 @@ use App\Http\Controllers\ContabilidadAsientoController;
 use App\Http\Controllers\ContabilidadCobroController;
 use App\Http\Controllers\ContabilidadCuentaController;
 use App\Http\Controllers\ContabilidadCxcController;
-use App\Http\Controllers\ContabilidadCxpController;
 use App\Http\Controllers\ContabilidadDashboardController;
 use App\Http\Controllers\ContabilidadGastoController;
 use App\Http\Controllers\ContabilidadParametroController;
-use App\Http\Controllers\ContabilidadProveedorController;
 use App\Http\Controllers\ContabilidadPeriodoController;
 use App\Http\Controllers\ContabilidadRentabilidadController;
 use App\Http\Controllers\ContabilidadReporteController;
-use App\Http\Controllers\ContabilidadVoucherController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DestinatarioController;
 use App\Http\Controllers\EncomiendaController;
@@ -250,20 +247,6 @@ Route::middleware(['auth', 'permiso:contabilidad'])->prefix('contabilidad')->gro
     Route::get('/cxc/clientes/{cliente}', [ContabilidadCxcController::class, 'estadoCuenta'])->whereNumber('cliente')->name('contabilidad.cxc.estado-cuenta');
     Route::get('/cxc/{facturaId}', [ContabilidadCxcController::class, 'show'])->whereNumber('facturaId')->name('contabilidad.cxc.show');
 
-    Route::get('/proveedores', [ContabilidadProveedorController::class, 'index'])->name('contabilidad.proveedores.index');
-    Route::post('/proveedores', [ContabilidadProveedorController::class, 'store'])->name('contabilidad.proveedores.store');
-
-    Route::get('/cxp', [ContabilidadCxpController::class, 'index'])->name('contabilidad.cxp.index');
-    Route::get('/cxp/crear', [ContabilidadCxpController::class, 'create'])->name('contabilidad.cxp.create');
-    Route::post('/cxp', [ContabilidadCxpController::class, 'store'])->name('contabilidad.cxp.store');
-    Route::get('/cxp/{id}', [ContabilidadCxpController::class, 'show'])->whereNumber('id')->name('contabilidad.cxp.show');
-    Route::post('/cxp/{id}/pagar', [ContabilidadCxpController::class, 'pagar'])->whereNumber('id')->name('contabilidad.cxp.pagar');
-    Route::get('/cxp/pagos/{pagoId}/comprobante', [ContabilidadCxpController::class, 'comprobante'])->whereNumber('pagoId')->name('contabilidad.cxp.comprobante');
-
-    Route::get('/vouchers', [ContabilidadVoucherController::class, 'index'])->name('contabilidad.vouchers.index');
-    Route::get('/vouchers/{id}', [ContabilidadVoucherController::class, 'show'])->whereNumber('id')->name('contabilidad.vouchers.show');
-    Route::get('/vouchers/{id}/pdf', [ContabilidadVoucherController::class, 'pdf'])->whereNumber('id')->name('contabilidad.vouchers.pdf');
-
     Route::get('/periodos', [ContabilidadPeriodoController::class, 'index'])->name('contabilidad.periodos.index');
     Route::patch('/periodos/{id}/toggle', [ContabilidadPeriodoController::class, 'toggleEstado'])->name('contabilidad.periodos.toggle');
 });
@@ -292,7 +275,6 @@ Route::middleware(['auth', 'permiso:contabilidad.cobros'])->prefix('contabilidad
     Route::get('/cobros', [ContabilidadCobroController::class, 'index'])->name('contabilidad.cobros.index');
     Route::get('/cobros/crear', [ContabilidadCobroController::class, 'create'])->name('contabilidad.cobros.create');
     Route::get('/cobros/{id}', [ContabilidadCobroController::class, 'show'])->name('contabilidad.cobros.show');
-    Route::get('/cobros/{id}/voucher', [ContabilidadVoucherController::class, 'pdfCobro'])->whereNumber('id')->name('contabilidad.cobros.voucher');
     Route::post('/cobros', [ContabilidadCobroController::class, 'store'])->name('contabilidad.cobros.store');
 });
 

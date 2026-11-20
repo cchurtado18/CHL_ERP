@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\ContaCobro;
 use App\Models\ContaCxc;
-use App\Models\ContaCxp;
 use App\Models\Facturacion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
@@ -24,7 +23,6 @@ class ContabilidadDashboardController extends Controller
 
         $cobradoMes = 0.0;
         $saldoCxc = 0.0;
-        $saldoCxp = 0.0;
         $aging = ['0_30' => 0, '31_60' => 0, '61_90' => 0, '90_plus' => 0];
         $cxcPendientes = collect();
         $facturasContabilidadPendiente = 0;
@@ -60,10 +58,6 @@ class ContabilidadDashboardController extends Controller
                 ->limit(12)
                 ->get();
 
-            if (Schema::hasTable('conta_cxp')) {
-                $saldoCxp = (float) ContaCxp::query()->where('saldo_actual', '>', 0)->sum('saldo_actual');
-            }
-
             if (Schema::hasColumn('facturacion', 'contabilidad_pendiente')) {
                 $facturasContabilidadPendiente = (int) Facturacion::query()
                     ->when(Schema::hasColumn('facturacion', 'anulada'), fn ($q) => $q->noAnulada())
@@ -72,6 +66,6 @@ class ContabilidadDashboardController extends Controller
             }
         }
 
-        return view('contabilidad.dashboard', compact('facturadoMes', 'cobradoMes', 'saldoCxc', 'saldoCxp', 'aging', 'setupPendiente', 'cxcPendientes', 'facturasContabilidadPendiente'));
+        return view('contabilidad.dashboard', compact('facturadoMes', 'cobradoMes', 'saldoCxc', 'aging', 'setupPendiente', 'cxcPendientes', 'facturasContabilidadPendiente'));
     }
 }

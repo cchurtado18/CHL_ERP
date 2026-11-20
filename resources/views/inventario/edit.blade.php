@@ -108,38 +108,6 @@
                                     @enderror
                                 </div>
                             </div>
-                            @if(($proveedores ?? collect())->isNotEmpty())
-                            <div class="col-12">
-                                <div class="rounded-3 p-3" style="background:#15537c0d;border:1px solid #15537c33;">
-                                    <p class="fw-semibold mb-2" style="color:#15537c;"><i class="fas fa-file-invoice me-1"></i> Factura del proveedor</p>
-                                    <div class="row g-3">
-                                        <div class="col-md-6">
-                                            <label class="form-label">Proveedor</label>
-                                            <select name="proveedor_id" class="form-select">
-                                                <option value="">— Sin proveedor —</option>
-                                                @foreach($proveedores as $p)
-                                                    <option value="{{ $p->id }}" @selected((string)old('proveedor_id', $paquete->proveedor_id) === (string)$p->id)>{{ $p->nombre }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label">Número de factura</label>
-                                            <select name="cxp_id" class="form-select">
-                                                <option value="">— Sin factura —</option>
-                                                @foreach($facturasCxp ?? [] as $f)
-                                                    <option value="{{ $f->id }}" @selected((string)old('cxp_id', $paquete->cxp_id) === (string)$f->id)>
-                                                        {{ $f->etiquetaDocumento() }} · {{ $f->proveedor->nombre ?? '' }} · ${{ number_format((float)$f->monto_original, 2) }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                    </div>
-                                    @if($paquete->proveedor_pagado_at)
-                                        <p class="mb-0 mt-2 small text-success"><i class="fas fa-check-circle me-1"></i> Cancelado al proveedor el {{ $paquete->proveedor_pagado_at->format('d/m/Y') }}</p>
-                                    @endif
-                                </div>
-                            </div>
-                            @endif
                             <!-- Tracking -->
                             <div class="col-md-6">
                                 <div class="form-group">

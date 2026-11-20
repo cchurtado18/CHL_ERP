@@ -54,12 +54,7 @@
                             <td class="px-4 py-2 text-slate-800">{{ $c->metodo }}</td>
                             <td class="px-4 py-2 text-sm text-slate-700">{{ $c->cuentaBancoCaja->codigo ?? '' }} {{ $c->cuentaBancoCaja->nombre ?? '' }}</td>
                             <td class="px-4 py-2 text-right">
-                                <div class="inline-flex flex-wrap items-center justify-end gap-2">
-                                    <a href="{{ route('contabilidad.cobros.show', $c->id) }}" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"><i class="fas fa-eye text-[#15537c]"></i> Ver</a>
-                                    @if($c->voucher_id)
-                                        <a href="{{ route('contabilidad.cobros.voucher', $c->id) }}" class="inline-flex items-center gap-1.5 rounded-lg border border-[#15537c]/30 bg-[#15537c]/5 px-3 py-1.5 text-sm font-semibold text-[#15537c] hover:bg-[#15537c]/10"><i class="fas fa-file-pdf"></i> Voucher</a>
-                                    @endif
-                                </div>
+                                <a href="{{ route('contabilidad.cobros.show', $c->id) }}" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"><i class="fas fa-eye text-[#15537c]"></i> Ver</a>
                             </td>
                         </tr>
                     @empty

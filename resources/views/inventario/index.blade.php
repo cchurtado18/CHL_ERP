@@ -199,12 +199,6 @@
                         </td>
                         <td class="max-w-[240px] px-4 py-1.5 align-top">
                             <div class="break-words font-medium leading-snug text-black" title="{{ $item->cliente->nombre_completo ?? 'N/A' }}">{{ $item->cliente->nombre_completo ?? 'N/A' }}</div>
-                            @if($item->factura_proveedor_codigo)
-                                <p class="mt-1 text-xs {{ $item->proveedor_pagado_at ? 'text-emerald-700' : 'text-amber-800' }}">
-                                    {{ $item->proveedor->nombre ?? 'Proveedor' }} · {{ $item->factura_proveedor_codigo }}
-                                    · {{ $item->proveedor_pagado_at ? 'Cancelado' : 'CxP pendiente' }}
-                                </p>
-                            @endif
                         </td>
                         <td class="px-4 py-1.5 text-center"><span class="rounded-md bg-slate-100 px-2 py-0.5 text-sm font-medium text-black">{{ $item->servicio->tipo_servicio ?? 'N/A' }}</span></td>
                         <td class="px-4 py-1.5 text-center font-medium text-black whitespace-nowrap">{{ \App\Models\Inventario::formatPeso($item->peso_lb) }} lb</td>
@@ -272,9 +266,6 @@
                     <div class="min-w-0 flex-1">
                         <p class="truncate text-lg font-semibold text-black">{{ $item->cliente->nombre_completo ?? 'N/A' }}</p>
                         <p class="mt-1 text-sm font-medium text-slate-700">{{ $item->servicio->tipo_servicio ?? 'N/A' }} · {{ \App\Models\Inventario::formatPeso($item->peso_lb) }} lb</p>
-                        @if($item->factura_proveedor_codigo)
-                            <p class="mt-1 text-xs {{ $item->proveedor_pagado_at ? 'text-emerald-700' : 'text-amber-800' }}">{{ $item->factura_proveedor_codigo }} · {{ $item->proveedor_pagado_at ? 'Cancelado proveedor' : 'CxP pendiente' }}</p>
-                        @endif
                     </div>
                     @php $estadoBadge = $item->estado === 'recibido' ? 'bg-amber-200 text-amber-900' : ($item->estado === 'entregado' ? 'bg-emerald-200 text-emerald-900' : 'bg-slate-200 text-slate-900'); @endphp
                     <div class="flex shrink-0 flex-col items-end gap-1">

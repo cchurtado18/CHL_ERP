@@ -69,7 +69,7 @@ return [
         ],
         'contabilidad' => [
             'label' => 'Contabilidad (completa)',
-            'descripcion' => 'Dashboard, CxC, CxP, vouchers, asientos, cuentas y períodos',
+            'descripcion' => 'Dashboard, CxC, asientos, cuentas y períodos',
             'icono' => 'fa-calculator',
         ],
         'contabilidad.cobros' => [
