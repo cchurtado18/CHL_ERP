@@ -68,6 +68,9 @@
                     @if($user->tienePermiso('usuarios'))
                     <a href="{{ url('/usuarios') }}" class="mb-1 flex h-12 items-center gap-3 rounded-r-lg px-3 text-[#15537c] {{ request()->is('usuarios*') ? 'bg-[#15537c]/10 border-l-4 border-[#15537c] font-semibold' : 'hover:bg-slate-100' }}" title="Usuarios"><i class="fas fa-user-cog w-6 text-center text-lg"></i><span>Usuarios</span></a>
                     @endif
+                    @if($user->esAdmin())
+                    <a href="{{ route('cargotrack.index') }}" class="mb-1 flex h-12 items-center gap-3 rounded-r-lg px-3 text-[#15537c] {{ request()->is('cargotrack*') ? 'bg-[#15537c]/10 border-l-4 border-[#15537c] font-semibold' : 'hover:bg-slate-100' }}" title="CargoTrack"><i class="fas fa-truck-loading w-6 text-center text-lg"></i><span>CargoTrack</span></a>
+                    @endif
                     @if($user->tienePermiso('logs_inventario'))
                     <a href="{{ route('auditoria.index') }}" class="mb-1 flex h-12 items-center gap-3 rounded-r-lg px-3 text-[#15537c] {{ request()->is('auditoria*') || request()->is('logs-inventario') ? 'bg-[#15537c]/10 border-l-4 border-[#15537c] font-semibold' : 'hover:bg-slate-100' }}" title="Auditoría"><i class="fas fa-clipboard-list w-6 text-center text-lg"></i><span>Auditoría</span></a>
                     @endif

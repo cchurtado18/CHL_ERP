@@ -11,6 +11,11 @@
         <span class="font-medium">{{ session('success') }}</span>
     </div>
     @endif
+    @error('usuario')
+    <div class="rounded-xl border border-rose-200 bg-rose-50 px-5 py-4 text-base text-rose-800" role="alert">
+        <span class="font-medium">{{ $message }}</span>
+    </div>
+    @enderror
 
     {{-- Filtros (client-side) --}}
     <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">

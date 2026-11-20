@@ -16,6 +16,15 @@
         </a>
     </div>
 
+    @if(session('success'))
+        <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-base text-emerald-800">{{ session('success') }}</div>
+    @endif
+    @if($errors->any())
+        <div class="rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-base text-red-800">
+            <ul class="list-disc space-y-1 pl-5">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
+        </div>
+    @endif
+
     <div class="grid gap-8 lg:grid-cols-[1fr_320px]">
         {{-- Formulario --}}
         <div class="min-w-0">
@@ -25,6 +34,46 @@
                 </h2>
                 <form action="{{ route('inventario.store') }}" method="POST" id="inventarioForm">
                     @csrf
+                    @if(($proveedores ?? collect())->isNotEmpty())
+                    <div class="mb-6 rounded-xl border border-[#15537c]/20 bg-[#15537c]/5 p-4">
+                        <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+                            <p class="text-sm font-semibold text-[#15537c]"><i class="fas fa-file-invoice mr-1"></i> Factura del proveedor</p>
+                            <div class="flex items-center gap-3">
+                                @if(auth()->user()?->tienePermiso('contabilidad'))
+                                    <a href="{{ route('contabilidad.cxp.create') }}" class="text-xs font-medium text-[#15537c] hover:underline">Nueva factura CxP</a>
+                                @endif
+                                <a href="{{ route('inventario.create', ['cxp_reset' => 1]) }}" class="text-xs font-medium text-slate-500 hover:text-[#15537c]">Limpiar</a>
+                            </div>
+                        </div>
+                        <p class="mb-3 text-xs text-slate-600">Elige una factura abierta. Puedes ir asignando paquetes en varios días; el total asignado se compara con el monto de la factura.</p>
+                        <div class="grid gap-3 sm:grid-cols-2">
+                            <div>
+                                <label for="proveedor_id" class="mb-1 block text-sm font-medium text-slate-600">Proveedor</label>
+                                <select name="proveedor_id" id="proveedor_id" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base">
+                                    <option value="">Todos / sin proveedor</option>
+                                    @foreach($proveedores as $p)
+                                        <option value="{{ $p->id }}" @selected((string)($cxpPrefill['proveedor_id'] ?? '') === (string)$p->id)>{{ $p->nombre }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label for="cxp_id" class="mb-1 block text-sm font-medium text-slate-600">Número de factura</label>
+                                <select name="cxp_id" id="cxp_id" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base">
+                                    <option value="">— Sin factura —</option>
+                                    @foreach($facturasCxp ?? [] as $f)
+                                        <option value="{{ $f->id }}" data-proveedor="{{ $f->proveedor_id }}" @selected((string)($cxpPrefill['cxp_id'] ?? '') === (string)$f->id)>
+                                            {{ $f->etiquetaDocumento() }} · {{ $f->proveedor->nombre ?? 'Proveedor' }} · factura ${{ number_format((float)$f->monto_original, 2) }} · asignado ${{ number_format($f->montoPaquetesAsignados(), 2) }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <p id="cxpFacturaResumen" class="mt-2 hidden text-sm text-slate-700"></p>
+                        @if(($facturasCxp ?? collect())->isEmpty())
+                            <p class="mt-2 text-sm text-amber-800">No hay facturas de proveedor abiertas. Regístrala en CxP con su monto y luego elige el número aquí.</p>
+                        @endif
+                    </div>
+                    @endif
                     <div class="grid gap-5 sm:grid-cols-2">
                         <div class="sm:col-span-2">
                             <label for="clienteAutocomplete" class="mb-1.5 block text-sm font-medium text-slate-600">Buscar cliente <span class="text-red-500">*</span></label>
@@ -128,6 +177,7 @@
                         <li>El número de guía es recomendado</li>
                         <li>Las notas ayudan a identificar el paquete</li>
                         <li>El estado se puede actualizar después</li>
+                        <li>Si hay factura de proveedor, elige el número: se queda para los siguientes paquetes</li>
                     </ul>
                     <p class="font-semibold text-slate-700 pt-2"><i class="fas fa-calculator text-[#15537c] mr-1"></i>Cálculo</p>
                     <p class="text-slate-600">La tarifa se calcula según peso, volumen y tipo de servicio.</p>
@@ -156,6 +206,54 @@
 <script>
 (function() {
     var clientesList = @json($clientes ?? []);
+    var facturasCxp = @json($facturasCxpJs ?? []);
+    var proveedorSelect = document.getElementById('proveedor_id');
+    var cxpSelect = document.getElementById('cxp_id');
+    var cxpResumen = document.getElementById('cxpFacturaResumen');
+
+    function money(n) {
+        return '$' + (Number(n || 0).toFixed(2));
+    }
+    function facturaPorId(id) {
+        return facturasCxp.find(function(f) { return String(f.id) === String(id); });
+    }
+    function pintarResumen() {
+        if (!cxpResumen || !cxpSelect) return;
+        var f = facturaPorId(cxpSelect.value);
+        if (!f) { cxpResumen.classList.add('hidden'); cxpResumen.textContent = ''; return; }
+        var falta = Math.round((f.monto - f.asignado) * 100) / 100;
+        var extra = falta > 0.009 ? (' Faltan ' + money(falta) + ' por asignar.') : (falta < -0.009 ? (' Asignado supera la factura por ' + money(Math.abs(falta)) + '.') : ' Completa.');
+        cxpResumen.textContent = f.numero + ' · Factura ' + money(f.monto) + ' · Paquetes asignados ' + money(f.asignado) + '.' + extra;
+        cxpResumen.classList.remove('hidden');
+    }
+    function filtrarFacturas() {
+        if (!cxpSelect) return;
+        var prov = proveedorSelect ? proveedorSelect.value : '';
+        var actual = cxpSelect.value;
+        Array.prototype.forEach.call(cxpSelect.options, function(opt) {
+            if (!opt.value) { opt.hidden = false; return; }
+            var pid = opt.getAttribute('data-proveedor') || '';
+            opt.hidden = !!(prov && String(pid) !== String(prov));
+        });
+        var selected = cxpSelect.options[cxpSelect.selectedIndex];
+        if (selected && selected.hidden) {
+            cxpSelect.value = '';
+        } else if (actual) {
+            cxpSelect.value = actual;
+        }
+        pintarResumen();
+    }
+    if (proveedorSelect) proveedorSelect.addEventListener('change', filtrarFacturas);
+    if (cxpSelect) cxpSelect.addEventListener('change', function() {
+        var f = facturaPorId(this.value);
+        if (f && proveedorSelect && !proveedorSelect.value) {
+            proveedorSelect.value = f.proveedor_id;
+            filtrarFacturas();
+            cxpSelect.value = f.id;
+        }
+        pintarResumen();
+    });
+    filtrarFacturas();
     var input = document.getElementById('clienteAutocomplete');
     var list = document.getElementById('autocompleteList');
     var hiddenInput = document.getElementById('cliente_id');

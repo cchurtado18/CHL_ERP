@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class UserController extends Controller
 {
@@ -36,6 +38,8 @@ class UserController extends Controller
             'permisos.*' => ['string', Rule::in($modulosValidos)],
         ]);
 
+        $this->ensureCanAssignRole($data['rol']);
+
         $permisos = $data['rol'] === 'admin'
             ? null
             : array_values(array_unique($data['permisos'] ?? []));
@@ -66,6 +70,7 @@ class UserController extends Controller
     public function edit($id)
     {
         $usuario = User::findOrFail($id);
+        $this->ensureCanManage($usuario);
         $modulos = config('permisos.modulos', []);
 
         return view('usuarios.edit', compact('usuario', 'modulos'));
@@ -74,6 +79,7 @@ class UserController extends Controller
     public function update(Request $request, $id)
     {
         $usuario = User::findOrFail($id);
+        $this->ensureCanManage($usuario);
         $modulosValidos = array_keys(config('permisos.modulos', []));
 
         $data = $request->validate([
@@ -85,6 +91,29 @@ class UserController extends Controller
             'permisos.*' => ['string', Rule::in($modulosValidos)],
             'password' => 'nullable|min:6',
         ]);
+
+        $this->ensureCanAssignRole($data['rol']);
+
+        $actor = Auth::user();
+        $nuevos = array_unique((array) ($data['permisos'] ?? []));
+        $actuales = array_unique((array) ($usuario->permisos ?? []));
+        sort($nuevos);
+        sort($actuales);
+        if ($actor->is($usuario) && ! $actor->esAdmin()
+            && ($data['rol'] !== $usuario->rol || $nuevos !== $actuales)) {
+            throw ValidationException::withMessages([
+                'rol' => 'No puedes cambiar tu propio rol ni tus módulos de acceso.',
+            ]);
+        }
+
+        // No dejar el sistema sin administradores activos.
+        $dejaDeSerAdminActivo = $usuario->esAdmin() && $usuario->estado
+            && ($data['rol'] !== 'admin' || ! $request->boolean('estado'));
+        if ($dejaDeSerAdminActivo && $this->adminsActivos() <= 1) {
+            throw ValidationException::withMessages([
+                'rol' => 'Debe quedar al menos un administrador activo.',
+            ]);
+        }
 
         $permisos = $data['rol'] === 'admin'
             ? null
@@ -120,8 +149,41 @@ class UserController extends Controller
     public function destroy($id)
     {
         $usuario = User::findOrFail($id);
+        $this->ensureCanManage($usuario);
+
+        if (Auth::user()->is($usuario)) {
+            return back()->withErrors(['usuario' => 'No puedes eliminar tu propia cuenta.']);
+        }
+
+        if ($usuario->esAdmin() && $usuario->estado && $this->adminsActivos() <= 1) {
+            return back()->withErrors(['usuario' => 'No se puede eliminar al último administrador activo.']);
+        }
+
         $usuario->delete();
 
         return redirect()->route('usuarios.index')->with('success', 'Usuario eliminado correctamente.');
+    }
+
+    /** Solo un admin puede otorgar el rol admin. */
+    private function ensureCanAssignRole(string $rol): void
+    {
+        if ($rol === 'admin' && ! Auth::user()->esAdmin()) {
+            throw ValidationException::withMessages([
+                'rol' => 'Solo un administrador puede asignar el rol Administrador.',
+            ]);
+        }
+    }
+
+    /** Un usuario no admin no puede ver, editar ni borrar cuentas de administrador. */
+    private function ensureCanManage(User $usuario): void
+    {
+        if ($usuario->esAdmin() && ! Auth::user()->esAdmin()) {
+            abort(403, 'Solo un administrador puede gestionar cuentas de administrador.');
+        }
+    }
+
+    private function adminsActivos(): int
+    {
+        return User::where('rol', 'admin')->where('estado', true)->count();
     }
 }

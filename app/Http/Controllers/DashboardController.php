@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Cliente;
+use App\Models\Facturacion;
 use App\Models\Inventario;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -36,6 +39,58 @@ class DashboardController extends Controller
         }
 
         return $grupos;
+    }
+
+    /** Panel principal: totales, últimos paquetes y estadísticas por cliente. */
+    public function index()
+    {
+        $totalClientes = Cliente::count();
+        $totalUsuarios = User::count();
+        $totalFacturas = Facturacion::count();
+        $totalPaquetes = Inventario::count();
+        $ultimosPaquetes = Inventario::with(['cliente', 'servicio'])
+            ->latest('fecha_ingreso')
+            ->take(5)
+            ->get();
+
+        // Solo lo que usa el buscador del dashboard (no exponer el resto de campos en el HTML).
+        $clientes = Cliente::orderBy('nombre_completo')->get(['id', 'nombre_completo']);
+
+        // Una sola consulta para todos los paquetes, agrupados por cliente en memoria.
+        $porCliente = Inventario::with('servicio:id,tipo_servicio')
+            ->get(['id', 'cliente_id', 'servicio_id', 'monto_calculado', 'peso_lb'])
+            ->groupBy('cliente_id');
+
+        $clientesData = [];
+        foreach ($clientes as $cliente) {
+            $g = $this->agregarPorTipoServicio($porCliente->get($cliente->id, collect()));
+            $clientesData[$cliente->id] = [
+                'paquetes_aereo' => $g['aereo']['paquetes'],
+                'paquetes_maritimo' => $g['maritimo']['paquetes'],
+                'paquetes_pie_cubico' => $g['pie_cubico']['paquetes'],
+                'ingresos_aereo' => $g['aereo']['dinero'],
+                'ingresos_maritimo' => $g['maritimo']['dinero'],
+                'ingresos_pie_cubico' => $g['pie_cubico']['dinero'],
+                'libras_aereo' => $g['aereo']['libras'],
+                'libras_maritimo' => $g['maritimo']['libras'],
+                'libras_pie_cubico' => $g['pie_cubico']['libras'],
+            ];
+        }
+
+        // Gráfico de pastel: paquetes del mes agrupados por tipo de servicio
+        $serviciosPieData = Inventario::with('servicio:id,tipo_servicio')
+            ->whereBetween('fecha_ingreso', [
+                Carbon::now()->startOfMonth()->toDateString(),
+                Carbon::now()->endOfMonth()->toDateString(),
+            ])
+            ->get(['id', 'servicio_id'])
+            ->groupBy(fn ($item) => $item->servicio->tipo_servicio ?? 'Sin tipo')
+            ->map->count();
+
+        return view('welcome', compact(
+            'totalClientes', 'totalUsuarios', 'totalFacturas', 'totalPaquetes',
+            'ultimosPaquetes', 'clientes', 'clientesData', 'serviciosPieData'
+        ));
     }
 
     public function estadisticasPaquetes(Request $request)

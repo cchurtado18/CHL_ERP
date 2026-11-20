@@ -2,18 +2,23 @@
 
 use App\Http\Controllers\AgendaEventoController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CargoTrackAdminController;
+use App\Http\Controllers\ClienteCargoTrackController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\ClientePortalAccesoController;
 use App\Http\Controllers\ContabilidadAsientoController;
 use App\Http\Controllers\ContabilidadCobroController;
 use App\Http\Controllers\ContabilidadCuentaController;
 use App\Http\Controllers\ContabilidadCxcController;
+use App\Http\Controllers\ContabilidadCxpController;
 use App\Http\Controllers\ContabilidadDashboardController;
 use App\Http\Controllers\ContabilidadGastoController;
 use App\Http\Controllers\ContabilidadParametroController;
+use App\Http\Controllers\ContabilidadProveedorController;
 use App\Http\Controllers\ContabilidadPeriodoController;
 use App\Http\Controllers\ContabilidadRentabilidadController;
 use App\Http\Controllers\ContabilidadReporteController;
+use App\Http\Controllers\ContabilidadVoucherController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DestinatarioController;
 use App\Http\Controllers\EncomiendaController;
@@ -34,14 +39,12 @@ use App\Http\Controllers\RemitenteController;
 use App\Http\Controllers\TarifaClienteController;
 use App\Http\Controllers\TrackingController;
 use App\Http\Controllers\UserController;
-use App\Models\Cliente;
-use App\Models\Inventario;
 use Illuminate\Support\Facades\Route;
 
 // Login (solo invitados; si ya hay sesión se redirige al home)
 Route::middleware('guest')->group(function () {
     Route::get('login', [AuthController::class, 'showLoginForm'])->name('login');
-    Route::post('login', [AuthController::class, 'login']);
+    Route::post('login', [AuthController::class, 'login'])->middleware('throttle:login');
 });
 Route::post('logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
@@ -49,8 +52,10 @@ Route::post('logout', [AuthController::class, 'logout'])->middleware('auth')->na
 Route::middleware('auth')->get('/sin-acceso', [AuthController::class, 'sinAcceso'])->name('sin-acceso');
 
 // Rastreo público (sin login)
-Route::get('/rastreo', [PublicTrackingController::class, 'index'])->name('public.tracking');
-Route::post('/rastreo/parse', [PublicTrackingController::class, 'parse'])->name('public.tracking.parse');
+Route::middleware('throttle:rastreo')->group(function () {
+    Route::get('/rastreo', [PublicTrackingController::class, 'index'])->name('public.tracking');
+    Route::post('/rastreo/parse', [PublicTrackingController::class, 'parse'])->name('public.tracking.parse');
+});
 
 // Portal de clientes
 Route::middleware(['auth', 'portal.cliente'])->prefix('portal')->name('portal.')->group(function () {
@@ -66,71 +71,7 @@ Route::middleware(['auth', 'portal.cliente'])->prefix('portal')->name('portal.')
 
 // Todas las rutas accesibles sin autenticación ni roles
 // RUTA PRINCIPAL ÚNICA PARA DASHBOARD
-Route::middleware(['auth', 'permiso:dashboard'])->get('/', function () {
-    $totalClientes = \App\Models\Cliente::count();
-    $totalUsuarios = \App\Models\User::count();
-    $totalFacturas = \App\Models\Facturacion::count();
-    $totalPaquetes = \App\Models\Inventario::count();
-    $ultimosPaquetes = \App\Models\Inventario::with(['cliente', 'servicio'])
-        ->latest('fecha_ingreso')
-        ->take(5)
-        ->get();
-
-    // Clientes para el select
-    $clientes = \App\Models\Cliente::orderBy('nombre_completo')->get();
-    // Datos de paquetes e ingresos por cliente en el mes actual
-    $clientesData = [];
-    $inicioMes = \Carbon\Carbon::now()->startOfMonth()->toDateString();
-    $finMes = \Carbon\Carbon::now()->endOfMonth()->toDateString();
-
-    // Función para normalizar el tipo de servicio (minúsculas y sin acentos)
-    function normalizarServicio($tipo)
-    {
-        $tipo = strtolower($tipo ?? '');
-        $tipo = str_replace(['á', 'é', 'í', 'ó', 'ú'], ['a', 'e', 'i', 'o', 'u'], $tipo);
-
-        return $tipo;
-    }
-
-    foreach ($clientes as $cliente) {
-        $paquetes = \App\Models\Inventario::with('servicio')
-            ->where('cliente_id', $cliente->id)
-            ->get();
-
-        $paquetesAereo = $paquetes->filter(function ($p) {
-            return normalizarServicio($p->servicio->tipo_servicio ?? '') === 'aereo';
-        });
-        $paquetesMaritimo = $paquetes->filter(function ($p) {
-            return normalizarServicio($p->servicio->tipo_servicio ?? '') === 'maritimo';
-        });
-        $paquetesPieCubico = $paquetes->filter(function ($p) {
-            return normalizarServicio($p->servicio->tipo_servicio ?? '') === 'pie_cubico';
-        });
-
-        $clientesData[$cliente->id] = [
-            'paquetes_aereo' => $paquetesAereo->count(),
-            'paquetes_maritimo' => $paquetesMaritimo->count(),
-            'paquetes_pie_cubico' => $paquetesPieCubico->count(),
-            'ingresos_aereo' => $paquetesAereo->sum('monto_calculado'),
-            'ingresos_maritimo' => $paquetesMaritimo->sum('monto_calculado'),
-            'ingresos_pie_cubico' => $paquetesPieCubico->sum('monto_calculado'),
-            'libras_aereo' => $paquetesAereo->sum('peso_lb'),
-            'libras_maritimo' => $paquetesMaritimo->sum('peso_lb'),
-            'libras_pie_cubico' => $paquetesPieCubico->sum('peso_lb'),
-        ];
-    }
-    // Gráfico de pastel: paquetes del mes agrupados por tipo de servicio
-    $serviciosMes = \App\Models\Inventario::with('servicio')
-        ->whereBetween('fecha_ingreso', [$inicioMes, $finMes])
-        ->get();
-    $serviciosPieData = $serviciosMes->groupBy(function ($item) {
-        return $item->servicio->tipo_servicio ?? 'Sin tipo';
-    })->map(function ($group) {
-        return $group->count();
-    });
-
-    return view('welcome', compact('totalClientes', 'totalUsuarios', 'totalFacturas', 'totalPaquetes', 'ultimosPaquetes', 'clientes', 'clientesData', 'serviciosPieData'));
-})->name('welcome');
+Route::middleware(['auth', 'permiso:dashboard'])->get('/', [DashboardController::class, 'index'])->name('welcome');
 
 // Rutas para usuarios
 Route::middleware(['auth', 'permiso:usuarios'])->prefix('usuarios')->group(function () {
@@ -154,6 +95,21 @@ Route::middleware(['auth', 'permiso:clientes'])->prefix('clientes')->group(funct
     Route::post('/{id}/portal', [ClientePortalAccesoController::class, 'store'])->name('clientes.portal.store');
     Route::post('/{id}/portal/reset', [ClientePortalAccesoController::class, 'resetPassword'])->name('clientes.portal.reset');
     Route::post('/{id}/portal/toggle', [ClientePortalAccesoController::class, 'toggle'])->name('clientes.portal.toggle');
+    Route::put('/{id}/cargotrack', [ClienteCargoTrackController::class, 'updateCredentials'])->name('clientes.cargotrack.credentials');
+    Route::post('/{id}/cargotrack/sync', [ClienteCargoTrackController::class, 'sync'])->name('clientes.cargotrack.sync');
+});
+
+// CargoTrack (panel admin: credenciales GC, agencias e ingreso de paquetes)
+Route::middleware(['auth', 'admin.only'])->prefix('cargotrack')->name('cargotrack.')->group(function () {
+    Route::get('/', [CargoTrackAdminController::class, 'index'])->name('index');
+    Route::post('/settings', [CargoTrackAdminController::class, 'updateSettings'])->name('settings');
+    Route::post('/sync', [CargoTrackAdminController::class, 'sync'])->name('sync');
+    Route::post('/agencias', [CargoTrackAdminController::class, 'storeAgencia'])->name('agencias.store');
+    Route::put('/agencias/{id}', [CargoTrackAdminController::class, 'updateAgencia'])->whereNumber('id')->name('agencias.update');
+    Route::delete('/agencias/{id}', [CargoTrackAdminController::class, 'destroyAgencia'])->whereNumber('id')->name('agencias.destroy');
+    Route::post('/inbound/asignar', [CargoTrackAdminController::class, 'assignBulk'])->name('inbound.assignBulk');
+    Route::post('/inbound/{id}/asignar', [CargoTrackAdminController::class, 'assign'])->whereNumber('id')->name('inbound.assign');
+    Route::get('/inbound/{id}/documento', [CargoTrackAdminController::class, 'documento'])->whereNumber('id')->name('documento');
 });
 
 // Rutas para facturación
@@ -240,12 +196,12 @@ Route::middleware(['auth', 'permiso:notificaciones'])->prefix('notificaciones')-
     Route::get('/', [NotificacionController::class, 'index'])->name('notificaciones.index');
     Route::get('/crear', [NotificacionController::class, 'create'])->name('notificaciones.create');
     Route::post('/', [NotificacionController::class, 'store'])->name('notificaciones.store');
+    Route::get('/no-leidas', [NotificacionController::class, 'noLeidas'])->name('notificaciones.no-leidas');
     Route::get('/{notificacion}', [NotificacionController::class, 'show'])->name('notificaciones.show');
     Route::get('/{notificacion}/editar', [NotificacionController::class, 'edit'])->name('notificaciones.edit');
     Route::put('/{notificacion}', [NotificacionController::class, 'update'])->name('notificaciones.update');
     Route::delete('/{notificacion}', [NotificacionController::class, 'destroy'])->name('notificaciones.destroy');
     Route::patch('/{notificacion}/marcar-leida', [NotificacionController::class, 'marcarLeida'])->name('notificaciones.marcar-leida');
-    Route::get('/no-leidas', [NotificacionController::class, 'noLeidas'])->name('notificaciones.no-leidas');
     Route::patch('/marcar-todas-leidas', [NotificacionController::class, 'marcarTodasLeidas'])->name('notificaciones.marcar-todas-leidas');
 });
 
@@ -294,6 +250,20 @@ Route::middleware(['auth', 'permiso:contabilidad'])->prefix('contabilidad')->gro
     Route::get('/cxc/clientes/{cliente}', [ContabilidadCxcController::class, 'estadoCuenta'])->whereNumber('cliente')->name('contabilidad.cxc.estado-cuenta');
     Route::get('/cxc/{facturaId}', [ContabilidadCxcController::class, 'show'])->whereNumber('facturaId')->name('contabilidad.cxc.show');
 
+    Route::get('/proveedores', [ContabilidadProveedorController::class, 'index'])->name('contabilidad.proveedores.index');
+    Route::post('/proveedores', [ContabilidadProveedorController::class, 'store'])->name('contabilidad.proveedores.store');
+
+    Route::get('/cxp', [ContabilidadCxpController::class, 'index'])->name('contabilidad.cxp.index');
+    Route::get('/cxp/crear', [ContabilidadCxpController::class, 'create'])->name('contabilidad.cxp.create');
+    Route::post('/cxp', [ContabilidadCxpController::class, 'store'])->name('contabilidad.cxp.store');
+    Route::get('/cxp/{id}', [ContabilidadCxpController::class, 'show'])->whereNumber('id')->name('contabilidad.cxp.show');
+    Route::post('/cxp/{id}/pagar', [ContabilidadCxpController::class, 'pagar'])->whereNumber('id')->name('contabilidad.cxp.pagar');
+    Route::get('/cxp/pagos/{pagoId}/comprobante', [ContabilidadCxpController::class, 'comprobante'])->whereNumber('pagoId')->name('contabilidad.cxp.comprobante');
+
+    Route::get('/vouchers', [ContabilidadVoucherController::class, 'index'])->name('contabilidad.vouchers.index');
+    Route::get('/vouchers/{id}', [ContabilidadVoucherController::class, 'show'])->whereNumber('id')->name('contabilidad.vouchers.show');
+    Route::get('/vouchers/{id}/pdf', [ContabilidadVoucherController::class, 'pdf'])->whereNumber('id')->name('contabilidad.vouchers.pdf');
+
     Route::get('/periodos', [ContabilidadPeriodoController::class, 'index'])->name('contabilidad.periodos.index');
     Route::patch('/periodos/{id}/toggle', [ContabilidadPeriodoController::class, 'toggleEstado'])->name('contabilidad.periodos.toggle');
 });
@@ -322,6 +292,7 @@ Route::middleware(['auth', 'permiso:contabilidad.cobros'])->prefix('contabilidad
     Route::get('/cobros', [ContabilidadCobroController::class, 'index'])->name('contabilidad.cobros.index');
     Route::get('/cobros/crear', [ContabilidadCobroController::class, 'create'])->name('contabilidad.cobros.create');
     Route::get('/cobros/{id}', [ContabilidadCobroController::class, 'show'])->name('contabilidad.cobros.show');
+    Route::get('/cobros/{id}/voucher', [ContabilidadVoucherController::class, 'pdfCobro'])->whereNumber('id')->name('contabilidad.cobros.voucher');
     Route::post('/cobros', [ContabilidadCobroController::class, 'store'])->name('contabilidad.cobros.store');
 });
 
@@ -331,16 +302,16 @@ Route::middleware(['auth', 'permiso:tracking'])->prefix('tracking')->group(funct
     Route::get('/dashboard', [TrackingController::class, 'dashboard'])->name('tracking.dashboard');
     Route::get('/crear', [TrackingController::class, 'create'])->name('tracking.create');
     Route::post('/', [TrackingController::class, 'store'])->name('tracking.store');
+    Route::get('/buscar', [TrackingController::class, 'buscarPorCodigo'])->name('tracking.buscar');
+    Route::get('/proximos-vencer', [TrackingController::class, 'proximosVencer'])->name('tracking.proximos-vencer');
+    Route::get('/verificar-recordatorios', [TrackingController::class, 'verificarRecordatorios'])->name('tracking.verificar-recordatorios');
+    Route::get('/vencidos/count', [TrackingController::class, 'countVencidos'])->name('tracking.vencidos.count');
     Route::get('/{tracking}', [TrackingController::class, 'show'])->name('tracking.show');
     Route::get('/{tracking}/editar', [TrackingController::class, 'edit'])->name('tracking.edit');
     Route::put('/{tracking}', [TrackingController::class, 'update'])->name('tracking.update');
     Route::delete('/{tracking}', [TrackingController::class, 'destroy'])->name('tracking.destroy');
     Route::post('/{tracking}/actualizar-estado', [TrackingController::class, 'actualizarEstado'])->name('tracking.actualizar-estado');
-    Route::get('/buscar', [TrackingController::class, 'buscarPorCodigo'])->name('tracking.buscar');
-    Route::get('/proximos-vencer', [TrackingController::class, 'proximosVencer'])->name('tracking.proximos-vencer');
-    Route::get('/verificar-recordatorios', [TrackingController::class, 'verificarRecordatorios'])->name('tracking.verificar-recordatorios');
     Route::post('/{id}/completar', [TrackingController::class, 'completar'])->name('tracking.completar');
-    Route::get('/vencidos/count', [TrackingController::class, 'countVencidos'])->name('tracking.vencidos.count');
 });
 
 // Tarifas (solo usuarios autenticados con módulo clientes)

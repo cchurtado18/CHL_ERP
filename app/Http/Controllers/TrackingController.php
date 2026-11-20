@@ -29,7 +29,7 @@ class TrackingController extends Controller
      */
     public function create()
     {
-        $clientes = Cliente::all();
+        $clientes = Cliente::orderBy('nombre_completo')->get(['id', 'nombre_completo']);
         $usuarios = User::all();
         return view('tracking.create', compact('clientes', 'usuarios'));
     }
@@ -79,7 +79,7 @@ class TrackingController extends Controller
      */
     public function edit(Tracking $tracking)
     {
-        $clientes = Cliente::all();
+        $clientes = Cliente::orderBy('nombre_completo')->get(['id', 'nombre_completo']);
         $usuarios = User::all();
         return view('tracking.edit', compact('tracking', 'clientes', 'usuarios'));
     }

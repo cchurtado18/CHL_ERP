@@ -85,13 +85,22 @@
                     <a href="{{ route('contabilidad.cxc.estados-cuenta') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
                         <i class="fas fa-user-tag text-[#15537c]"></i> Estado de cuenta
                     </a>
+                    <a href="{{ route('contabilidad.cxp.index') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                        <i class="fas fa-file-invoice text-[#15537c]"></i> CxP
+                    </a>
+                    <a href="{{ route('contabilidad.proveedores.index') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                        <i class="fas fa-truck text-[#15537c]"></i> Proveedores
+                    </a>
+                    <a href="{{ route('contabilidad.vouchers.index') }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                        <i class="fas fa-receipt text-[#15537c]"></i> Vouchers
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 
     {{-- KPIs --}}
-    <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
+    <div class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
         <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div class="flex items-center gap-4">
                 <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-[#15537c]/10 text-2xl text-[#15537c]"><i class="fas fa-file-invoice"></i></div>
@@ -116,6 +125,15 @@
                 <div>
                     <p class="text-sm font-medium uppercase tracking-wide text-slate-500">Saldo CxC total</p>
                     <p class="text-2xl font-bold text-rose-700">${{ number_format($saldoCxc, 2) }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex items-center gap-4">
+                <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-2xl text-amber-700"><i class="fas fa-file-invoice"></i></div>
+                <div>
+                    <p class="text-sm font-medium uppercase tracking-wide text-slate-500">Saldo CxP total</p>
+                    <p class="text-2xl font-bold text-amber-800">${{ number_format($saldoCxp ?? 0, 2) }}</p>
                 </div>
             </div>
         </div>
