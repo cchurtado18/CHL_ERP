@@ -95,6 +95,12 @@
         .reveal { animation: reveal .5s cubic-bezier(.22,1,.36,1) both; }
         @keyframes reveal { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 
+        .btn-wa { background: linear-gradient(180deg, #2fd568 0%, #1fb855 100%); box-shadow: 0 10px 24px -10px rgba(31,184,85,0.7); transition: filter .15s, transform .1s; }
+        .btn-wa:hover { filter: brightness(1.05); }
+        .wa-fab { position: fixed; right: 18px; bottom: 18px; z-index: 50; }
+        .wa-fab .pulse { position: absolute; inset: 0; border-radius: 999px; background: #25d366; opacity: .5; animation: wapulse 2.2s ease-out infinite; }
+        @keyframes wapulse { 0% { transform: scale(1); opacity: .45; } 100% { transform: scale(1.6); opacity: 0; } }
+        @media (prefers-reduced-motion: reduce) { .wa-fab .pulse { animation: none; display: none; } }
         @media (prefers-reduced-motion: reduce) {
             .radar .ring, .radar .core, .radar .orbit, .dots span, .reveal, .spinner, .hero-bg .moving { animation: none !important; }
             .hero-bg .moving { display: none; }
@@ -157,6 +163,12 @@
         'listo_para_entrega' => ['Listo para entregar', 'Ya puedes coordinar la entrega o retiro.', 'fa-clipboard-check'],
         'entregado' => ['Entregado', 'Tu paquete fue entregado.', 'fa-circle-check'],
     ];
+
+    // WhatsApp de atención: +505 8928-8565
+    $wa = fn (string $msg = '') => 'https://wa.me/50589288565'.($msg !== '' ? '?text='.rawurlencode($msg) : '');
+    $waMsg = filled($code ?? null)
+        ? "Hola CH Logistics, quiero consultar sobre mi paquete con tracking {$code}."
+        : 'Hola CH Logistics, quiero consultar sobre mi paquete.';
 @endphp
 
     {{-- ================= Encabezado + buscador ================= --}}
@@ -338,7 +350,7 @@
                 </article>
 
                 <p class="mt-5 text-center text-sm text-slate-500">
-                    ¿Tienes dudas sobre tu envío? <a href="{{ route('login') }}" class="font-semibold text-[var(--brand)] hover:underline">Entra a tu cuenta</a> o contáctanos.
+                    ¿Tienes dudas sobre tu envío? <a href="{{ route('login') }}" class="font-semibold text-[var(--brand)] hover:underline">Entra a tu cuenta</a> o <a href="{{ $wa($waMsg) }}" target="_blank" rel="noopener" class="font-semibold text-[#128C7E] hover:underline">escríbenos por WhatsApp</a>.
                 </p>
 
             @elseif(!empty($usarNavegador))
@@ -351,8 +363,11 @@
             <p class="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-500">Buscamos <span class="font-mono font-bold text-slate-700">__CODE__</span> y aún no aparece. Revisa que esté escrito igual que en tu compra.</p>
             <div class="mx-auto mt-6 max-w-md rounded-2xl bg-[var(--amber-soft)] px-5 py-4 text-left text-[13px] leading-relaxed text-[#7a4a07]">
                 <p class="font-bold">¿Tu paquete aún no aparece?</p>
-                <p class="mt-1">Si después de un día sigue sin verse, contáctanos.</p>
+                <p class="mt-1">Si después de un día sigue sin verse, <a href="{{ $wa($waMsg) }}" target="_blank" rel="noopener" class="font-bold underline decoration-2 underline-offset-2 hover:text-[#128C7E]">contáctanos por WhatsApp</a>.</p>
             </div>
+            <a href="{{ $wa($waMsg) }}" target="_blank" rel="noopener" class="btn-wa mt-6 inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-extrabold text-white">
+                <i class="fab fa-whatsapp text-lg" aria-hidden="true"></i> Escríbenos por WhatsApp
+            </a>
         </div>
     </template>
                 <script>
@@ -470,9 +485,13 @@
                     @endif
                     <div class="mx-auto mt-6 max-w-md rounded-2xl bg-[var(--amber-soft)] px-5 py-4 text-left text-[13px] leading-relaxed text-[#7a4a07]">
                         <p class="font-bold">¿Tu paquete aún no aparece?</p>
-                        <p class="mt-1">Si después de un día sigue sin verse, contáctanos.</p>
+                        <p class="mt-1">Si después de un día sigue sin verse, <a href="{{ $wa($waMsg) }}" target="_blank" rel="noopener" class="font-bold underline decoration-2 underline-offset-2 hover:text-[#128C7E]">contáctanos por WhatsApp</a>.</p>
                     </div>
-                    <button type="button" onclick="document.getElementById('tracking').select()" class="mt-6 text-sm font-bold text-[var(--brand)] hover:underline">
+                    <a href="{{ $wa($waMsg) }}" target="_blank" rel="noopener" class="btn-wa mt-6 inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-extrabold text-white">
+                        <i class="fab fa-whatsapp text-lg" aria-hidden="true"></i> Escríbenos por WhatsApp
+                    </a>
+                    <br>
+                    <button type="button" onclick="document.getElementById('tracking').select()" class="mt-4 text-sm font-bold text-[var(--brand)] hover:underline">
                         Intentar con otro código
                     </button>
                 </div>
@@ -493,7 +512,7 @@
                 <div class="card rounded-2xl p-5">
                     <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--amber-soft)] text-[#b26a06]"><i class="fas fa-headset"></i></span>
                     <p class="mt-4 font-bold">¿Aún no aparece?</p>
-                    <p class="mt-1 text-sm leading-relaxed text-slate-500">Si después de un día sigue sin verse, contáctanos.</p>
+                    <p class="mt-1 text-sm leading-relaxed text-slate-500">Si después de un día sigue sin verse, <a href="{{ $wa($waMsg) }}" target="_blank" rel="noopener" class="font-semibold text-[#128C7E] hover:underline">escríbenos por WhatsApp</a>.</p>
                 </div>
             </section>
         @endif
@@ -561,5 +580,13 @@
         }));
     })();
     </script>
+    {{-- Botón flotante de WhatsApp --}}
+    <a href="{{ $wa($waMsg) }}" target="_blank" rel="noopener" class="wa-fab group flex items-center" aria-label="Escríbenos por WhatsApp al +505 8928-8565">
+        <span class="mr-3 hidden rounded-full bg-white px-4 py-2 text-sm font-bold text-[var(--ink)] shadow-lg shadow-black/10 sm:block">¿Dudas? Escríbenos</span>
+        <span class="relative flex h-14 w-14 items-center justify-center rounded-full bg-[#25d366] text-3xl text-white shadow-xl shadow-[#25d366]/40 transition group-hover:scale-105">
+            <span class="pulse" aria-hidden="true"></span>
+            <i class="fab fa-whatsapp relative" aria-hidden="true"></i>
+        </span>
+    </a>
 </body>
 </html>
