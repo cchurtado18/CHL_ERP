@@ -300,7 +300,7 @@
                     </div>
                 </div>
 
-                <div class="rise my-auto grid items-center gap-10 py-10 2xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] 2xl:gap-12">
+                <div class="rise my-auto py-10">
                     <div class="max-w-md">
                         <h1 class="text-[2.6rem] font-extrabold leading-[1.08] tracking-tight 2xl:text-5xl">
                             Tus envíos,<br><span class="text-[var(--amber)]">siempre a la vista.</span>
@@ -318,61 +318,6 @@
                                 Rastreo en línea
                             </li>
                         </ul>
-                    </div>
-
-                    {{-- Vista previa ilustrativa del portal --}}
-                    <div class="preview hidden xl:block" aria-hidden="true">
-                        <div class="preview-card w-full max-w-[340px] rounded-2xl p-4 text-[var(--ink)]">
-                            <div class="flex items-center justify-between">
-                                <p class="text-[13px] font-extrabold">Mis paquetes</p>
-                                <span class="text-[11px] font-semibold text-slate-400">Este mes</span>
-                            </div>
-                            <div class="mt-3 grid grid-cols-2 gap-2">
-                                <div class="rounded-xl bg-slate-50 px-3 py-2.5">
-                                    <p class="text-[10.5px] font-semibold uppercase tracking-wider text-slate-400">Recibidos</p>
-                                    <p class="mt-0.5 text-xl font-extrabold text-[var(--brand)]">12</p>
-                                </div>
-                                <div class="rounded-xl bg-slate-50 px-3 py-2.5">
-                                    <p class="text-[10.5px] font-semibold uppercase tracking-wider text-slate-400">Entregados</p>
-                                    <p class="mt-0.5 text-xl font-extrabold text-emerald-600">9</p>
-                                </div>
-                            </div>
-                            <ul class="mt-3 divide-y divide-slate-100">
-                                <li class="flex items-center justify-between py-2.5">
-                                    <div>
-                                        <p class="font-mono text-[12px] font-semibold">WRH-48213</p>
-                                        <p class="text-[11px] text-slate-400">3.2 lb · Aéreo</p>
-                                    </div>
-                                    <span class="chip chip-in">Recibido</span>
-                                </li>
-                                <li class="flex items-center justify-between py-2.5">
-                                    <div>
-                                        <p class="font-mono text-[12px] font-semibold">WRH-48177</p>
-                                        <p class="text-[11px] text-slate-400">11.0 lb · Marítimo</p>
-                                    </div>
-                                    <span class="chip chip-ok">Entregado</span>
-                                </li>
-                                <li class="flex items-center justify-between py-2.5">
-                                    <div>
-                                        <p class="font-mono text-[12px] font-semibold">WRH-48102</p>
-                                        <p class="text-[11px] text-slate-400">1.4 lb · Aéreo</p>
-                                    </div>
-                                    <span class="chip chip-ok">Entregado</span>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="preview-card -mt-6 ml-12 w-full max-w-[300px] rounded-2xl p-4 text-[var(--ink)]">
-                            <div class="flex items-center gap-3">
-                                <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--amber-soft)] text-[#9a5b06]">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h7M9 17h5"/></svg>
-                                </div>
-                                <div class="min-w-0 flex-1">
-                                    <p class="text-[12.5px] font-bold">Factura F-0231</p>
-                                    <p class="text-[11px] text-slate-400">$48.50 · PDF disponible</p>
-                                </div>
-                                <span class="chip chip-due">Pendiente</span>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
