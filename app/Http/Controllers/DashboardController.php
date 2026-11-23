@@ -44,6 +44,11 @@ class DashboardController extends Controller
     /** Panel principal: totales, últimos paquetes y estadísticas por cliente. */
     public function index()
     {
+        // Las cifras (dinero, libras, por cliente) son solo para administradores.
+        if (! auth()->user()?->esAdmin()) {
+            return view('welcome');
+        }
+
         $totalClientes = Cliente::count();
         $totalUsuarios = User::count();
         $totalFacturas = Facturacion::count();

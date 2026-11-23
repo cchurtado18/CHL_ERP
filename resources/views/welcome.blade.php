@@ -361,6 +361,7 @@
     @media (prefers-reduced-motion: reduce) { .dash-mod, .dash-mod:hover { transition: none; transform: none; } }
 </style>
 
+@if($esAdmin)
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -663,4 +664,5 @@ if (ctxPie && typeof Chart !== 'undefined') {
 })();
 </script>
 @endpush
+@endif
 @endsection

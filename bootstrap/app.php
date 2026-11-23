@@ -35,9 +35,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('facturacion:alertar-morosidad')->dailyAt('08:00');
         $schedule->command('leads:recordar-seguimientos')->hourly();
         $schedule->command('paquetes:sync-estados')->everyFifteenMinutes();
-        // Solo actúan si la sincronización está activada en CargoTrack / en el cliente.
-        $schedule->command('tracking:sync-admin')->hourly()->withoutOverlapping();
-        $schedule->command('tracking:sync-cliente')->hourly()->withoutOverlapping();
+        // La sincronización automática con CargoTrack (tracking:sync-admin / tracking:sync-cliente)
+        // está apagada a propósito. Se puede correr a mano desde la consola si hiciera falta.
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

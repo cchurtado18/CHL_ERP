@@ -223,6 +223,31 @@ class SecurityHardeningTest extends TestCase
         $this->assertArrayNotHasKey('cargotrack_password', $cliente->fresh()->toArray());
     }
 
+    public function test_staff_with_dashboard_permission_sees_no_figures(): void
+    {
+        $cliente = $this->cliente('Secreto');
+        $trabajador = $this->staff(['dashboard', 'inventario']);
+
+        $this->actingAs($trabajador)->get('/')
+            ->assertOk()
+            ->assertSee('Tus módulos')
+            ->assertDontSee('Secreto')
+            ->assertDontSee('clientesData', false)
+            ->assertDontSee('Estadísticas por cliente');
+
+        $this->actingAs($trabajador)
+            ->getJson('/dashboard/estadisticas-paquetes-cliente?cliente_id='.$cliente->id)
+            ->assertForbidden();
+        $this->actingAs($trabajador)
+            ->getJson('/dashboard/estadisticas-paquetes')
+            ->assertForbidden();
+
+        $this->actingAs($this->admin())
+            ->getJson('/dashboard/estadisticas-paquetes-cliente?cliente_id=todos')
+            ->assertOk()
+            ->assertJsonPath('todos_clientes', true);
+    }
+
     public function test_dashboard_and_cargotrack_pages_render_for_admin(): void
     {
         $admin = $this->admin();

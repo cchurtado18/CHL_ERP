@@ -309,7 +309,7 @@ Route::middleware(['auth', 'permiso:logs_inventario'])->group(function () {
 });
 
 // API AJAX para dashboard: estadísticas de paquetes
-Route::middleware(['auth', 'staff'])->get('/dashboard/estadisticas-paquetes', [DashboardController::class, 'estadisticasPaquetes'])->name('dashboard.estadisticas-paquetes');
+Route::middleware(['auth', 'admin.only'])->get('/dashboard/estadisticas-paquetes', [DashboardController::class, 'estadisticasPaquetes'])->name('dashboard.estadisticas-paquetes');
 
 // API AJAX para estadísticas por cliente con filtro de fechas y tipo de servicio
-Route::middleware(['auth', 'permiso:dashboard'])->get('/dashboard/estadisticas-paquetes-cliente', [App\Http\Controllers\DashboardController::class, 'estadisticasPaquetesCliente'])->name('dashboard.estadisticas-paquetes-cliente');
+Route::middleware(['auth', 'admin.only'])->get('/dashboard/estadisticas-paquetes-cliente', [App\Http\Controllers\DashboardController::class, 'estadisticasPaquetesCliente'])->name('dashboard.estadisticas-paquetes-cliente');
