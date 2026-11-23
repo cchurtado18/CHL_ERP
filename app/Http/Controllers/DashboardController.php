@@ -87,9 +87,26 @@ class DashboardController extends Controller
             ->groupBy(fn ($item) => $item->servicio->tipo_servicio ?? 'Sin tipo')
             ->map->count();
 
+        // Resumen del mes actual vs. mes anterior (una consulta agregada por mes).
+        $resumenMes = function (Carbon $inicio, Carbon $fin) {
+            $r = Inventario::whereBetween('fecha_ingreso', [$inicio->toDateString(), $fin->toDateString()])
+                ->selectRaw('COUNT(*) as paquetes, COALESCE(SUM(peso_lb),0) as libras, COALESCE(SUM(monto_calculado),0) as monto, COUNT(DISTINCT cliente_id) as clientes')
+                ->first();
+
+            return [
+                'paquetes' => (int) $r->paquetes,
+                'libras' => (float) $r->libras,
+                'monto' => (float) $r->monto,
+                'clientes' => (int) $r->clientes,
+            ];
+        };
+        $mesActual = $resumenMes(Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth());
+        $mesAnterior = $resumenMes(Carbon::now()->subMonthNoOverflow()->startOfMonth(), Carbon::now()->subMonthNoOverflow()->endOfMonth());
+
         return view('welcome', compact(
             'totalClientes', 'totalUsuarios', 'totalFacturas', 'totalPaquetes',
-            'ultimosPaquetes', 'clientes', 'clientesData', 'serviciosPieData'
+            'ultimosPaquetes', 'clientes', 'clientesData', 'serviciosPieData',
+            'mesActual', 'mesAnterior'
         ));
     }
 
