@@ -225,7 +225,7 @@
                         <tbody class="divide-y divide-slate-100">
                             @forelse($ultimosPaquetes ?? [] as $paq)
                                 @php
-                                    $tipo = strtolower(str_replace(['á','é','í','ó','ú'], ['a','e','i','o','u'], $paq->servicio->tipo_servicio ?? ''));
+                                    $tipo = \App\Models\Servicio::claveTipo($paq->servicio->tipo_servicio ?? '');
                                     $chip = match ($tipo) {
                                         'aereo' => ['bg-sky-50 text-sky-700', 'fa-plane'],
                                         'maritimo' => ['bg-[#15537c]/10 text-[#15537c]', 'fa-ship'],

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Cliente;
 use App\Models\Facturacion;
 use App\Models\Inventario;
+use App\Models\Servicio;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -14,9 +15,7 @@ class DashboardController extends Controller
 {
     private function normalizarTipoServicio(?string $tipo): string
     {
-        $t = strtolower($tipo ?? '');
-
-        return str_replace(['á', 'é', 'í', 'ó', 'ú'], ['a', 'e', 'i', 'o', 'u'], $t);
+        return Servicio::claveTipo($tipo);
     }
 
     /** @param  Collection<int, Inventario>  $paquetes */
@@ -125,10 +124,10 @@ class DashboardController extends Controller
         }
         $paquetes = $query->get();
         $maritimo = $paquetes->filter(function ($p) {
-            return strtolower($p->servicio->tipo_servicio ?? '') === 'maritimo';
+            return $this->normalizarTipoServicio($p->servicio->tipo_servicio ?? '') === 'maritimo';
         });
         $aereo = $paquetes->filter(function ($p) {
-            return strtolower($p->servicio->tipo_servicio ?? '') === 'aereo';
+            return $this->normalizarTipoServicio($p->servicio->tipo_servicio ?? '') === 'aereo';
         });
 
         return response()->json([
@@ -207,13 +206,12 @@ class DashboardController extends Controller
             $query->whereBetween('fecha_ingreso', [$desde, $hasta]);
         }
         if ($tipoServicio !== 'todos') {
-            $tipoServicioNormalizado = $this->normalizarTipoServicio($tipoServicio);
-            $query->whereHas('servicio', function ($q) use ($tipoServicioNormalizado) {
-                $q->whereRaw(
-                    "LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(tipo_servicio, 'á', 'a'), 'é', 'e'), 'í', 'i'), 'ó', 'o'), 'ú', 'u')) = ?",
-                    [$tipoServicioNormalizado]
-                );
-            });
+            // Se compara la clave en PHP ("Pie Cúbico" → "pie_cubico"); en SQL no coincidía.
+            $tipoNorm = $this->normalizarTipoServicio($tipoServicio);
+            $servicioIds = Servicio::all(['id', 'tipo_servicio'])
+                ->filter(fn ($s) => $this->normalizarTipoServicio($s->tipo_servicio) === $tipoNorm)
+                ->pluck('id');
+            $query->whereIn('servicio_id', $servicioIds);
         }
         $paquetes = $query->get();
         $total = $paquetes->count();

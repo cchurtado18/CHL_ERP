@@ -16,6 +16,17 @@ class Servicio extends Model
         'descripcion',
     ];
 
+    /**
+     * Clave estable del tipo de servicio: "Pie Cúbico" → "pie_cubico", "Aéreo" → "aereo".
+     * Sin tildes, en minúsculas y con espacios/guiones convertidos a "_".
+     */
+    public static function claveTipo(?string $tipo): string
+    {
+        $t = strtolower(\Illuminate\Support\Str::ascii((string) $tipo));
+
+        return trim(preg_replace('/[^a-z0-9]+/', '_', $t), '_');
+    }
+
     // Relación con tarifas
     public function tarifas()
     {
