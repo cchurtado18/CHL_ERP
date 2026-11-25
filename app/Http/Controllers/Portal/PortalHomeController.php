@@ -16,8 +16,8 @@ class PortalHomeController extends Controller
 
         $paquetesQuery = Inventario::where('cliente_id', $clienteId);
         $totalPaquetes = (clone $paquetesQuery)->count();
-        $recibidos = (clone $paquetesQuery)->where('estado', 'recibido')->count();
-        $entregados = (clone $paquetesQuery)->where('estado', 'entregado')->count();
+        $recibidos = (clone $paquetesQuery)->whereNull('factura_id')->count(); // en oficina
+        $entregados = (clone $paquetesQuery)->whereNotNull('factura_id')->count(); // facturados
         $otros = max(0, $totalPaquetes - $recibidos - $entregados);
 
         $facturasPendientes = Facturacion::where('cliente_id', $clienteId)

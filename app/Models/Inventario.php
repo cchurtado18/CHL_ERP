@@ -80,6 +80,25 @@ class Inventario extends Model
         return round($peso * $tarifa, 2, PHP_ROUND_HALF_UP);
     }
 
+    /**
+     * Estado que ve el cliente (rastreo y portal):
+     * facturado → "entregado"; ingresado pero sin factura → "en_oficina".
+     */
+    public function estadoCliente(): string
+    {
+        return $this->factura_id ? 'entregado' : 'en_oficina';
+    }
+
+    public function estadoClienteLabel(): string
+    {
+        return $this->factura_id ? 'Entregado' : 'En oficina';
+    }
+
+    public function estadoClienteBadge(): string
+    {
+        return $this->factura_id ? 'bg-emerald-200 text-emerald-900' : 'bg-amber-200 text-amber-900';
+    }
+
     public function montoFacturable(): float
     {
         if ($this->monto_calculado !== null && $this->monto_calculado !== '') {

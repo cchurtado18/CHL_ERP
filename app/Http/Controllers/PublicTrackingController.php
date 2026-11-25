@@ -3,11 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Contracts\TrackingProvider;
+use App\Models\Inventario;
 use App\Services\Tracking\CargoTrackProvider;
 use Illuminate\Http\Request;
 
 /**
- * Rastreo público: toma el código escrito y lo consulta en CargoTrack.
+ * Rastreo público: busca el código en nuestro inventario y, si no está, en CargoTrack.
  */
 class PublicTrackingController extends Controller
 {
@@ -24,7 +25,15 @@ class PublicTrackingController extends Controller
         $fuente = null;
         $error = null;
 
-        if ($code !== '' && $provider->enabled()) {
+        // Primero nuestro inventario: si el paquete ya se ingresó, su estado lo damos nosotros
+        // (facturado = Entregado, sin factura = En oficina) y no hace falta consultar CargoTrack.
+        $paquete = $code !== ''
+            ? Inventario::findByPublicCode($code)?->load(['servicio', 'estadoEventos'])
+            : null;
+
+        if ($paquete) {
+            $fuente = 'local';
+        } elseif ($code !== '' && $provider->enabled()) {
             $remoto = $provider->lookup($code);
             if ($remoto) {
                 $fuente = $provider->driver();
@@ -38,14 +47,15 @@ class PublicTrackingController extends Controller
         $cargotrackUrl = rtrim((string) config('services.cargotrack.base_url'), '/').
             (string) config('services.cargotrack.track_path', '/m/track.asp');
         $errorText = strtolower((string) $error);
-        $usarNavegador = $error !== null
+        $usarNavegador = ! $paquete
+            && $error !== null
             && $remoto === null
             && ! str_contains($errorText, 'no está configurado')
             && ! str_contains($errorText, 'no está activo');
 
         return view('public.tracking', [
             'code' => $code,
-            'paquete' => null,
+            'paquete' => $paquete,
             'remoto' => $remoto,
             'fuente' => $fuente,
             'buscado' => $code !== '',

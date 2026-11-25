@@ -32,7 +32,7 @@
             <div class="flex items-center gap-3 sm:gap-4">
                 <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600 text-xl sm:h-14 sm:w-14 sm:text-2xl"><i class="fas fa-check-circle"></i></div>
                 <div class="min-w-0">
-                    <p class="text-xs font-medium uppercase tracking-wide text-slate-500 sm:text-sm">Recibidos</p>
+                    <p class="text-xs font-medium uppercase tracking-wide text-slate-500 sm:text-sm">En oficina</p>
                     <p class="text-xl font-bold text-slate-800 sm:text-2xl">{{ $totalRecibidos }}</p>
                 </div>
             </div>
@@ -60,8 +60,8 @@
                 <label class="mb-1.5 block text-sm font-medium text-slate-600">Estado</label>
                 <select name="estado" class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-base focus:border-[#15537c] focus:ring-1 focus:ring-[#15537c]">
                     <option value="">Todos</option>
-                    @foreach(['recibido','en_transito','en_aduana','listo_entrega','entregado','pendiente'] as $est)
-                        <option value="{{ $est }}" @selected(request('estado') === $est)>{{ ucfirst(str_replace('_',' ', $est)) }}</option>
+                    @foreach(['en_oficina' => 'En oficina', 'entregado' => 'Entregado'] as $est => $estLabel)
+                        <option value="{{ $est }}" @selected(request('estado') === $est)>{{ $estLabel }}</option>
                     @endforeach
                 </select>
             </div>
@@ -110,7 +110,7 @@
                         <td class="px-4 py-1.5 text-center"><span class="rounded-md bg-slate-100 px-2 py-0.5 text-sm font-medium">{{ $p->servicio->tipo_servicio ?? '—' }}</span></td>
                         <td class="px-4 py-1.5 text-center font-medium whitespace-nowrap">{{ \App\Models\Inventario::formatPeso($p->peso_lb) }} lb</td>
                         <td class="px-4 py-1.5 text-center">
-                            <span class="inline-flex items-center rounded-full px-2 py-0.5 text-sm font-semibold {{ $estadoBadge($p->estado) }}">{{ ucfirst(str_replace('_',' ', $p->estado)) }}</span>
+                            <span class="inline-flex items-center rounded-full px-2 py-0.5 text-sm font-semibold {{ $p->estadoClienteBadge() }}">{{ $p->estadoClienteLabel() }}</span>
                         </td>
                         <td class="px-4 py-1.5 text-center font-medium">{{ \Carbon\Carbon::parse($p->fecha_ingreso)->format('d/m/Y') }}</td>
                         <td class="px-4 py-1.5 text-right">
@@ -135,7 +135,7 @@
                         <p class="truncate text-lg font-semibold text-black">{{ $p->tracking_codigo ?: $p->numero_guia ?: ('#'.$p->id) }}</p>
                         <p class="mt-1 text-sm font-medium text-slate-700">{{ $p->servicio->tipo_servicio ?? '—' }} · {{ \App\Models\Inventario::formatPeso($p->peso_lb) }} lb</p>
                     </div>
-                    <span class="shrink-0 rounded-full px-3 py-1 text-sm font-semibold {{ $estadoBadge($p->estado) }}">{{ ucfirst(str_replace('_',' ', $p->estado)) }}</span>
+                    <span class="shrink-0 rounded-full px-3 py-1 text-sm font-semibold {{ $p->estadoClienteBadge() }}">{{ $p->estadoClienteLabel() }}</span>
                 </div>
                 <div class="mt-4 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4 text-sm">
                     <div>

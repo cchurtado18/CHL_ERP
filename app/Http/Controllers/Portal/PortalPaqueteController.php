@@ -15,14 +15,17 @@ class PortalPaqueteController extends Controller
 
         $base = Inventario::where('cliente_id', $clienteId);
         $totalPaquetes = (clone $base)->count();
-        $totalRecibidos = (clone $base)->where('estado', 'recibido')->count();
-        $totalEntregados = (clone $base)->where('estado', 'entregado')->count();
+        // Estado visto por el cliente: facturado = entregado, sin factura = en oficina.
+        $totalRecibidos = (clone $base)->whereNull('factura_id')->count();
+        $totalEntregados = (clone $base)->whereNotNull('factura_id')->count();
 
         $query = Inventario::with('servicio')
             ->where('cliente_id', $clienteId);
 
-        if ($request->filled('estado')) {
-            $query->where('estado', $request->estado);
+        if ($request->estado === 'entregado') {
+            $query->whereNotNull('factura_id');
+        } elseif ($request->estado === 'en_oficina') {
+            $query->whereNull('factura_id');
         }
 
         if ($request->filled('q')) {

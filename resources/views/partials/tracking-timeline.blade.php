@@ -11,7 +11,7 @@
         ['key' => 'recibido', 'label' => 'Recibido', 'icon' => 'fa-box'],
         ['key' => 'en_transito', 'label' => 'En tránsito', 'icon' => 'fa-truck'],
         ['key' => 'en_aduana', 'label' => 'En destino', 'icon' => 'fa-flag'],
-        ['key' => 'listo_entrega', 'label' => 'Listo', 'icon' => 'fa-clipboard-check'],
+        ['key' => 'en_oficina', 'label' => 'En oficina', 'icon' => 'fa-store'],
         ['key' => 'entregado', 'label' => 'Entregado', 'icon' => 'fa-circle-check'],
     ];
 
@@ -22,6 +22,7 @@
         'en_transito' => 1,
         'en_camino' => 1,
         'en_aduana' => 2,
+        'en_oficina' => 3,
         'listo_entrega' => 3,
         'listo_para_entrega' => 3,
         'entregado' => 4,
@@ -38,7 +39,7 @@
     if (! $ingresadoLocal && $carrierIdx >= 3) {
         $carrierIdx = 2;
     }
-    if ($ingresadoLocal && in_array($estadoNorm, ['listo_entrega', 'listo_para_entrega'], true)) {
+    if ($ingresadoLocal && in_array($estadoNorm, ['en_oficina', 'listo_entrega', 'listo_para_entrega'], true)) {
         $carrierIdx = 3;
     }
     if ($ingresadoLocal && in_array($estadoNorm, ['entregado', 'devuelto'], true)) {

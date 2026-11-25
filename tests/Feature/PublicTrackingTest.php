@@ -5,11 +5,14 @@ namespace Tests\Feature;
 use App\Contracts\TrackingProvider;
 use App\Services\Tracking\CargoTrackProvider;
 use App\Services\Tracking\NullTrackingProvider;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class PublicTrackingTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_public_tracking_shows_not_found_for_unknown_code(): void
     {
         $this->app->instance(TrackingProvider::class, new NullTrackingProvider);

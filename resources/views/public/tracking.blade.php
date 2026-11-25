@@ -161,6 +161,7 @@
         'en_aduana' => ['En destino', 'Tu paquete llegó al país y se está procesando.', 'fa-flag'],
         'listo_entrega' => ['Listo para entregar', 'Ya puedes coordinar la entrega o retiro.', 'fa-clipboard-check'],
         'listo_para_entrega' => ['Listo para entregar', 'Ya puedes coordinar la entrega o retiro.', 'fa-clipboard-check'],
+        'en_oficina' => ['En oficina', 'Tu paquete ya está en nuestra oficina de CH Logistics.', 'fa-store'],
         'entregado' => ['Entregado', 'Tu paquete fue entregado.', 'fa-circle-check'],
     ];
 
@@ -259,7 +260,7 @@
                     if ($paquete) {
                         $guia = $paquete->numero_guia;
                         $trackingCod = $paquete->tracking_codigo;
-                        $estadoKey = strtolower((string) $paquete->estado);
+                        $estadoKey = $paquete->estadoCliente();
                         $peso = \App\Models\Inventario::formatPeso($paquete->peso_lb).' lb';
                         $fechaRecepcion = $paquete->fecha_ingreso ? \Carbon\Carbon::parse($paquete->fecha_ingreso)->format('d/m/Y') : null;
                         $descripcion = null;

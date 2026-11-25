@@ -20,7 +20,7 @@
                 {{ $paquete->numero_guia ? 'Guía '.$paquete->numero_guia : ($paquete->tracking_codigo ?: ('Paquete #'.$paquete->id)) }}
             </h1>
         </div>
-        <span class="rounded-full px-3 py-1 text-sm font-semibold {{ $estadoBadge }}">{{ ucfirst(str_replace('_',' ', $paquete->estado)) }}</span>
+        <span class="rounded-full px-3 py-1 text-sm font-semibold {{ $paquete->estadoClienteBadge() }}">{{ $paquete->estadoClienteLabel() }}</span>
     </div>
 
     <div class="grid gap-6 lg:grid-cols-3">
@@ -62,7 +62,7 @@
             <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
                 <h2 class="mb-4 font-bold text-slate-800">Estado del envío</h2>
                 @include('partials.tracking-timeline', [
-                    'estadoActual' => $paquete->estado,
+                    'estadoActual' => $paquete->estadoCliente(),
                     'eventos' => $paquete->estadoEventos->sortBy('evento_at')->values(),
                     'ingresadoLocal' => true,
                 ])

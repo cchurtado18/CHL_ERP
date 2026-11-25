@@ -24,7 +24,7 @@
             <div class="flex items-center gap-3 sm:gap-4">
                 <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600 text-xl sm:h-14 sm:w-14 sm:text-2xl"><i class="fas fa-check-circle"></i></div>
                 <div class="min-w-0">
-                    <p class="text-xs font-medium uppercase tracking-wide text-slate-500 sm:text-sm">Recibidos</p>
+                    <p class="text-xs font-medium uppercase tracking-wide text-slate-500 sm:text-sm">En oficina</p>
                     <p class="text-xl font-bold text-slate-800 sm:text-2xl">{{ $recibidos }}</p>
                 </div>
             </div>
@@ -69,7 +69,7 @@
                             <p class="truncate font-semibold text-slate-800">{{ $p->tracking_codigo ?: $p->numero_guia ?: ('#'.$p->id) }}</p>
                             <p class="text-xs text-slate-500">{{ \Carbon\Carbon::parse($p->fecha_ingreso)->format('d/m/Y') }} · {{ $p->servicio->tipo_servicio ?? '—' }}</p>
                         </div>
-                        <span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold capitalize {{ $badge }}">{{ str_replace('_',' ', $p->estado) }}</span>
+                        <span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold {{ $p->estadoClienteBadge() }}">{{ $p->estadoClienteLabel() }}</span>
                     </a>
                 @empty
                     <p class="px-4 py-8 text-center text-sm text-slate-400 sm:px-5">Aún no tienes paquetes registrados.</p>
